@@ -1,0 +1,47 @@
+spring:
+  datasource:
+    url: jdbc:mysql://10.0.30.172:13306/smart_doc?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: root
+    password: 123456
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${JWT_ISSUER_URI:http://localhost:8080}
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 20MB
+
+# 应用配置
+application:
+  security:
+    jwt:
+      secret-key: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+      expiration: 86400000 # 一天
+      refresh-token:
+        expiration: 604800000 # 一周
+
+# LLM配置
+llm:
+  openai:
+    api-key: ${OPENAI_API_KEY:your-api-key-here}
+    model: glm-4-flash
+    embedding-model: bge-m3
+    temperature: 0.7
+
+# Milvus配置
+milvus:
+  host: 10.0.30.172
+  port: 19530
+  collection-name: document_vectors
+  dimension: 1024 # 根据您使用的嵌入模型维度调整
