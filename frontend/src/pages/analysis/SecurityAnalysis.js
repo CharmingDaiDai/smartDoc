@@ -6,14 +6,14 @@ import {
   Button, 
   Space, 
   Alert, 
-  Spin,
-  message, 
+  Spin, 
+  Table, 
+  Tag, 
   Radio,
   Modal
 } from 'antd';
 import { 
-  FileTextOutlined, 
-  CopyOutlined 
+  SafetyOutlined
 } from '@ant-design/icons';
 import { documentAPI } from '../../services/api';
 import DocumentSelector from '../../components/analysis/DocumentSelector';
@@ -21,9 +21,9 @@ import DocumentSelector from '../../components/analysis/DocumentSelector';
 const { Title, Paragraph, Text } = Typography;
 const { TextArea } = Input;
 
-const SummaryAnalysis = () => {
+const SecurityAnalysis = () => {
   const [content, setContent] = useState('');
-  const [summary, setSummary] = useState('');
+  const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [inputType, setInputType] = useState('text'); // 'text' 或 'document'
@@ -61,21 +61,8 @@ const SummaryAnalysis = () => {
     setResultModalVisible(false);
   };
 
-  // 处理复制摘要
-  const handleCopySummary = () => {
-    const textToCopy = summary || viewingDocument?.summary || '';
-    if (!textToCopy) {
-      message.warning('没有可复制的摘要');
-      return;
-    }
-
-    navigator.clipboard.writeText(textToCopy)
-      .then(() => message.success('已复制到剪贴板'))
-      .catch(() => message.error('复制失败，请手动复制'));
-  };
-
-  // 生成摘要
-  const generateSummary = async () => {
+  // 检测敏感信息
+  const detectSensitiveInfo = async () => {
     // 基于输入类型验证输入
     if (inputType === 'text' && !content.trim()) {
       setError('请输入文档内容');
@@ -91,18 +78,18 @@ const SummaryAnalysis = () => {
       let response;
       
       if (inputType === 'text') {
-        // 使用文本内容生成摘要
-        response = await documentAPI.generateSummary(content);
+        // 使用文本内容检测敏感信息
+        response = await documentAPI.detectSensitiveInfo(content);
       } else {
-        // 使用文档ID生成摘要
-        response = await documentAPI.generateSummaryFromDocument(selectedDocument.id);
+        // 使用文档ID检测敏感信息
+        response = await documentAPI.detectSensitiveInfoFromDocument(selectedDocument.id);
       }
       
-      setSummary(response.data.summary);
+      setResults(response.data.items || []);
       setLoading(false);
     } catch (err) {
-      console.error('生成摘要失败:', err);
-      setError('生成摘要失败，请稍后再试');
+      console.error('检测敏感信息失败:', err);
+      setError('检测敏感信息失败，请稍后再试');
       setLoading(false);
     }
   };
@@ -110,16 +97,55 @@ const SummaryAnalysis = () => {
   // 清空所有内容
   const handleClear = () => {
     setContent('');
-    setSummary('');
+    setResults([]);
     setError('');
     setSelectedDocument(null);
   };
 
+  // 表格列定义
+  const columns = [
+    {
+      title: '类型',
+      dataIndex: 'type',
+      key: 'type',
+      render: (type) => (
+        <Tag color={type === '个人信息' ? 'red' : type === '商业敏感' ? 'orange' : 'blue'}>
+          {type}
+        </Tag>
+      ),
+    },
+    {
+      title: '敏感内容',
+      dataIndex: 'content',
+      key: 'content',
+    },
+    {
+      title: '位置',
+      dataIndex: 'position',
+      key: 'position',
+    },
+    {
+      title: '风险级别',
+      dataIndex: 'riskLevel',
+      key: 'riskLevel',
+      render: (level) => (
+        <Tag color={level === '高' ? 'red' : level === '中' ? 'orange' : 'green'}>
+          {level}
+        </Tag>
+      ),
+    },
+    {
+      title: '建议',
+      dataIndex: 'suggestion',
+      key: 'suggestion',
+    },
+  ];
+
   return (
     <div>
-      <Title level={2}>摘要生成</Title>
+      <Title level={2}>敏感信息检测</Title>
       <Paragraph>
-        自动总结文档的主要内容，提取核心信息，生成简洁清晰的摘要。
+        检测文档中可能包含的个人信息、商业敏感信息等，帮助您避免信息泄露风险。
       </Paragraph>
 
       <Radio.Group 
@@ -136,7 +162,7 @@ const SummaryAnalysis = () => {
           <TextArea
             value={content}
             onChange={handleContentChange}
-            placeholder="请在此输入或粘贴需要生成摘要的文档内容..."
+            placeholder="请在此输入或粘贴需要检测敏感信息的文档内容..."
             autoSize={{ minRows: 8, maxRows: 16 }}
             style={{ marginBottom: 16 }}
           />
@@ -145,9 +171,9 @@ const SummaryAnalysis = () => {
         <div style={{ marginBottom: 16 }}>
           <DocumentSelector 
             onSelect={handleDocumentSelect}
-            title="选择要生成摘要的文档"
-            emptyText="暂无可分析的文档，请先上传文档"
-            analysisType="summary"
+            title="选择要检测敏感信息的文档"
+            emptyText="暂无可分析的文档，请先上传文档" 
+            analysisType="security"
             onViewResult={handleViewResult}
           />
         </div>
@@ -156,11 +182,11 @@ const SummaryAnalysis = () => {
       <Space style={{ marginBottom: 16 }}>
         <Button 
           type="primary" 
-          onClick={generateSummary} 
+          onClick={detectSensitiveInfo} 
           loading={loading}
-          icon={<FileTextOutlined />}
+          icon={<SafetyOutlined />}
         >
-          生成摘要
+          检测敏感信息
         </Button>
         <Button onClick={handleClear}>清空</Button>
       </Space>
@@ -169,47 +195,41 @@ const SummaryAnalysis = () => {
 
       {loading && (
         <div style={{ textAlign: 'center', padding: '20px 0' }}>
-          <Spin tip="正在生成摘要..." />
+          <Spin tip="正在检测敏感信息..." />
         </div>
       )}
 
-      {summary && (
-        <Card 
-          title="摘要结果" 
-          extra={
-            <Button 
-              type="text" 
-              icon={<CopyOutlined />} 
-              onClick={handleCopySummary}
-            >
-              复制
-            </Button>
-          }
-        >
-          <Paragraph>{summary}</Paragraph>
+      {results.length > 0 && (
+        <Card title="敏感信息检测结果">
+          <Table 
+            columns={columns} 
+            dataSource={results.map((item, index) => ({ ...item, key: index }))} 
+            pagination={false}
+            locale={{ emptyText: '未检测到敏感信息' }}
+          />
         </Card>
       )}
 
       {/* 已有结果查看模态框 */}
       <Modal
-        title={`摘要：${viewingDocument?.title || ''}`}
+        title={`敏感信息检测：${viewingDocument?.title || ''}`}
         open={resultModalVisible}
         onCancel={handleCloseResultModal}
         footer={[
-          <Button key="copy" type="primary" onClick={handleCopySummary} icon={<CopyOutlined />}>
-            复制摘要
-          </Button>,
           <Button key="close" onClick={handleCloseResultModal}>
             关闭
           </Button>
         ]}
-        width={700}
+        width={800}
       >
         {viewingDocument && (
           <div>
-            <Card>
-              <Paragraph>{viewingDocument.summary}</Paragraph>
-            </Card>
+            <Table 
+              columns={columns} 
+              dataSource={(viewingDocument.securityResults || []).map((item, index) => ({ ...item, key: index }))} 
+              pagination={false}
+              locale={{ emptyText: '未检测到敏感信息' }}
+            />
             <div style={{ marginTop: 16 }}>
               <Text type="secondary">
                 文档信息: {viewingDocument.fileName} ({viewingDocument.fileSize} 字节)
@@ -222,4 +242,4 @@ const SummaryAnalysis = () => {
   );
 };
 
-export default SummaryAnalysis;
+export default SecurityAnalysis;

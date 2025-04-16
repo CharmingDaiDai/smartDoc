@@ -1,6 +1,7 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { message } from 'antd';
 import { authAPI } from '../services/api';
+import api from '../services/api';
 
 // 创建认证上下文
 const AuthContext = createContext(null);
@@ -84,6 +85,21 @@ export const AuthProvider = ({ children }) => {
               isVip: payload.vip,
             });
             setIsAuthenticated(true);
+            
+            // 在这里获取用户完整资料（包括头像）
+            try {
+              const profileResponse = await api.get('/api/profile');
+              if (profileResponse && profileResponse.data) {
+                setCurrentUser(prev => ({
+                  ...prev,
+                  avatarUrl: profileResponse.data.avatarUrl,
+                  email: profileResponse.data.email,
+                  fullName: profileResponse.data.fullName
+                }));
+              }
+            } catch (profileError) {
+              console.error('获取用户资料失败', profileError);
+            }
           } catch (error) {
             console.error('Token解析错误', error);
             localStorage.removeItem('token');
@@ -201,7 +217,25 @@ export const AuthProvider = ({ children }) => {
     loading,
     login,
     register,
-    logout
+    logout,
+    refreshUserInfo: async () => {
+      try {
+        // 获取用户个人资料并更新状态
+        const response = await api.get('/api/profile');
+        
+        if (response && response.data) {
+          // 更新当前用户信息
+          setCurrentUser(prev => ({
+            ...prev,
+            email: response.data.email,
+            // 如果有头像信息，也可以更新
+            avatarUrl: response.data.avatarUrl
+          }));
+        }
+      } catch (error) {
+        console.error('刷新用户信息失败', error);
+      }
+    }
   };
 
   return (

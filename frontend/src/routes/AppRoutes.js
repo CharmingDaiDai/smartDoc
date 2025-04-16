@@ -7,7 +7,10 @@ import Dashboard from '../pages/dashboard/Dashboard';
 import SummaryAnalysis from '../pages/analysis/SummaryAnalysis';
 import KeywordsAnalysis from '../pages/analysis/KeywordsAnalysis';
 import PolishAnalysis from '../pages/analysis/PolishAnalysis';
+import SecurityAnalysis from '../pages/analysis/SecurityAnalysis';
 import DocumentManagement from '../pages/documents/DocumentManagement';
+import UserProfile from '../pages/profile/UserProfile';
+import VipMembership from '../pages/vip/VipMembership';
 import ProtectedRoute from '../components/ProtectedRoute';
 
 const AppRoutes = () => {
@@ -35,11 +38,13 @@ const AppRoutes = () => {
           <Route path="summary" element={<SummaryAnalysis />} />
           <Route path="keywords" element={<KeywordsAnalysis />} />
           <Route path="polish" element={<PolishAnalysis />} />
+          <Route path="security" element={<SecurityAnalysis />} />
           {/* 其他分析功能路由可在此处添加 */}
         </Route>
         
         {/* VIP功能路由 - 需要VIP角色 */}
         <Route path="vip">
+          <Route path="membership" element={<VipMembership />} />
           <Route path="advanced-analysis" element={
             <ProtectedRoute requiredRole="VIP">
               <div>高级分析功能（VIP专属）</div>
@@ -51,6 +56,9 @@ const AppRoutes = () => {
             </ProtectedRoute>
           } />
         </Route>
+        
+        {/* 个人资料路由 */}
+        <Route path="profile" element={<UserProfile />} />
         
         {/* 其他路由可在此处添加 */}
       </Route>

@@ -176,7 +176,7 @@ const Dashboard = () => {
                 <List.Item>
                   <List.Item.Meta
                     avatar={item.icon}
-                    title={<a href="#">{item.documentName}</a>}
+                    title={<span style={{ cursor: 'pointer' }}>{item.documentName}</span>}
                     description={
                       <Space>
                         <Tag color={item.color}>

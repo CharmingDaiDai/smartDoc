@@ -7,55 +7,78 @@ import {
   Space, 
   Alert, 
   Spin,
-  Upload,
   message,
   Radio,
+  Modal,
   Tabs,
-  Empty
+  Tooltip
 } from 'antd';
 import { 
-  HighlightOutlined, 
-  UploadOutlined, 
+  FileTextOutlined, 
   CopyOutlined, 
-  SwapOutlined 
+  FormOutlined,
+  DiffOutlined
 } from '@ant-design/icons';
 import { documentAPI } from '../../services/api';
+import DocumentSelector from '../../components/analysis/DocumentSelector';
 
 const { Title, Paragraph, Text } = Typography;
 const { TextArea } = Input;
+const { TabPane } = Tabs;
 
 const PolishAnalysis = () => {
   const [content, setContent] = useState('');
   const [polishedContent, setPolishedContent] = useState('');
-  const [polishType, setPolishType] = useState('formal');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState('input');
+  const [inputType, setInputType] = useState('text'); // 'text' 或 'document'
+  const [selectedDocument, setSelectedDocument] = useState(null);
+  const [resultModalVisible, setResultModalVisible] = useState(false);
+  const [viewingDocument, setViewingDocument] = useState(null);
+  const [polishType, setPolishType] = useState('formal'); // 'formal', 'simple', 'creative'
 
   // 处理文本输入变化
   const handleContentChange = (e) => {
     setContent(e.target.value);
   };
 
-  // 处理润色类型变化
-  const handlePolishTypeChange = (e) => {
-    setPolishType(e.target.value);
+  // 处理输入类型变化
+  const handleInputTypeChange = (e) => {
+    setInputType(e.target.value);
+    // 清空错误消息
+    setError('');
   };
 
-  // 处理文件上传
-  const handleFileUpload = (info) => {
-    if (info.file.status === 'done') {
-      message.success(`${info.file.name} 上传成功`);
-      // 这里可以添加文件内容提取逻辑
-      // 目前仅模拟将文件名添加到内容中
-      setContent(`[文件: ${info.file.name}]\n${content}`);
-    } else if (info.file.status === 'error') {
-      message.error(`${info.file.name} 上传失败`);
-    }
+  // 处理文档选择
+  const handleDocumentSelect = (document) => {
+    setSelectedDocument(document);
+    // 清空错误消息
+    setError('');
+  };
+
+  // 处理查看已有结果
+  const handleViewResult = (document) => {
+    setViewingDocument(document);
+    setResultModalVisible(true);
+  };
+
+  // 关闭结果查看模态框
+  const handleCloseResultModal = () => {
+    setResultModalVisible(false);
+  };
+  
+  // 处理润色类型变化
+  const handlePolishTypeChange = (value) => {
+    setPolishType(value);
   };
 
   // 处理复制润色结果
   const handleCopyPolished = () => {
+    if (!polishedContent) {
+      message.warning('没有可复制的润色结果');
+      return;
+    }
+
     navigator.clipboard.writeText(polishedContent)
       .then(() => message.success('已复制到剪贴板'))
       .catch(() => message.error('复制失败，请手动复制'));
@@ -63,35 +86,30 @@ const PolishAnalysis = () => {
 
   // 润色文档
   const polishDocument = async () => {
-    if (!content.trim()) {
-      setError('请输入或上传文档内容');
+    // 基于输入类型验证输入
+    if (inputType === 'text' && !content.trim()) {
+      setError('请输入文档内容');
+      return;
+    } else if (inputType === 'document' && !selectedDocument) {
+      setError('请选择一个文档');
       return;
     }
 
     setLoading(true);
     setError('');
     try {
-      // 实际环境中，这里调用后端API
-      // const response = await documentAPI.polishDocument(content, polishType);
-      // setPolishedContent(response.data);
+      let response;
       
-      // 模拟API调用
-      setTimeout(() => {
-        let mockPolished = '';
-        
-        if (polishType === 'formal') {
-          mockPolished = '本文档详细阐述了智能文档分析系统的功能特性与技术实现。该系统采用先进的自然语言处理技术，为用户提供高效的文档管理与分析服务。系统的核心模块包括文档摘要生成、关键词提取以及文档润色功能，这些功能有效提升了文档处理的效率与质量。';
-        } else if (polishType === 'concise') {
-          mockPolished = '智能文档系统具备多种分析功能，包括摘要生成、关键词提取和文档润色。系统采用NLP技术处理文档，提高效率，优化文档质量。用户可轻松管理和分析各类文档。';
-        } else if (polishType === 'creative') {
-          mockPolished = '想象一下，你的文档如同经过魔法般的转变！我们的智能文档小精灵施展了它的魔法，让你的文字焕发出全新的生命力。不仅内容清晰明了，还充满了创意的表达，让读者在阅读的旅程中感受到文字的魅力与活力。';
-        }
-        
-        setPolishedContent(mockPolished);
-        setLoading(false);
-        // 自动切换到结果标签页
-        setActiveTab('result');
-      }, 2000);
+      if (inputType === 'text') {
+        // 使用文本内容润色
+        response = await documentAPI.polishText(content, polishType);
+      } else {
+        // 使用文档ID润色
+        response = await documentAPI.polishDocument(selectedDocument.id, polishType);
+      }
+      
+      setPolishedContent(response.data.polishedContent);
+      setLoading(false);
     } catch (err) {
       console.error('文档润色失败:', err);
       setError('文档润色失败，请稍后再试');
@@ -104,15 +122,49 @@ const PolishAnalysis = () => {
     setContent('');
     setPolishedContent('');
     setError('');
-    setActiveTab('input');
+    setSelectedDocument(null);
   };
 
-  const tabItems = [
-    {
-      key: 'input',
-      label: '输入',
-      children: (
-        <Card title="输入文档内容">
+  // 润色风格选项
+  const polishTypes = [
+    { value: 'formal', label: '正式', description: '适合商务报告、论文等正式场合' },
+    { value: 'simple', label: '简洁', description: '直接明了，易于理解' },
+    { value: 'creative', label: '创意', description: '生动有趣，适合营销文案' }
+  ];
+
+  return (
+    <div>
+      <Title level={2}>文档润色</Title>
+      <Paragraph>
+        智能优化文档的语言表达，修正语法错误，提升文档的专业性和可读性。
+      </Paragraph>
+
+      <Card style={{ marginBottom: 16 }}>
+        <Title level={5}>选择润色风格</Title>
+        <Radio.Group 
+          value={polishType}
+          onChange={(e) => handlePolishTypeChange(e.target.value)}
+          style={{ marginBottom: 16 }}
+        >
+          {polishTypes.map(type => (
+            <Tooltip key={type.value} title={type.description}>
+              <Radio.Button value={type.value}>{type.label}</Radio.Button>
+            </Tooltip>
+          ))}
+        </Radio.Group>
+      </Card>
+
+      <Radio.Group 
+        value={inputType} 
+        onChange={handleInputTypeChange}
+        style={{ marginBottom: 16 }}
+      >
+        <Radio.Button value="text">直接输入文本</Radio.Button>
+        <Radio.Button value="document">选择已上传文档</Radio.Button>
+      </Radio.Group>
+
+      {inputType === 'text' ? (
+        <Card title="输入文档内容" style={{ marginBottom: 16 }}>
           <TextArea
             value={content}
             onChange={handleContentChange}
@@ -120,98 +172,29 @@ const PolishAnalysis = () => {
             autoSize={{ minRows: 8, maxRows: 16 }}
             style={{ marginBottom: 16 }}
           />
-          
-          <Space direction="vertical" style={{ width: '100%' }}>
-            <Text type="secondary">或者上传文档文件 (支持 .txt, .doc, .docx, .pdf)</Text>
-            <Upload
-              name="file"
-              action="/api/documents/upload"
-              onChange={handleFileUpload}
-              maxCount={1}
-              showUploadList={false}
-            >
-              <Button icon={<UploadOutlined />}>上传文件</Button>
-            </Upload>
-            
-            <div style={{ marginTop: 16 }}>
-              <Title level={5}>选择润色类型：</Title>
-              <Radio.Group value={polishType} onChange={handlePolishTypeChange}>
-                <Radio.Button value="formal">正式</Radio.Button>
-                <Radio.Button value="concise">简洁</Radio.Button>
-                <Radio.Button value="creative">创意</Radio.Button>
-              </Radio.Group>
-            </div>
-          </Space>
         </Card>
-      )
-    },
-    {
-      key: 'result',
-      label: '润色结果',
-      children: (
-        <Card 
-          title="润色后的文档" 
-          extra={
-            <Button 
-              type="text" 
-              icon={<CopyOutlined />} 
-              onClick={handleCopyPolished}
-            >
-              复制
-            </Button>
-          }
-        >
-          {polishedContent ? (
-            <Paragraph>{polishedContent}</Paragraph>
-          ) : (
-            <Empty description="尚未生成润色结果" />
-          )}
-        </Card>
-      )
-    },
-    {
-      key: 'compare',
-      label: '对比视图',
-      children: (
-        <Card title="原文与润色结果对比">
-          <div style={{ display: 'flex', gap: '16px' }}>
-            <Card title="原文" style={{ flex: 1 }}>
-              <Paragraph>{content || '无原文内容'}</Paragraph>
-            </Card>
-            <Card title="润色结果" style={{ flex: 1 }}>
-              <Paragraph>{polishedContent || '尚未生成润色结果'}</Paragraph>
-            </Card>
-          </div>
-        </Card>
-      )
-    }
-  ];
-
-  return (
-    <div>
-      <Title level={2}>文档润色</Title>
-      <Paragraph>
-        优化文档的表达方式，提高文档的可读性和专业性。选择不同的润色类型，满足不同场景需求。
-      </Paragraph>
+      ) : (
+        <div style={{ marginBottom: 16 }}>
+          <DocumentSelector 
+            onSelect={handleDocumentSelect}
+            title="选择要润色的文档"
+            emptyText="暂无可润色的文档，请先上传文档"
+            analysisType="polish"
+            onViewResult={handleViewResult}
+          />
+        </div>
+      )}
 
       <Space style={{ marginBottom: 16 }}>
         <Button 
           type="primary" 
           onClick={polishDocument} 
           loading={loading}
-          icon={<HighlightOutlined />}
+          icon={<FormOutlined />}
         >
           开始润色
         </Button>
         <Button onClick={handleClear}>清空</Button>
-        {content && polishedContent && (
-          <Button 
-            icon={<SwapOutlined />}
-            onClick={() => setActiveTab('compare')}
-          >
-            查看对比
-          </Button>
-        )}
       </Space>
 
       {error && <Alert message={error} type="error" style={{ marginBottom: 16 }} />}
@@ -222,11 +205,90 @@ const PolishAnalysis = () => {
         </div>
       )}
 
-      <Tabs 
-        activeKey={activeTab} 
-        onChange={setActiveTab}
-        items={tabItems}
-      />
+      {polishedContent && (
+        <Card 
+          title="文档润色结果" 
+          extra={
+            <Button 
+              type="text" 
+              icon={<CopyOutlined />} 
+              onClick={handleCopyPolished}
+            >
+              复制
+            </Button>
+          }
+        >
+          <Tabs defaultActiveKey="polished">
+            <TabPane 
+              tab={
+                <span>
+                  <FileTextOutlined />
+                  润色后
+                </span>
+              } 
+              key="polished"
+            >
+              <Paragraph>{polishedContent}</Paragraph>
+            </TabPane>
+            <TabPane 
+              tab={
+                <span>
+                  <DiffOutlined />
+                  对比
+                </span>
+              } 
+              key="compare"
+            >
+              <div style={{ display: 'flex', gap: '20px' }}>
+                <Card 
+                  title="原文" 
+                  style={{ width: '50%', backgroundColor: '#f9f9f9' }}
+                  size="small"
+                >
+                  <Paragraph>{content || (selectedDocument?.content || '')}</Paragraph>
+                </Card>
+                <Card 
+                  title="润色后" 
+                  style={{ width: '50%', backgroundColor: '#f6ffed' }}
+                  size="small"
+                >
+                  <Paragraph>{polishedContent}</Paragraph>
+                </Card>
+              </div>
+            </TabPane>
+          </Tabs>
+        </Card>
+      )}
+
+      {/* 已有结果查看模态框 */}
+      <Modal
+        title={`文档润色：${viewingDocument?.title || ''}`}
+        open={resultModalVisible}
+        onCancel={handleCloseResultModal}
+        footer={[
+          <Button key="close" onClick={handleCloseResultModal}>
+            关闭
+          </Button>
+        ]}
+        width={700}
+      >
+        {viewingDocument && (
+          <div>
+            <Alert 
+              message="历史润色结果" 
+              description="抱歉，该文档的润色结果未保存在系统中。请重新进行润色操作。" 
+              type="info" 
+              showIcon 
+              style={{ marginBottom: 16 }} 
+            />
+            <div style={{ marginTop: 16 }}>
+              <Text type="secondary">
+                文档信息: {viewingDocument.fileName} ({viewingDocument.fileSize} 字节)
+              </Text>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };

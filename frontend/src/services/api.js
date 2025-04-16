@@ -169,15 +169,35 @@ export const documentAPI = {
   
   // 文档分析相关API
   // 文档摘要
-  getSummary: (content) => api.post('/api/summary', { content }),
+  getSummary: (content) => api.post('/api/analysis/summary', { content }),
+  getSummaryFromDocument: (documentId) => api.post('/api/analysis/summary', { documentId }),
   // 提取关键词
-  extractKeywords: (content) => api.post('/api/keywords', { content }),
+  extractKeywords: (content) => api.post('/api/analysis/keywords', { content }),
+  extractKeywordsFromDocument: (documentId) => api.post('/api/analysis/keywords', { documentId }),
   // 文档润色
-  polishDocument: (content, type) => api.post('/api/polish', { content, type }),
+  polishDocument: (content, polishType) => api.post('/api/analysis/polish', { content, polishType }),
+  polishDocumentFromDocument: (documentId, polishType) => api.post('/api/analysis/polish', { documentId, polishType }),
   // 敏感信息检测
-  detectSensitiveInfo: (content) => api.post('/api/security', { content }),
-  // 文档分类
-  classifyDocument: (content) => api.post('/api/classification', { content }),
+  detectSensitiveInfo: (content) => api.post('/api/analysis/security', { content }),
+  detectSensitiveInfoFromDocument: (documentId) => api.post('/api/analysis/security', { documentId }),
+  // 文档分类 - 此功能已移除
+  // classifyDocument: (content) => api.post('/api/classification', { content }),
+};
+
+// 用户个人资料相关API
+export const profileAPI = {
+  // 获取个人资料
+  getProfile: () => api.get('/api/profile'),
+  // 更新个人资料
+  updateProfile: (data) => api.put('/api/profile', data),
+  // 上传头像
+  uploadAvatar: (formData) => api.post('/api/profile/avatar', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  }),
+  // 修改密码
+  changePassword: (data) => api.put('/api/profile/password', data),
 };
 
 export default api;

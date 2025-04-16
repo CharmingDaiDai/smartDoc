@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
   Typography, Button, Row, Col, Card, Space, 
-  Upload, Modal, Table, Tag, Divider, Input,
-  Form, message, Spin, Drawer, Descriptions, Empty
+  Upload, Modal, Table, Tag, Input,
+  Form, message, Spin, Drawer, Empty
 } from 'antd';
 import {
   DeleteOutlined, 
@@ -13,7 +13,7 @@ import {
 import api from '../../services/api';
 import DocumentViewer from '../../components/viewer/DocumentViewer';
 
-const { Title, Text, Paragraph } = Typography;
+const { Title } = Typography;
 const { confirm } = Modal;
 
 // 格式化文件大小
@@ -237,17 +237,6 @@ const DocumentManagement = () => {
       ),
     },
   ];
-
-  // 渲染标签
-  const renderTags = (tags) => {
-    if (!tags) return null;
-    
-    return tags.split(',').map((tag, index) => (
-      <Tag key={index} color="blue" style={{ margin: '2px' }}>
-        {tag.trim()}
-      </Tag>
-    ));
-  };
 
   return (
     <div style={{ padding: '24px' }}>

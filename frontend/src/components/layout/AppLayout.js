@@ -6,15 +6,11 @@ import {
   UserOutlined, 
   DashboardOutlined,
   FileTextOutlined,
-  HighlightOutlined,
-  SafetyOutlined,
-  TagOutlined,
   LogoutOutlined,
-  SettingOutlined,
   AppstoreOutlined,
   CrownOutlined
 } from '@ant-design/icons';
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 const { Header, Sider, Content } = Layout;
@@ -41,10 +37,10 @@ const AppLayout = () => {
       onClick: () => navigate('/profile')
     },
     {
-      key: 'settings',
-      label: '设置',
-      icon: <SettingOutlined />,
-      onClick: () => navigate('/settings')
+      key: 'vip',
+      label: 'VIP会员中心',
+      icon: <CrownOutlined />,
+      onClick: () => navigate('/vip/membership')
     },
     {
       type: 'divider'
@@ -89,11 +85,7 @@ const AppLayout = () => {
         {
           key: '/analysis/security',
           label: '敏感信息检测',
-        },
-        {
-          key: '/analysis/classification',
-          label: '文档分类',
-        },
+        }
       ],
     },
     ...(currentUser?.isVip ? [
@@ -172,10 +164,18 @@ const AppLayout = () => {
                 <span style={{ marginRight: 8 }}>
                   {currentUser?.isVip && (
                     <Badge count={<CrownOutlined style={{ color: '#faad14' }} />} offset={[-5, 5]}>
-                      <Avatar icon={<UserOutlined />} />
+                      <Avatar 
+                        icon={!currentUser?.avatarUrl && <UserOutlined />} 
+                        src={currentUser?.avatarUrl}
+                      />
                     </Badge>
                   )}
-                  {!currentUser?.isVip && <Avatar icon={<UserOutlined />} />}
+                  {!currentUser?.isVip && (
+                    <Avatar 
+                      icon={!currentUser?.avatarUrl && <UserOutlined />} 
+                      src={currentUser?.avatarUrl}
+                    />
+                  )}
                 </span>
                 <span>{currentUser?.username || '用户'}</span>
               </div>

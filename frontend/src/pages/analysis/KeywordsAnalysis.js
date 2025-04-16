@@ -5,73 +5,105 @@ import {
   Input, 
   Button, 
   Space, 
-  Divider, 
   Alert, 
   Spin,
-  Upload,
-  message,
-  Tag
+  message, 
+  Tag,
+  Radio,
+  Modal
 } from 'antd';
-import { TagsOutlined, UploadOutlined, CopyOutlined } from '@ant-design/icons';
+import { 
+  CopyOutlined,
+  TagsOutlined
+} from '@ant-design/icons';
 import { documentAPI } from '../../services/api';
+import DocumentSelector from '../../components/analysis/DocumentSelector';
 
 const { Title, Paragraph, Text } = Typography;
 const { TextArea } = Input;
-
-// 模拟的关键词标签颜色
-const tagColors = ['magenta', 'red', 'volcano', 'orange', 'gold', 'lime', 'green', 'cyan', 'blue', 'geekblue', 'purple'];
 
 const KeywordsAnalysis = () => {
   const [content, setContent] = useState('');
   const [keywords, setKeywords] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [inputType, setInputType] = useState('text'); // 'text' 或 'document'
+  const [selectedDocument, setSelectedDocument] = useState(null);
+  const [resultModalVisible, setResultModalVisible] = useState(false);
+  const [viewingDocument, setViewingDocument] = useState(null);
 
   // 处理文本输入变化
   const handleContentChange = (e) => {
     setContent(e.target.value);
   };
 
-  // 处理文件上传
-  const handleFileUpload = (info) => {
-    if (info.file.status === 'done') {
-      message.success(`${info.file.name} 上传成功`);
-      // 这里可以添加文件内容提取逻辑
-      // 目前仅模拟将文件名添加到内容中
-      setContent(`[文件: ${info.file.name}]\n${content}`);
-    } else if (info.file.status === 'error') {
-      message.error(`${info.file.name} 上传失败`);
-    }
+  // 处理输入类型变化
+  const handleInputTypeChange = (e) => {
+    setInputType(e.target.value);
+    // 清空错误消息
+    setError('');
+  };
+
+  // 处理文档选择
+  const handleDocumentSelect = (document) => {
+    setSelectedDocument(document);
+    // 清空错误消息
+    setError('');
+  };
+
+  // 处理查看已有结果
+  const handleViewResult = (document) => {
+    setViewingDocument(document);
+    setResultModalVisible(true);
+  };
+
+  // 关闭结果查看模态框
+  const handleCloseResultModal = () => {
+    setResultModalVisible(false);
   };
 
   // 处理复制关键词
   const handleCopyKeywords = () => {
-    const keywordsText = keywords.join(', ');
-    navigator.clipboard.writeText(keywordsText)
+    const keywordsToCopy = keywords.length > 0 
+      ? keywords.join(', ') 
+      : viewingDocument?.keywords?.join(', ') || '';
+      
+    if (!keywordsToCopy) {
+      message.warning('没有可复制的关键词');
+      return;
+    }
+
+    navigator.clipboard.writeText(keywordsToCopy)
       .then(() => message.success('已复制到剪贴板'))
       .catch(() => message.error('复制失败，请手动复制'));
   };
 
   // 提取关键词
   const extractKeywords = async () => {
-    if (!content.trim()) {
-      setError('请输入或上传文档内容');
+    // 基于输入类型验证输入
+    if (inputType === 'text' && !content.trim()) {
+      setError('请输入文档内容');
+      return;
+    } else if (inputType === 'document' && !selectedDocument) {
+      setError('请选择一个文档');
       return;
     }
 
     setLoading(true);
     setError('');
     try {
-      // 实际环境中，这里调用后端API
-      // const response = await documentAPI.extractKeywords(content);
-      // setKeywords(response.data);
+      let response;
       
-      // 模拟API调用
-      setTimeout(() => {
-        const mockKeywords = ['人工智能', '机器学习', '文本分析', '自然语言处理', '文档管理', '数据挖掘', '知识图谱', '语义分析'];
-        setKeywords(mockKeywords);
-        setLoading(false);
-      }, 1500);
+      if (inputType === 'text') {
+        // 使用文本内容提取关键词
+        response = await documentAPI.extractKeywords(content);
+      } else {
+        // 使用文档ID提取关键词
+        response = await documentAPI.extractKeywordsFromDocument(selectedDocument.id);
+      }
+      
+      setKeywords(response.data.keywords || []);
+      setLoading(false);
     } catch (err) {
       console.error('提取关键词失败:', err);
       setError('提取关键词失败，请稍后再试');
@@ -84,37 +116,63 @@ const KeywordsAnalysis = () => {
     setContent('');
     setKeywords([]);
     setError('');
+    setSelectedDocument(null);
+  };
+
+  // 渲染关键词标签
+  const renderKeywordTags = (keywordList) => {
+    if (!keywordList || keywordList.length === 0) {
+      return <Text type="secondary">暂无关键词</Text>;
+    }
+
+    return (
+      <div style={{ lineHeight: '30px' }}>
+        {keywordList.map((keyword, index) => (
+          <Tag color="blue" key={index} style={{ margin: '5px' }}>
+            {keyword}
+          </Tag>
+        ))}
+      </div>
+    );
   };
 
   return (
     <div>
       <Title level={2}>关键词提取</Title>
       <Paragraph>
-        自动从文档中提取重要关键词，帮助您把握文档的核心主题和关键概念。
+        自动分析文档内容，提取最能代表文档主题和核心信息的关键词。
       </Paragraph>
 
-      <Card title="输入文档内容" style={{ marginBottom: 16 }}>
-        <TextArea
-          value={content}
-          onChange={handleContentChange}
-          placeholder="请在此输入或粘贴文档内容..."
-          autoSize={{ minRows: 6, maxRows: 12 }}
-          style={{ marginBottom: 16 }}
-        />
-        
-        <Space direction="vertical" style={{ width: '100%' }}>
-          <Text type="secondary">或者上传文档文件 (支持 .txt, .doc, .docx, .pdf)</Text>
-          <Upload
-            name="file"
-            action="/api/documents/upload"
-            onChange={handleFileUpload}
-            maxCount={1}
-            showUploadList={false}
-          >
-            <Button icon={<UploadOutlined />}>上传文件</Button>
-          </Upload>
-        </Space>
-      </Card>
+      <Radio.Group 
+        value={inputType} 
+        onChange={handleInputTypeChange}
+        style={{ marginBottom: 16 }}
+      >
+        <Radio.Button value="text">直接输入文本</Radio.Button>
+        <Radio.Button value="document">选择已上传文档</Radio.Button>
+      </Radio.Group>
+
+      {inputType === 'text' ? (
+        <Card title="输入文档内容" style={{ marginBottom: 16 }}>
+          <TextArea
+            value={content}
+            onChange={handleContentChange}
+            placeholder="请在此输入或粘贴需要提取关键词的文档内容..."
+            autoSize={{ minRows: 8, maxRows: 16 }}
+            style={{ marginBottom: 16 }}
+          />
+        </Card>
+      ) : (
+        <div style={{ marginBottom: 16 }}>
+          <DocumentSelector 
+            onSelect={handleDocumentSelect}
+            title="选择要提取关键词的文档"
+            emptyText="暂无可分析的文档，请先上传文档" 
+            analysisType="keywords"
+            onViewResult={handleViewResult}
+          />
+        </div>
+      )}
 
       <Space style={{ marginBottom: 16 }}>
         <Button 
@@ -132,7 +190,7 @@ const KeywordsAnalysis = () => {
 
       {loading && (
         <div style={{ textAlign: 'center', padding: '20px 0' }}>
-          <Spin tip="正在分析文档..." />
+          <Spin tip="正在提取关键词..." />
         </div>
       )}
 
@@ -149,19 +207,38 @@ const KeywordsAnalysis = () => {
             </Button>
           }
         >
-          <Space size={[8, 16]} wrap>
-            {keywords.map((keyword, index) => (
-              <Tag 
-                key={index} 
-                color={tagColors[index % tagColors.length]}
-                style={{ fontSize: '14px', padding: '4px 8px' }}
-              >
-                {keyword}
-              </Tag>
-            ))}
-          </Space>
+          {renderKeywordTags(keywords)}
         </Card>
       )}
+
+      {/* 已有结果查看模态框 */}
+      <Modal
+        title={`关键词：${viewingDocument?.title || ''}`}
+        open={resultModalVisible}
+        onCancel={handleCloseResultModal}
+        footer={[
+          <Button key="copy" type="primary" onClick={handleCopyKeywords} icon={<CopyOutlined />}>
+            复制关键词
+          </Button>,
+          <Button key="close" onClick={handleCloseResultModal}>
+            关闭
+          </Button>
+        ]}
+        width={700}
+      >
+        {viewingDocument && (
+          <div>
+            <Card>
+              {renderKeywordTags(viewingDocument.keywords || [])}
+            </Card>
+            <div style={{ marginTop: 16 }}>
+              <Text type="secondary">
+                文档信息: {viewingDocument.fileName} ({viewingDocument.fileSize} 字节)
+              </Text>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 };
