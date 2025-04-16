@@ -7,6 +7,7 @@ import Dashboard from '../pages/dashboard/Dashboard';
 import SummaryAnalysis from '../pages/analysis/SummaryAnalysis';
 import KeywordsAnalysis from '../pages/analysis/KeywordsAnalysis';
 import PolishAnalysis from '../pages/analysis/PolishAnalysis';
+import DocumentManagement from '../pages/documents/DocumentManagement';
 import ProtectedRoute from '../components/ProtectedRoute';
 
 const AppRoutes = () => {
@@ -25,6 +26,9 @@ const AppRoutes = () => {
         {/* 默认路由重定向到仪表盘 */}
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
+        
+        {/* 文档管理路由 */}
+        <Route path="documents" element={<DocumentManagement />} />
         
         {/* 文档分析相关路由 */}
         <Route path="analysis">

@@ -1,64 +1,121 @@
-import React from 'react';
-import { Row, Col, Card, Statistic, Typography, List, Tag, Space, Button } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Row, Col, Card, Statistic, Typography, List, Tag, Space, Button, Spin, Empty, message } from 'antd';
 import { 
   FileTextOutlined, 
   EyeOutlined, 
   HighlightOutlined, 
   SafetyOutlined,
-  ClockCircleOutlined
+  ClockCircleOutlined,
+  LoadingOutlined
 } from '@ant-design/icons';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { dashboardAPI } from '../../services/api';
 
 const { Title, Paragraph } = Typography;
-
-// 模拟的最近活动数据
-const recentActivities = [
-  {
-    id: 1,
-    type: 'summary',
-    documentName: '年度财务报告.docx',
-    timestamp: '5分钟前',
-    icon: <EyeOutlined style={{ color: '#1890ff' }} />,
-    tag: '摘要'
-  },
-  {
-    id: 2,
-    type: 'keywords',
-    documentName: '产品规划书.pdf',
-    timestamp: '30分钟前',
-    icon: <HighlightOutlined style={{ color: '#52c41a' }} />,
-    tag: '关键词'
-  },
-  {
-    id: 3,
-    type: 'security',
-    documentName: '员工信息表.xlsx',
-    timestamp: '2小时前',
-    icon: <SafetyOutlined style={{ color: '#faad14' }} />,
-    tag: '敏感信息'
-  },
-  {
-    id: 4,
-    type: 'summary',
-    documentName: '客户满意度调查.docx',
-    timestamp: '昨天',
-    icon: <EyeOutlined style={{ color: '#1890ff' }} />,
-    tag: '摘要'
-  }
-];
-
-// 模拟的功能统计数据
-const statistics = {
-  documents: 14,
-  analysis: 27,
-  keywords: 112,
-  security: 8
-};
 
 const Dashboard = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  const [statistics, setStatistics] = useState({
+    documents: 0,
+    analysis: 0,
+    keywords: 0,
+    security: 0
+  });
+  const [activities, setActivities] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    // 获取仪表盘数据
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // 并行请求获取仪表盘数据
+        const [statisticsResponse, activitiesResponse] = await Promise.all([
+          dashboardAPI.getStatistics(),
+          dashboardAPI.getRecentActivities(5)
+        ]);
+
+        setStatistics(statisticsResponse.data);
+        
+        // 处理活动数据，添加图标和标签
+        const processedActivities = activitiesResponse.data.map(activity => {
+          // 基于活动类型添加图标和标签颜色
+          let icon = <FileTextOutlined style={{ color: '#1890ff' }} />;
+          let tag = '文档';
+          let color = 'default';
+          
+          switch(activity.type) {
+            case 'summary':
+              icon = <EyeOutlined style={{ color: '#1890ff' }} />;
+              tag = '摘要';
+              color = 'blue';
+              break;
+            case 'keywords':
+              icon = <HighlightOutlined style={{ color: '#52c41a' }} />;
+              tag = '关键词';
+              color = 'green';
+              break;
+            case 'security':
+              icon = <SafetyOutlined style={{ color: '#faad14' }} />;
+              tag = '敏感信息';
+              color = 'orange';
+              break;
+            case 'polish':
+              icon = <HighlightOutlined style={{ color: '#722ed1' }} />;
+              tag = '润色';
+              color = 'purple';
+              break;
+            default:
+              break;
+          }
+          
+          return {
+            ...activity,
+            icon,
+            tag,
+            color
+          };
+        });
+        
+        setActivities(processedActivities);
+      } catch (err) {
+        console.error('获取仪表盘数据失败:', err);
+        setError('获取仪表盘数据失败，请稍后再试');
+        message.error('获取仪表盘数据失败，请稍后再试');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  // 加载指示器配置
+  const antIcon = <LoadingOutlined style={{ fontSize: 24 }} spin />;
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', padding: '50px 0' }}>
+        <Spin indicator={antIcon} tip="加载中..." />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div style={{ textAlign: 'center', padding: '50px 0' }}>
+        <Empty description={error} />
+        <Button type="primary" onClick={() => window.location.reload()} style={{ marginTop: 16 }}>
+          重试
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -114,7 +171,7 @@ const Dashboard = () => {
           >
             <List
               itemLayout="horizontal"
-              dataSource={recentActivities}
+              dataSource={activities}
               renderItem={item => (
                 <List.Item>
                   <List.Item.Meta
@@ -122,11 +179,7 @@ const Dashboard = () => {
                     title={<a href="#">{item.documentName}</a>}
                     description={
                       <Space>
-                        <Tag color={
-                          item.type === 'summary' ? 'blue' : 
-                          item.type === 'keywords' ? 'green' :
-                          item.type === 'security' ? 'orange' : 'default'
-                        }>
+                        <Tag color={item.color}>
                           {item.tag}
                         </Tag>
                         <span><ClockCircleOutlined /> {item.timestamp}</span>
