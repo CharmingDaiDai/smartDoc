@@ -1,0 +1,159 @@
+package com.mtmn.smartdoc.service;
+
+import com.mtmn.smartdoc.dto.ChangePasswordRequest;
+import com.mtmn.smartdoc.dto.UpdateProfileRequest;
+import com.mtmn.smartdoc.dto.UserProfileDTO;
+import com.mtmn.smartdoc.entity.User;
+import com.mtmn.smartdoc.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.util.Optional;
+
+/**
+ * 用户服务
+ */
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class UserService {
+    
+    private final UserRepository userRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final MinioService minioService;
+    
+    /**
+     * 获取用户个人资料
+     * 
+     * @param username 用户名
+     * @return 用户个人资料DTO
+     */
+    public UserProfileDTO getUserProfile(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("用户不存在"));
+        
+        return convertToDTO(user);
+    }
+    
+    /**
+     * 更新用户个人资料
+     * 
+     * @param username 用户名
+     * @param request 更新请求
+     * @return 更新后的用户个人资料DTO
+     */
+    @Transactional
+    public UserProfileDTO updateProfile(String username, UpdateProfileRequest request) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("用户不存在"));
+        
+        // 如果要更改邮箱，检查邮箱是否已被其他用户使用
+        if (!user.getEmail().equals(request.getEmail()) &&
+                userRepository.findByEmail(request.getEmail()).isPresent()) {
+            throw new RuntimeException("该邮箱已被使用");
+        }
+        
+        user.setEmail(request.getEmail());
+        user.setFullName(request.getFullName());
+        
+        User updatedUser = userRepository.save(user);
+        return convertToDTO(updatedUser);
+    }
+    
+    /**
+     * 上传用户头像
+     * 
+     * @param username 用户名
+     * @param file 头像文件
+     * @return 更新后的用户个人资料DTO
+     */
+    @Transactional
+    public UserProfileDTO uploadAvatar(String username, MultipartFile file) {
+        if (file.isEmpty()) {
+            throw new RuntimeException("头像文件不能为空");
+        }
+        
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("用户不存在"));
+        
+        try {
+            // 如果用户已有头像，先删除旧头像
+            if (user.getAvatarPath() != null && !user.getAvatarPath().isEmpty()) {
+                try {
+                    minioService.deleteFile(user.getAvatarPath());
+                } catch (Exception e) {
+                    log.warn("删除旧头像失败: {}", e.getMessage());
+                    // 继续上传新头像，不中断流程
+                }
+            }
+            
+            // 上传新头像到 MinIO
+            String originalFilename = file.getOriginalFilename();
+            String filePath = minioService.uploadFile(file, originalFilename);
+            
+            // 更新用户头像路径
+            user.setAvatarPath(filePath);
+            User updatedUser = userRepository.save(user);
+            
+            return convertToDTO(updatedUser);
+        } catch (Exception e) {
+            log.error("上传头像失败: {}", e.getMessage(), e);
+            throw new RuntimeException("上传头像失败: " + e.getMessage());
+        }
+    }
+    
+    /**
+     * 修改密码
+     * 
+     * @param username 用户名
+     * @param request 修改密码请求
+     * @return 是否修改成功
+     */
+    @Transactional
+    public boolean changePassword(String username, ChangePasswordRequest request) {
+        // 验证新密码与确认密码是否一致
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new RuntimeException("新密码与确认密码不一致");
+        }
+        
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("用户不存在"));
+        
+        // 验证当前密码是否正确
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new BadCredentialsException("当前密码不正确");
+        }
+        
+        // 更新密码
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+        
+        return true;
+    }
+    
+    /**
+     * 将用户实体转换为DTO
+     */
+    private UserProfileDTO convertToDTO(User user) {
+        UserProfileDTO dto = UserProfileDTO.builder()
+                .id(user.getId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .vip(user.isVip())
+                .build();
+        
+        // 如果用户有头像，获取头像URL
+        if (user.getAvatarPath() != null && !user.getAvatarPath().isEmpty()) {
+            String avatarUrl = minioService.getFileUrl(user.getAvatarPath());
+            dto.setAvatarUrl(avatarUrl);
+        }
+        
+        return dto;
+    }
+}

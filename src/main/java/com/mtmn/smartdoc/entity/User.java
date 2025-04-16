@@ -36,6 +36,9 @@ public class User implements UserDetails {
 
     @Column(name = "full_name")
     private String fullName;
+    
+    @Column(name = "avatar_path")
+    private String avatarPath;
 
     @Column(nullable = false)
     private boolean vip;
