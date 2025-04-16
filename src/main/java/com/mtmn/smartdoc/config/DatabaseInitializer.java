@@ -7,8 +7,15 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.util.FileCopyUtils;
 
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -19,10 +26,15 @@ public class DatabaseInitializer {
 
     private final PasswordEncoder passwordEncoder;
     private final UserRepository userRepository;
+    private final JdbcTemplate jdbcTemplate;
 
     @Bean
     public CommandLineRunner initDatabase() {
         return args -> {
+            // 初始化数据库表
+            initDatabaseTables();
+            
+            // 初始化用户数据
             if (userRepository.count() == 0) {
                 log.info("初始化测试用户数据...");
                 
@@ -63,5 +75,45 @@ public class DatabaseInitializer {
                 log.info("测试用户数据初始化完成");
             }
         };
+    }
+    
+    /**
+     * 初始化数据库表
+     */
+    private void initDatabaseTables() {
+        try {
+            log.info("开始初始化数据库表...");
+            
+            // 执行创建文档表的SQL
+            String createDocumentsTableSql = readResourceFile("db/create_documents_table.sql");
+            if (createDocumentsTableSql != null && !createDocumentsTableSql.isEmpty()) {
+                log.info("执行文档表创建SQL");
+                jdbcTemplate.execute(createDocumentsTableSql);
+            }
+            
+            log.info("数据库表初始化完成");
+        } catch (Exception e) {
+            log.error("初始化数据库表失败", e);
+        }
+    }
+    
+    /**
+     * 读取资源文件内容
+     */
+    private String readResourceFile(String resourcePath) {
+        try {
+            ClassPathResource resource = new ClassPathResource(resourcePath);
+            if (!resource.exists()) {
+                log.warn("资源文件不存在: {}", resourcePath);
+                return null;
+            }
+            
+            try (Reader reader = new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8)) {
+                return FileCopyUtils.copyToString(reader);
+            }
+        } catch (IOException e) {
+            log.error("读取资源文件失败: {}", resourcePath, e);
+            return null;
+        }
     }
 }
