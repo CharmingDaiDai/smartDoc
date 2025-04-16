@@ -46,6 +46,14 @@ milvus:
   collection-name: document_vectors
   dimension: 1024
 
+# MinIO配置
+minio:
+  endpoint: http://10.0.30.172:9000 #minio服务地址
+  accessKey: root #minio的用户名
+  secretKey: 12345678 #minio的密码
+  bucket:
+    files: smartdoc
+
 # Knife4j 配置
 springdoc:
   swagger-ui:
