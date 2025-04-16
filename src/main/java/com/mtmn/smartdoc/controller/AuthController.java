@@ -1,5 +1,6 @@
 package com.mtmn.smartdoc.controller;
 
+import com.mtmn.smartdoc.common.ApiResponse;
 import com.mtmn.smartdoc.dto.AuthenticationRequest;
 import com.mtmn.smartdoc.dto.AuthenticationResponse;
 import com.mtmn.smartdoc.dto.RegisterRequest;
@@ -26,14 +27,14 @@ public class AuthController {
 
     @PostMapping("/register")
     @Operation(summary = "用户注册", description = "注册新用户")
-    public ResponseEntity<AuthenticationResponse> register(
+    public ApiResponse<AuthenticationResponse> register(
             @RequestBody RegisterRequest request
     ) {
         log.info("收到用户注册请求: {}", request.getUsername());
         try {
             AuthenticationResponse response = authenticationService.register(request);
             log.info("用户注册成功: {}", request.getUsername());
-            return ResponseEntity.ok(response);
+            return ApiResponse.success("用户注册成功", response);
         } catch (Exception e) {
             log.error("用户注册失败: {} - 错误信息: {}", request.getUsername(), e.getMessage());
             throw e;
@@ -42,14 +43,14 @@ public class AuthController {
 
     @PostMapping("/login")
     @Operation(summary = "用户登录", description = "用户名密码登录")
-    public ResponseEntity<AuthenticationResponse> login(
+    public ApiResponse<AuthenticationResponse> login(
             @RequestBody AuthenticationRequest request
     ) {
         log.info("收到用户登录请求: {}", request.getUsername());
         try {
             AuthenticationResponse response = authenticationService.authenticate(request);
             log.info("用户登录成功: {}", request.getUsername());
-            return ResponseEntity.ok(response);
+            return ApiResponse.success("登录成功", response);
         } catch (Exception e) {
             log.error("用户登录失败: {} - 错误信息: {}", request.getUsername(), e.getMessage());
             throw e;
@@ -58,14 +59,14 @@ public class AuthController {
 
     @PostMapping("/refresh-token")
     @Operation(summary = "刷新令牌", description = "使用刷新令牌获取新的访问令牌")
-    public ResponseEntity<AuthenticationResponse> refreshToken(
+    public ApiResponse<AuthenticationResponse> refreshToken(
             @RequestBody TokenRefreshRequest request
     ) {
         log.info("收到令牌刷新请求");
         try {
             AuthenticationResponse response = authenticationService.refreshToken(request.getRefreshToken());
             log.info("令牌刷新成功");
-            return ResponseEntity.ok(response);
+            return ApiResponse.success("令牌刷新成功", response);
         } catch (Exception e) {
             log.error("令牌刷新失败 - 错误信息: {}", e.getMessage());
             throw e;
