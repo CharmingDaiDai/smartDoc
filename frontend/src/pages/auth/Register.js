@@ -39,7 +39,7 @@ const Register = () => {
         }}
       >
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <Title level={2} style={{ margin: 0 }}>智能文档分析系统</Title>
+          <Title level={2} style={{ margin: 0 }}>智能文档系统</Title>
           <Text type="secondary">创建新账户</Text>
         </div>
         

@@ -92,10 +92,10 @@ const SummaryAnalysis = () => {
       
       if (inputType === 'text') {
         // 使用文本内容生成摘要
-        response = await documentAPI.generateSummary(content);
+        response = await documentAPI.getSummary(content);
       } else {
         // 使用文档ID生成摘要
-        response = await documentAPI.generateSummaryFromDocument(selectedDocument.id);
+        response = await documentAPI.getSummaryFromDocument(selectedDocument.id);
       }
       
       setSummary(response.data.summary);

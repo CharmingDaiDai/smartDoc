@@ -10,11 +10,13 @@ import com.mtmn.smartdoc.repository.UserActivityRepository;
 import com.mtmn.smartdoc.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -43,7 +45,7 @@ public class DashboardService {
     /**
      * 记录用户活动
      */
-    public void recordUserActivity(Authentication authentication, String activityType, Document document, String description) {
+    public void recordUserActivity(Authentication authentication, String activityType, Long documentId, String documentName, String description) {
         User user = getUserFromAuthentication(authentication);
         if (user == null) {
             log.warn("无法记录用户活动: 用户未找到");
@@ -52,11 +54,12 @@ public class DashboardService {
         
         try {
             UserActivity activity = UserActivity.builder()
-                    .user(user)
+                    .userId(user.getId())
                     .activityType(activityType)
-                    .document(document)
-                    .documentName(document != null ? document.getFileName() : null)
+                    .documentId(documentId)
+                    .documentName(documentName)
                     .description(description)
+                    .createdAt(LocalDateTime.now())
                     .build();
             
             userActivityRepository.save(activity);
@@ -76,13 +79,13 @@ public class DashboardService {
             return new DashboardStatisticsDTO(0, 0, 0, 0);
         }
         
-        // 获取用户的文档总数 - 使用更通用的查询方法
+        // 获取用户的文档总数
         long documentCount = documentRepository.countByUserId(user.getId());
         
         // 获取用户的分析活动统计
-        long analysisCount = userActivityRepository.countAnalysisActivitiesByUser(user);
-        long keywordsCount = userActivityRepository.countByUserAndActivityType(user, "keywords");
-        long securityCount = userActivityRepository.countByUserAndActivityType(user, "security");
+        long analysisCount = userActivityRepository.countAnalysisActivitiesByUserId(user.getId());
+        long keywordsCount = userActivityRepository.countByUserIdAndActivityType(user.getId(), "KEYWORDS");
+        long securityCount = userActivityRepository.countByUserIdAndActivityType(user.getId(), "SECURITY");
         
         return DashboardStatisticsDTO.builder()
                 .documents(documentCount)
@@ -103,9 +106,9 @@ public class DashboardService {
         }
         
         Pageable pageable = PageRequest.of(0, limit);
-        List<UserActivity> activities = userActivityRepository.findByUserOrderByCreatedAtDesc(user, pageable);
+        Page<UserActivity> activitiesPage = userActivityRepository.findByUserIdOrderByCreatedAtDesc(user.getId(), pageable);
         
-        return activities.stream()
+        return activitiesPage.getContent().stream()
                 .map(this::convertToDTO)
                 .collect(Collectors.toList());
     }
@@ -117,7 +120,7 @@ public class DashboardService {
         UserActivityDTO dto = UserActivityDTO.builder()
                 .id(activity.getId())
                 .type(activity.getActivityType())
-                .documentId(activity.getDocument() != null ? activity.getDocument().getId() : null)
+                .documentId(activity.getDocumentId())
                 .documentName(activity.getDocumentName())
                 .description(activity.getDescription())
                 .createdAt(activity.getCreatedAt())

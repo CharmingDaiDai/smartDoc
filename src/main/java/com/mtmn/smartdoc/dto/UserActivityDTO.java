@@ -8,7 +8,6 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.Locale;
 
 @Data
 @Builder
@@ -16,15 +15,15 @@ import java.util.Locale;
 @AllArgsConstructor
 public class UserActivityDTO {
     private Long id;
-    private String type;  // 活动类型
+    private String type;
     private Long documentId;
     private String documentName;
     private String description;
     private LocalDateTime createdAt;
-    private String timestamp;  // 友好的时间表示，如"5分钟前"
-    
+    private String timestamp;  // 友好的时间表示，如"2分钟前"
+
     /**
-     * 将LocalDateTime转换为友好的时间表示
+     * 将LocalDateTime格式化为友好的时间表示
      */
     public static String formatTimestamp(LocalDateTime dateTime) {
         if (dateTime == null) {
@@ -32,20 +31,29 @@ public class UserActivityDTO {
         }
         
         LocalDateTime now = LocalDateTime.now();
-        long minutes = ChronoUnit.MINUTES.between(dateTime, now);
-        long hours = ChronoUnit.HOURS.between(dateTime, now);
-        long days = ChronoUnit.DAYS.between(dateTime, now);
+        long seconds = ChronoUnit.SECONDS.between(dateTime, now);
         
-        if (minutes < 1) {
+        if (seconds < 60) {
             return "刚刚";
-        } else if (minutes < 60) {
-            return minutes + "分钟前";
-        } else if (hours < 24) {
-            return hours + "小时前";
-        } else if (days < 30) {
-            return days + "天前";
-        } else {
-            return dateTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         }
+        
+        long minutes = ChronoUnit.MINUTES.between(dateTime, now);
+        if (minutes < 60) {
+            return minutes + "分钟前";
+        }
+        
+        long hours = ChronoUnit.HOURS.between(dateTime, now);
+        if (hours < 24) {
+            return hours + "小时前";
+        }
+        
+        long days = ChronoUnit.DAYS.between(dateTime, now);
+        if (days < 30) {
+            return days + "天前";
+        }
+        
+        // 如果时间太久远，则显示具体日期
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+        return dateTime.format(formatter);
     }
 }

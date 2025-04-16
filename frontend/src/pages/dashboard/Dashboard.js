@@ -48,27 +48,44 @@ const Dashboard = () => {
           let icon = <FileTextOutlined style={{ color: '#1890ff' }} />;
           let tag = '文档';
           let color = 'default';
+          let operationType = '查看';
           
           switch(activity.type) {
-            case 'summary':
+            case 'SUMMARY':
               icon = <EyeOutlined style={{ color: '#1890ff' }} />;
               tag = '摘要';
               color = 'blue';
+              operationType = '摘要生成';
               break;
-            case 'keywords':
+            case 'KEYWORDS':
               icon = <HighlightOutlined style={{ color: '#52c41a' }} />;
               tag = '关键词';
               color = 'green';
+              operationType = '关键词提取';
               break;
-            case 'security':
+            case 'SECURITY':
               icon = <SafetyOutlined style={{ color: '#faad14' }} />;
               tag = '敏感信息';
               color = 'orange';
+              operationType = '安全检查';
               break;
-            case 'polish':
+            case 'POLISH':
               icon = <HighlightOutlined style={{ color: '#722ed1' }} />;
               tag = '润色';
               color = 'purple';
+              operationType = '文档润色';
+              break;
+            case 'UPLOAD':
+              icon = <FileTextOutlined style={{ color: '#1890ff' }} />;
+              tag = '上传';
+              color = 'cyan';
+              operationType = '文档上传';
+              break;
+            case 'DOWNLOAD':
+              icon = <FileTextOutlined style={{ color: '#1890ff' }} />;
+              tag = '下载';
+              color = 'geekblue';
+              operationType = '文档下载';
               break;
             default:
               break;
@@ -78,7 +95,8 @@ const Dashboard = () => {
             ...activity,
             icon,
             tag,
-            color
+            color,
+            operationType
           };
         });
         
@@ -121,7 +139,7 @@ const Dashboard = () => {
     <div>
       <div style={{ marginBottom: 24 }}>
         <Title level={2}>欢迎, {currentUser?.username}!</Title>
-        <Paragraph>智能文档分析系统帮助您高效管理和分析各类文档</Paragraph>
+        <Paragraph>智能文档系统帮助您高效管理和分析各类文档</Paragraph>
       </div>
       
       <Row gutter={[16, 16]}>
@@ -176,13 +194,18 @@ const Dashboard = () => {
                 <List.Item>
                   <List.Item.Meta
                     avatar={item.icon}
-                    title={<span style={{ cursor: 'pointer' }}>{item.documentName}</span>}
-                    description={
-                      <Space>
-                        <Tag color={item.color}>
+                    title={
+                      <span style={{ cursor: 'pointer' }}>
+                        {item.documentName}
+                        <Tag color={item.color} style={{ marginLeft: 8 }}>
                           {item.tag}
                         </Tag>
+                      </span>
+                    }
+                    description={
+                      <Space>
                         <span><ClockCircleOutlined /> {item.timestamp}</span>
+                        <span>操作: {item.operationType || '查看'}</span>
                       </Space>
                     }
                   />

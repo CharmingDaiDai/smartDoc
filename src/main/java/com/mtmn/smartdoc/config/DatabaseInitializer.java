@@ -91,6 +91,29 @@ public class DatabaseInitializer {
                 jdbcTemplate.execute(createDocumentsTableSql);
             }
             
+            // 执行创建用户活动记录表的SQL - 先创建表，然后再创建索引
+            String createUserActivitiesTableSql = readResourceFile("db/create_user_activities_table.sql");
+            if (createUserActivitiesTableSql != null && !createUserActivitiesTableSql.isEmpty()) {
+                log.info("执行用户活动记录表创建SQL");
+                
+                // 将SQL脚本拆分为单独的语句
+                String[] sqlStatements = createUserActivitiesTableSql.split(";");
+                
+                // 首先执行创建表的语句（通常是第一条语句）
+                String createTableStatement = sqlStatements[0].trim();
+                if (!createTableStatement.isEmpty() && !createTableStatement.startsWith("--")) {
+                    try {
+                        log.info("创建用户活动记录表");
+                        jdbcTemplate.execute(createTableStatement);
+                        log.info("用户活动记录表创建成功");
+                    } catch (Exception e) {
+                        log.error("创建用户活动记录表失败", e);
+                        // 如果表创建失败，直接返回，不尝试创建索引
+                        return;
+                    }
+                }
+            }
+            
             log.info("数据库表初始化完成");
         } catch (Exception e) {
             log.error("初始化数据库表失败", e);

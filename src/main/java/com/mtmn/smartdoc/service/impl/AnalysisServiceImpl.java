@@ -125,7 +125,7 @@ public class AnalysisServiceImpl implements AnalysisService {
         String polishedContent;
         switch (polishType) {
             case "formal":
-                polishedContent = "本文档详细阐述了智能文档分析系统的功能特性与技术实现。该系统采用先进的自然语言处理技术，"
+                polishedContent = "本文档详细阐述了智能文档系统的功能特性与技术实现。该系统采用先进的自然语言处理技术，"
                         + "为用户提供高效的文档管理与分析服务。系统的核心模块包括文档摘要生成、关键词提取以及文档润色功能，"
                         + "这些功能有效提升了文档处理的效率与质量。";
                 break;

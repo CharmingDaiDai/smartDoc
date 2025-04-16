@@ -31,8 +31,8 @@ public class Knife4jConfig {
 
         // 创建API基本信息
         Info info = new Info()
-                .title("智能文档分析系统API")
-                .description("基于LangChain4j的智能文档分析系统接口文档")
+                .title("智能文档系统API")
+                .description("基于LangChain4j的智能文档系统接口文档")
                 .version("1.0.0")
                 .contact(contact)
                 .license(new License().name("MIT").url("https://opensource.org/licenses/MIT"));

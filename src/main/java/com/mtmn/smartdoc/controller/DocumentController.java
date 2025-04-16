@@ -4,7 +4,9 @@ import com.mtmn.smartdoc.common.ApiResponse;
 import com.mtmn.smartdoc.dto.DocumentDto;
 import com.mtmn.smartdoc.entity.Document;
 import com.mtmn.smartdoc.entity.User;
+import com.mtmn.smartdoc.entity.UserActivity;
 import com.mtmn.smartdoc.service.DocumentService;
+import com.mtmn.smartdoc.service.UserActivityService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,6 +32,7 @@ import java.util.stream.Collectors;
 public class DocumentController {
 
     private final DocumentService documentService;
+    private final UserActivityService userActivityService;
 
     @GetMapping
     @Operation(summary = "获取用户文档列表", description = "获取当前用户的所有文档")
@@ -54,6 +57,17 @@ public class DocumentController {
         
         try {
             Document document = documentService.uploadDocument(file, title, user);
+            
+            // 记录文档上传活动
+            userActivityService.recordActivity(
+                user.getId(), 
+                UserActivity.ActivityType.UPLOAD.name(), 
+                document.getId(), 
+                document.getTitle(), 
+                "上传了文档：" + document.getFileName()
+            );
+            log.info("用户 {} 上传了文档 {}", user.getUsername(), document.getTitle());
+            
             return ApiResponse.success("文档上传成功", convertToDto(document));
         } catch (Exception e) {
             log.error("Error uploading document: {}", e.getMessage(), e);
@@ -78,6 +92,16 @@ public class DocumentController {
                 if (!files[i].isEmpty()) {
                     Document document = documentService.uploadDocument(files[i], titles[i], user);
                     uploadedDocs.add(convertToDto(document));
+                    
+                    // 记录文档上传活动
+                    userActivityService.recordActivity(
+                        user.getId(), 
+                        UserActivity.ActivityType.UPLOAD.name(), 
+                        document.getId(), 
+                        document.getTitle(), 
+                        "上传了文档：" + document.getFileName()
+                    );
+                    log.info("用户 {} 上传了文档 {}", user.getUsername(), document.getTitle());
                 }
             }
             return ApiResponse.success("文档批量上传成功", uploadedDocs);
@@ -93,12 +117,28 @@ public class DocumentController {
             @Parameter(description = "文档ID") @PathVariable Long id,
             @AuthenticationPrincipal User user) {
         
-        boolean deleted = documentService.deleteDocument(id, user);
-        if (deleted) {
-            return ApiResponse.success("文档删除成功", null);
-        } else {
-            return ApiResponse.notFound("文档不存在或您没有删除权限");
+        // 先获取文档信息，以便记录活动
+        Optional<Document> documentOpt = documentService.getDocumentById(id, user);
+        if (documentOpt.isPresent()) {
+            Document document = documentOpt.get();
+            boolean deleted = documentService.deleteDocument(id, user);
+            
+            if (deleted) {
+                // 记录文档删除活动
+                userActivityService.recordActivity(
+                    user.getId(), 
+                    "DELETE", 
+                    null,  // 文档已被删除，不再关联文档ID
+                    document.getTitle(), 
+                    "删除了文档：" + document.getFileName()
+                );
+                log.info("用户 {} 删除了文档 {}", user.getUsername(), document.getTitle());
+                
+                return ApiResponse.success("文档删除成功", null);
+            }
         }
+        
+        return ApiResponse.notFound("文档不存在或您没有删除权限");
     }
 
     @DeleteMapping("/batch")
@@ -107,7 +147,30 @@ public class DocumentController {
             @RequestBody List<Long> documentIds,
             @AuthenticationPrincipal User user) {
         
+        // 先获取所有要删除的文档信息
+        List<Document> documentsToDelete = new ArrayList<>();
+        for (Long docId : documentIds) {
+            documentService.getDocumentById(docId, user).ifPresent(documentsToDelete::add);
+        }
+        
         int deletedCount = documentService.deleteDocuments(documentIds, user);
+        
+        // 记录批量删除活动
+        if (deletedCount > 0) {
+            String docTitles = documentsToDelete.stream()
+                    .map(Document::getTitle)
+                    .collect(Collectors.joining(", "));
+                    
+            userActivityService.recordActivity(
+                user.getId(), 
+                "BATCH_DELETE", 
+                null,  // 文档已被删除，不再关联文档ID
+                null, 
+                "批量删除了 " + deletedCount + " 个文档: " + docTitles
+            );
+            log.info("用户 {} 批量删除了 {} 个文档", user.getUsername(), deletedCount);
+        }
+        
         return ApiResponse.success("已成功删除 " + deletedCount + " 个文档", deletedCount);
     }
 
@@ -119,11 +182,22 @@ public class DocumentController {
         
         Optional<Document> documentOpt = documentService.getDocumentById(id, user);
         if (documentOpt.isPresent()) {
-            DocumentDto dto = convertToDto(documentOpt.get());
+            Document document = documentOpt.get();
+            DocumentDto dto = convertToDto(document);
             
             // 获取文件访问URL
             String fileUrl = documentService.getDocumentUrl(id, user);
             dto.setFileUrl(fileUrl);
+            
+            // 记录文档查看/下载活动
+            userActivityService.recordActivity(
+                user.getId(), 
+                UserActivity.ActivityType.DOWNLOAD.name(), 
+                document.getId(), 
+                document.getTitle(), 
+                "查看/下载了文档：" + document.getFileName()
+            );
+            log.info("用户 {} 查看/下载了文档 {}", user.getUsername(), document.getTitle());
             
             return ApiResponse.success(dto);
         } else {
