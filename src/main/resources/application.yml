@@ -19,8 +19,8 @@ spring:
           issuer-uri: ${JWT_ISSUER_URI:http://localhost:8080}
   servlet:
     multipart:
-      max-file-size: 100MB
-      max-request-size: 20MB
+      max-file-size: 200MB
+      max-request-size: 50MB
 
 # 应用配置
 application:
