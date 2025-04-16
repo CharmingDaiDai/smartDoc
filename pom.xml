@@ -62,6 +62,14 @@
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
+        
+        <!-- MinIO 客户端依赖 -->
+        <dependency>
+            <groupId>io.minio</groupId>
+            <artifactId>minio</artifactId>
+            <version>8.5.6</version>
+        </dependency>
+        
         <!-- LangChain4j 核心依赖 -->
         <dependency>
             <groupId>dev.langchain4j</groupId>
