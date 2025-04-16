@@ -44,4 +44,31 @@ milvus:
   host: 10.0.30.172
   port: 19530
   collection-name: document_vectors
-  dimension: 1024 # 根据您使用的嵌入模型维度调整
+  dimension: 1024
+
+# Knife4j 配置
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+  api-docs:
+    path: /v3/api-docs
+  group-configs:
+    - group: '默认分组'
+      paths-to-match: '/**'
+      packages-to-scan: com.mtmn.smartdoc.controller
+  default-flat-param-object: true
+
+knife4j:
+  enable: true
+  setting:
+    language: zh-CN
+    swagger-model-name: 实体类列表
+    enable-swagger-models: true
+    enable-document-manage: true
+    enable-home-custom: false
+    enable-search: true
+    enable-footer: false
+    enable-footer-custom: true
+    footer-custom-content: Copyright © 2025 智能文档分析系统 | CharmingDaiDai

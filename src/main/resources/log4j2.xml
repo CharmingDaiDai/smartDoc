@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN" monitorInterval="30">
+    <Properties>
+        <Property name="LOG_PATTERN">%d{yyyy-MM-dd HH:mm:ss.SSS} %5p ${hostName} --- [%15.15t] %-40.40c{1.} : %m%n%ex</Property>
+        <Property name="APP_LOG_ROOT">logs</Property>
+    </Properties>
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+        </Console>
+
+        <RollingFile name="appLog"
+                     fileName="${APP_LOG_ROOT}/application.log"
+                     filePattern="${APP_LOG_ROOT}/application-%d{yyyy-MM-dd}-%i.log">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="19500KB"/>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+            <DefaultRolloverStrategy max="10"/>
+        </RollingFile>
+
+        <RollingFile name="errorLog"
+                     fileName="${APP_LOG_ROOT}/error.log"
+                     filePattern="${APP_LOG_ROOT}/error-%d{yyyy-MM-dd}-%i.log">
+            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <Policies>
+                <SizeBasedTriggeringPolicy size="19500KB"/>
+                <TimeBasedTriggeringPolicy interval="1"/>
+            </Policies>
+            <DefaultRolloverStrategy max="10"/>
+        </RollingFile>
+    </Appenders>
+
+    <Loggers>
+        <Root level="info">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="appLog"/>
+        </Root>
+
+        <!-- 应用日志配置 -->
+        <Logger name="com.mtmn.smartdoc" level="debug" additivity="false">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="appLog"/>
+        </Logger>
+
+        <!-- 错误日志单独收集 -->
+        <Logger name="ERROR_LOGGER" level="error" additivity="false">
+            <AppenderRef ref="errorLog"/>
+        </Logger>
+
+        <!-- 第三方库日志级别 -->
+        <Logger name="org.hibernate" level="info" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+
+        <Logger name="org.springframework" level="info" additivity="false">
+            <AppenderRef ref="Console"/>
+        </Logger>
+    </Loggers>
+</Configuration>
