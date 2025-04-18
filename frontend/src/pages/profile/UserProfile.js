@@ -1,28 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import {
-  Card,
-  Form,
-  Input,
-  Button,
-  message,
-  Tabs,
-  Upload,
-  Spin,
-  Avatar,
-  Typography,
-  Divider,
-  Row,
-  Col
-} from 'antd';
-import {
-  UserOutlined,
-  MailOutlined,
-  LockOutlined,
-  UploadOutlined,
-  IdcardOutlined
-} from '@ant-design/icons';
-import { useAuth } from '../../context/AuthContext';
-import { profileAPI } from '../../services/api';
+import React, {useCallback, useEffect, useState} from 'react';
+import {Avatar, Button, Card, Col, Divider, Form, Input, message, Row, Spin, Tabs, Typography, Upload} from 'antd';
+import {IdcardOutlined, LockOutlined, MailOutlined, UploadOutlined, UserOutlined} from '@ant-design/icons';
+import {useAuth} from '../../context/AuthContext';
+import {profileAPI} from '../../services/api';
 
 const { Title, Text } = Typography;
 const { TabPane } = Tabs;

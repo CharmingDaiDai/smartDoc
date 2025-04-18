@@ -1,21 +1,7 @@
-import React, { useState } from 'react';
-import { 
-  Card, 
-  Typography, 
-  Input, 
-  Button, 
-  Space, 
-  Alert, 
-  Spin, 
-  Table, 
-  Tag, 
-  Radio,
-  Modal
-} from 'antd';
-import { 
-  SafetyOutlined
-} from '@ant-design/icons';
-import { documentAPI } from '../../services/api';
+import React, {useState} from 'react';
+import {Alert, Button, Card, Input, Modal, Radio, Space, Spin, Table, Tag, Typography} from 'antd';
+import {SafetyOutlined} from '@ant-design/icons';
+import {documentAPI} from '../../services/api';
 import DocumentSelector from '../../components/analysis/DocumentSelector';
 
 const { Title, Paragraph, Text } = Typography;

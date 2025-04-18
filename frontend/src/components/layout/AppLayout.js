@@ -1,17 +1,17 @@
-import React, { useState } from 'react';
-import { Layout, Menu, Avatar, Dropdown, Badge, Typography, theme } from 'antd';
-import { 
-  MenuFoldOutlined, 
-  MenuUnfoldOutlined, 
-  UserOutlined, 
-  DashboardOutlined,
-  FileTextOutlined,
-  LogoutOutlined,
-  AppstoreOutlined,
-  CrownOutlined
+import React, {useState} from 'react';
+import {Avatar, Badge, Dropdown, Layout, Menu, theme, Typography} from 'antd';
+import {
+    AppstoreOutlined,
+    CrownOutlined,
+    DashboardOutlined,
+    FileTextOutlined,
+    LogoutOutlined,
+    MenuFoldOutlined,
+    MenuUnfoldOutlined,
+    UserOutlined
 } from '@ant-design/icons';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import {Outlet, useLocation, useNavigate} from 'react-router-dom';
+import {useAuth} from '../../context/AuthContext';
 
 const { Header, Sider, Content } = Layout;
 const { Title } = Typography;

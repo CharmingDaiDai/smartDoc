@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
-import { Form, Input, Button, Typography, Card, Divider } from 'antd';
-import { UserOutlined, LockOutlined, MailOutlined, IdcardOutlined } from '@ant-design/icons';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import React, {useState} from 'react';
+import {Button, Card, Divider, Form, Input, Typography} from 'antd';
+import {IdcardOutlined, LockOutlined, MailOutlined, UserOutlined} from '@ant-design/icons';
+import {Link, useNavigate} from 'react-router-dom';
+import {useAuth} from '../../context/AuthContext';
 
 const { Title, Text } = Typography;
 

@@ -1,16 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { Row, Col, Card, Statistic, Typography, List, Tag, Space, Button, Spin, Empty, message } from 'antd';
-import { 
-  FileTextOutlined, 
-  EyeOutlined, 
-  HighlightOutlined, 
-  SafetyOutlined,
-  ClockCircleOutlined,
-  LoadingOutlined
+import React, {useEffect, useState} from 'react';
+import {Button, Card, Col, Empty, List, message, Row, Space, Spin, Statistic, Tag, Typography} from 'antd';
+import {
+    ClockCircleOutlined,
+    EyeOutlined,
+    FileTextOutlined,
+    HighlightOutlined,
+    LoadingOutlined,
+    SafetyOutlined
 } from '@ant-design/icons';
-import { useAuth } from '../../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
-import { dashboardAPI } from '../../services/api';
+import {useAuth} from '../../context/AuthContext';
+import {useNavigate} from 'react-router-dom';
+import {dashboardAPI} from '../../services/api';
 
 const { Title, Paragraph } = Typography;
 

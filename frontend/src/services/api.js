@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { message } from 'antd';
+import {message} from 'antd';
 
 const BASE_URL = 'http://localhost:8080';
 

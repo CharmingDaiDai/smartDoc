@@ -1,19 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Spin, Empty, message, Typography, Tag, Tooltip, Button } from 'antd';
-import { 
-  FileTextOutlined, 
-  FilePdfOutlined, 
-  FileWordOutlined, 
-  FileExcelOutlined, 
-  FilePptOutlined, 
-  FileImageOutlined, 
-  FileZipOutlined, 
-  FileUnknownOutlined,
-  CheckCircleFilled,
-  EyeOutlined,
-  CheckOutlined
+import React, {useEffect, useState} from 'react';
+import {Button, Card, Col, Empty, message, Row, Spin, Tag, Tooltip, Typography} from 'antd';
+import {
+    CheckCircleFilled,
+    CheckOutlined,
+    EyeOutlined,
+    FileExcelOutlined,
+    FileImageOutlined,
+    FilePdfOutlined,
+    FilePptOutlined,
+    FileTextOutlined,
+    FileUnknownOutlined,
+    FileWordOutlined,
+    FileZipOutlined
 } from '@ant-design/icons';
-import { documentAPI } from '../../services/api';
+import {documentAPI} from '../../services/api';
 
 const { Title, Text } = Typography;
 

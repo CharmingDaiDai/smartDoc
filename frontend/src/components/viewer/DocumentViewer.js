@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Tabs, Card, Typography, Tag, Space, Skeleton, Alert, Button } from 'antd';
-import { FileTextOutlined, TagsOutlined, ReadOutlined, SafetyOutlined, AppstoreOutlined } from '@ant-design/icons';
+import React, {useEffect, useState} from 'react';
+import {Alert, Button, Card, Skeleton, Space, Tabs, Tag, Typography} from 'antd';
+import {AppstoreOutlined, FileTextOutlined, ReadOutlined, SafetyOutlined, TagsOutlined} from '@ant-design/icons';
 
 const { Title, Paragraph, Text } = Typography;
 

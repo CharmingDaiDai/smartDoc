@@ -1,14 +1,14 @@
 import React from 'react';
-import { Card, Row, Col, Typography, Button, Badge, Divider, List, Space } from 'antd';
-import { 
-  CrownOutlined, 
-  CheckCircleOutlined, 
-  UploadOutlined, 
-  RocketOutlined, 
-  ThunderboltOutlined, 
-  CloudDownloadOutlined
+import {Badge, Button, Card, Col, Divider, List, Row, Space, Typography} from 'antd';
+import {
+    CheckCircleOutlined,
+    CloudDownloadOutlined,
+    CrownOutlined,
+    RocketOutlined,
+    ThunderboltOutlined,
+    UploadOutlined
 } from '@ant-design/icons';
-import { useAuth } from '../../context/AuthContext';
+import {useAuth} from '../../context/AuthContext';
 
 const { Title, Paragraph, Text } = Typography;
 

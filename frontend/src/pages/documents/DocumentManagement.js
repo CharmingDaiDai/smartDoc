@@ -1,15 +1,22 @@
-import React, { useState, useEffect } from 'react';
+import React, {useEffect, useState} from 'react';
 import {
-  Typography, Button, Row, Col, Card, Space, 
-  Upload, Modal, Table, Tag, Input,
-  Form, message, Spin, Drawer, Empty
+    Button,
+    Card,
+    Col,
+    Drawer,
+    Empty,
+    Form,
+    Input,
+    message,
+    Modal,
+    Row,
+    Space,
+    Spin,
+    Table,
+    Typography,
+    Upload
 } from 'antd';
-import {
-  DeleteOutlined, 
-  UploadOutlined, 
-  EyeOutlined,
-  ExclamationCircleOutlined
-} from '@ant-design/icons';
+import {DeleteOutlined, ExclamationCircleOutlined, EyeOutlined, UploadOutlined} from '@ant-design/icons';
 import api from '../../services/api';
 import DocumentViewer from '../../components/viewer/DocumentViewer';
 

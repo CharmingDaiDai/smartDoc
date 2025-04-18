@@ -1,25 +1,7 @@
-import React, { useState } from 'react';
-import { 
-  Card, 
-  Typography, 
-  Input, 
-  Button, 
-  Space, 
-  Alert, 
-  Spin,
-  message,
-  Radio,
-  Modal,
-  Tabs,
-  Tooltip
-} from 'antd';
-import { 
-  FileTextOutlined, 
-  CopyOutlined, 
-  FormOutlined,
-  DiffOutlined
-} from '@ant-design/icons';
-import { documentAPI } from '../../services/api';
+import React, {useState} from 'react';
+import {Alert, Button, Card, Input, message, Modal, Radio, Space, Spin, Tabs, Tooltip, Typography} from 'antd';
+import {CopyOutlined, DiffOutlined, FileTextOutlined, FormOutlined} from '@ant-design/icons';
+import {documentAPI} from '../../services/api';
 import DocumentSelector from '../../components/analysis/DocumentSelector';
 
 const { Title, Paragraph, Text } = Typography;
