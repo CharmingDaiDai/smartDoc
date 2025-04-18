@@ -53,6 +53,24 @@ public class ModelConfig {
     }
     
     /**
+     * 根据ID获取大语言模型配置
+     * @param modelId 模型ID
+     * @return 对应的模型配置，如果不存在则返回null
+     */
+    public ModelProperties getLlmConfig(String modelId) {
+        return llm.get(modelId);
+    }
+    
+    /**
+     * 根据ID获取嵌入模型配置
+     * @param modelId 模型ID
+     * @return 对应的模型配置，如果不存在则返回null
+     */
+    public ModelProperties getEmbeddingConfig(String modelId) {
+        return embedding.get(modelId);
+    }
+    
+    /**
      * 切换当前激活的大语言模型
      * @param modelId 模型ID
      * @return 是否切换成功
@@ -87,5 +105,14 @@ public class ModelConfig {
         private String apiKey;
         private String baseUrl;
         private String modelName;
+        private String modelId;  // 添加模型ID字段
+        
+        /**
+         * 获取模型ID
+         * @return 模型ID，如果未设置则返回模型名称
+         */
+        public String getModelId() {
+            return modelId != null ? modelId : modelName;
+        }
     }
 }

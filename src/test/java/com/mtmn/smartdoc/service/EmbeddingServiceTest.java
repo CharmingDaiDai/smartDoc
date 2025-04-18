@@ -40,7 +40,6 @@ public class EmbeddingServiceTest {
     public void testCreateDocumentVectors() {
         // 安排
         String content = "测试文档内容\n第二段落";
-        EmbeddingModel embeddingModel = embeddingService.createEmbeddingModel();
 
         EmbeddingStore<Embedding> result = embeddingService.createDocumentVectors(content);
 
