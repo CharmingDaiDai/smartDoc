@@ -2,7 +2,6 @@ package com.mtmn.smartdoc.service;
 
 import com.mtmn.smartdoc.dto.DashboardStatisticsDTO;
 import com.mtmn.smartdoc.dto.UserActivityDTO;
-import com.mtmn.smartdoc.entity.Document;
 import com.mtmn.smartdoc.entity.User;
 import com.mtmn.smartdoc.entity.UserActivity;
 import com.mtmn.smartdoc.repository.DocumentRepository;

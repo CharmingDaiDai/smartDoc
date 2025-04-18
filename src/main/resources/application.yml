@@ -1,4 +1,6 @@
 spring:
+  application:
+    name: smart-doc
   datasource:
     url: jdbc:mysql://10.0.30.172:13306/smart_doc?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
     username: root
@@ -22,6 +24,14 @@ spring:
       max-file-size: 200MB
       max-request-size: 50MB
 
+server:
+  port: 8080
+
+logging:
+  level:
+    root: INFO
+    com.mtmn.smartdoc: DEBUG
+
 # 应用配置
 application:
   security:
@@ -31,13 +41,37 @@ application:
       refresh-token:
         expiration: 604800000 # 一周
 
-# LLM配置
-llm:
-  openai:
-    api-key: ${OPENAI_API_KEY:your-api-key-here}
-    model: glm-4-flash
-    embedding-model: bge-m3
-    temperature: 0.7
+# 模型配置
+models:
+  # 当前激活的模型
+  active-llm: glm
+  active-embedding: bge-m3
+  
+  # 大语言模型配置
+  llm:
+    glm:
+      api-key: 8af2f6a0b0197d510612ec82547a9a1d.dNP2dmQIZpoeusa0
+      base-url: https://open.bigmodel.cn/api/paas/v4
+      model-name: GLM-4-Flash-250414
+    chatgpt:
+      api-key: ${OPENAI_API_KEY:your-openai-api-key}
+      base-url: https://api.openai.com/v1
+      model-name: gpt-4
+    gemini:
+      api-key: ${GEMINI_API_KEY:your-gemini-api-key}
+      base-url: https://generativelanguage.googleapis.com
+      model-name: gemini-pro
+  
+  # 嵌入模型配置
+  embedding:
+    bge-m3:
+      api-key: notnull
+      base-url: http://10.0.30.172:9997/v1/
+      model-name: bge-m3
+    openai:
+      api-key: ${OPENAI_API_KEY:your-openai-api-key}
+      base-url: https://api.openai.com/v1
+      model-name: text-embedding-ada-002
 
 # Milvus配置
 milvus:

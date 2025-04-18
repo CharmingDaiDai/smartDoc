@@ -5,7 +5,6 @@ import com.mtmn.smartdoc.dto.AuthenticationResponse;
 import com.mtmn.smartdoc.dto.RegisterRequest;
 import com.mtmn.smartdoc.entity.User;
 import com.mtmn.smartdoc.repository.UserRepository;
-import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.ExpiredJwtException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
