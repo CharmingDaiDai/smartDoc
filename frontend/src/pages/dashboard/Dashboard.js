@@ -6,7 +6,9 @@ import {
     FileTextOutlined,
     HighlightOutlined,
     LoadingOutlined,
-    SafetyOutlined
+    SafetyOutlined,
+    FileSearchOutlined,
+    EditOutlined
 } from '@ant-design/icons';
 import {useAuth} from '../../context/AuthContext';
 import {useNavigate} from 'react-router-dom';
@@ -21,7 +23,9 @@ const Dashboard = () => {
     documents: 0,
     analysis: 0,
     keywords: 0,
-    security: 0
+    security: 0,
+    summary: 0,
+    polish: 0
   });
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -40,7 +44,13 @@ const Dashboard = () => {
           dashboardAPI.getRecentActivities(5)
         ]);
 
-        setStatistics(statisticsResponse.data);
+        // 确保设置默认值为0，以防后端未返回这些字段
+        const statsData = {
+          ...statisticsResponse.data,
+          summary: statisticsResponse.data.summary || 0,
+          polish: statisticsResponse.data.polish || 0
+        };
+        setStatistics(statsData);
         
         // 处理活动数据，添加图标和标签
         const processedActivities = activitiesResponse.data.map(activity => {
@@ -176,6 +186,27 @@ const Dashboard = () => {
               title="安全检测" 
               value={statistics.security} 
               prefix={<SafetyOutlined />} 
+            />
+          </Card>
+        </Col>
+      </Row>
+      
+      <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
+        <Col xs={24} sm={12} md={6}>
+          <Card hoverable>
+            <Statistic 
+              title="生成摘要" 
+              value={statistics.summary} 
+              prefix={<FileSearchOutlined />} 
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} md={6}>
+          <Card hoverable>
+            <Statistic 
+              title="内容润色" 
+              value={statistics.polish} 
+              prefix={<EditOutlined />} 
             />
           </Card>
         </Col>

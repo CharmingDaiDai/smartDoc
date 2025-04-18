@@ -71,7 +71,7 @@ const SecurityAnalysis = () => {
         response = await documentAPI.detectSensitiveInfoFromDocument(selectedDocument.id);
       }
       
-      setResults(response.data.items || []);
+      setResults(response.data.sensitiveInfoList || []);
       setLoading(false);
     } catch (err) {
       console.error('检测敏感信息失败:', err);
@@ -185,7 +185,7 @@ const SecurityAnalysis = () => {
         </div>
       )}
 
-      {results.length > 0 && (
+      {!loading && results !== null && (
         <Card title="敏感信息检测结果">
           <Table 
             columns={columns} 

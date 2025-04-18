@@ -106,7 +106,30 @@ const KeywordsAnalysis = () => {
 
   // 渲染关键词标签
   const renderKeywordTags = (keywordList) => {
-    if (!keywordList || keywordList.length === 0) {
+    // 确保keywordList是数组
+    if (!keywordList || keywordList.length === 0 || !Array.isArray(keywordList)) {
+      // 如果不是数组但又有内容，尝试转换为数组
+      if (keywordList && !Array.isArray(keywordList)) {
+        try {
+          // 如果是字符串，可能是逗号分隔的关键词
+          if (typeof keywordList === 'string') {
+            const keywordsArray = keywordList.split(',').map(k => k.trim()).filter(k => k);
+            if (keywordsArray.length > 0) {
+              return (
+                <div style={{ lineHeight: '30px' }}>
+                  {keywordsArray.map((keyword, index) => (
+                    <Tag color="blue" key={index} style={{ margin: '5px' }}>
+                      {keyword}
+                    </Tag>
+                  ))}
+                </div>
+              );
+            }
+          }
+        } catch (err) {
+          console.error('关键词转换失败:', err);
+        }
+      }
       return <Text type="secondary">暂无关键词</Text>;
     }
 

@@ -75,7 +75,7 @@ public class DashboardService {
         User user = getUserFromAuthentication(authentication);
         if (user == null) {
             log.warn("无法获取用户统计: 用户未找到");
-            return new DashboardStatisticsDTO(0, 0, 0, 0);
+            return new DashboardStatisticsDTO(0, 0, 0, 0, 0, 0);
         }
         
         // 获取用户的文档总数
@@ -85,12 +85,16 @@ public class DashboardService {
         long analysisCount = userActivityRepository.countAnalysisActivitiesByUserId(user.getId());
         long keywordsCount = userActivityRepository.countByUserIdAndActivityType(user.getId(), "KEYWORDS");
         long securityCount = userActivityRepository.countByUserIdAndActivityType(user.getId(), "SECURITY");
+        long summaryCount = userActivityRepository.countByUserIdAndActivityType(user.getId(), "SUMMARY");
+        long polishCount = userActivityRepository.countByUserIdAndActivityType(user.getId(), "POLISH");
         
         return DashboardStatisticsDTO.builder()
                 .documents(documentCount)
                 .analysis(analysisCount)
                 .keywords(keywordsCount)
                 .security(securityCount)
+                .summary(summaryCount)
+                .polish(polishCount)
                 .build();
     }
     

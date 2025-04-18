@@ -3,6 +3,10 @@ import {Alert, Button, Card, Input, message, Modal, Radio, Space, Spin, Typograp
 import {CopyOutlined, FileTextOutlined} from '@ant-design/icons';
 import {documentAPI} from '../../services/api';
 import DocumentSelector from '../../components/analysis/DocumentSelector';
+import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
+import '../../components/markdown/markdown-styles.css';
 
 const { Title, Paragraph, Text } = Typography;
 const { TextArea } = Input;
@@ -16,6 +20,18 @@ const SummaryAnalysis = () => {
   const [selectedDocument, setSelectedDocument] = useState(null);
   const [resultModalVisible, setResultModalVisible] = useState(false);
   const [viewingDocument, setViewingDocument] = useState(null);
+
+  // Markdown 渲染组件
+  const MarkdownRenderer = ({ content }) => (
+    <div className="markdown-content">
+      <ReactMarkdown 
+        rehypePlugins={[rehypeRaw]} 
+        remarkPlugins={[remarkGfm]}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
+  );
 
   // 处理文本输入变化
   const handleContentChange = (e) => {
@@ -172,7 +188,7 @@ const SummaryAnalysis = () => {
             </Button>
           }
         >
-          <Paragraph>{summary}</Paragraph>
+          <MarkdownRenderer content={summary} />
         </Card>
       )}
 
@@ -194,7 +210,7 @@ const SummaryAnalysis = () => {
         {viewingDocument && (
           <div>
             <Card>
-              <Paragraph>{viewingDocument.summary}</Paragraph>
+              <MarkdownRenderer content={viewingDocument.summary} />
             </Card>
             <div style={{ marginTop: 16 }}>
               <Text type="secondary">

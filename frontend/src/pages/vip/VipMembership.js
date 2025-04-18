@@ -44,7 +44,7 @@ const VipMembership = () => {
   const membershipPlans = [
     {
       title: '月度会员',
-      price: '￥39/月',
+      price: '￥6/月',
       features: [
         '所有VIP特权',
         '每月自动续费',
@@ -55,11 +55,11 @@ const VipMembership = () => {
     },
     {
       title: '年度会员',
-      price: '￥288/年',
+      price: '￥60/年',
       features: [
         '所有VIP特权',
-        '相当于￥24/月',
-        '节省38%',
+        '相当于￥5/月',
+        '节省23%',
         '赠送1个月',
       ],
       recommended: true,
@@ -67,7 +67,7 @@ const VipMembership = () => {
     },
     {
       title: '终身会员',
-      price: '￥888',
+      price: '￥88',
       features: [
         '所有VIP特权',
         '一次付费，终身受益',

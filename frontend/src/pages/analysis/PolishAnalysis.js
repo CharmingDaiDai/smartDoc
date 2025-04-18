@@ -3,6 +3,10 @@ import {Alert, Button, Card, Input, message, Modal, Radio, Space, Spin, Tabs, To
 import {CopyOutlined, DiffOutlined, FileTextOutlined, FormOutlined} from '@ant-design/icons';
 import {documentAPI} from '../../services/api';
 import DocumentSelector from '../../components/analysis/DocumentSelector';
+import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
+import '../../components/markdown/markdown-styles.css';
 
 const { Title, Paragraph, Text } = Typography;
 const { TextArea } = Input;
@@ -84,10 +88,10 @@ const PolishAnalysis = () => {
       
       if (inputType === 'text') {
         // 使用文本内容润色
-        response = await documentAPI.polishText(content, polishType);
+        response = await documentAPI.polishDocument(content, polishType);
       } else {
         // 使用文档ID润色
-        response = await documentAPI.polishDocument(selectedDocument.id, polishType);
+        response = await documentAPI.polishDocumentFromDocument(selectedDocument.id, polishType);
       }
       
       setPolishedContent(response.data.polishedContent);
@@ -113,6 +117,18 @@ const PolishAnalysis = () => {
     { value: 'simple', label: '简洁', description: '直接明了，易于理解' },
     { value: 'creative', label: '创意', description: '生动有趣，适合营销文案' }
   ];
+
+  // Markdown 渲染组件 - 使用外部容器而不是直接在ReactMarkdown上设置className
+  const MarkdownRenderer = ({ content }) => (
+    <div className="markdown-content">
+      <ReactMarkdown 
+        rehypePlugins={[rehypeRaw]} 
+        remarkPlugins={[remarkGfm]}
+      >
+        {content}
+      </ReactMarkdown>
+    </div>
+  );
 
   return (
     <div>
@@ -210,7 +226,9 @@ const PolishAnalysis = () => {
               } 
               key="polished"
             >
-              <Paragraph>{polishedContent}</Paragraph>
+              <div className="markdown-wrapper">
+                <MarkdownRenderer content={polishedContent} />
+              </div>
             </TabPane>
             <TabPane 
               tab={
@@ -227,14 +245,18 @@ const PolishAnalysis = () => {
                   style={{ width: '50%', backgroundColor: '#f9f9f9' }}
                   size="small"
                 >
-                  <Paragraph>{content || (selectedDocument?.content || '')}</Paragraph>
+                  <div className="markdown-wrapper">
+                    <MarkdownRenderer content={content || (selectedDocument?.content || '')} />
+                  </div>
                 </Card>
                 <Card 
                   title="润色后" 
                   style={{ width: '50%', backgroundColor: '#f6ffed' }}
                   size="small"
                 >
-                  <Paragraph>{polishedContent}</Paragraph>
+                  <div className="markdown-wrapper">
+                    <MarkdownRenderer content={polishedContent} />
+                  </div>
                 </Card>
               </div>
             </TabPane>

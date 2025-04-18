@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.InputStream;
 import java.time.LocalDate;
 import java.util.UUID;
 
@@ -112,6 +113,26 @@ public class MinioService {
         } catch (Exception e) {
             log.error("Error getting file URL: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to get file URL from MinIO", e);
+        }
+    }
+
+    /**
+     * 获取文件内容流
+     * 
+     * @param filePath 文件路径
+     * @return 文件流
+     */
+    public InputStream getFileContent(String filePath) {
+        try {
+            return minioClient.getObject(
+                GetObjectArgs.builder()
+                    .bucket(bucketName)
+                    .object(filePath)
+                    .build()
+            );
+        } catch (Exception e) {
+            log.error("Error getting file content: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to get file content from MinIO", e);
         }
     }
 }
