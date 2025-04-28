@@ -1,6 +1,6 @@
 package com.mtmn.smartdoc.service;
 
-import com.mtmn.smartdoc.entity.UserActivity;
+import com.mtmn.smartdoc.po.UserActivity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -8,6 +8,7 @@ import java.util.List;
 
 /**
  * 用户活动服务接口
+ * @author charmingdaidai
  */
 public interface UserActivityService {
     

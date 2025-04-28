@@ -13,7 +13,7 @@ import java.time.temporal.ChronoUnit;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserActivityDTO {
+public class UserActivityDto {
     private Long id;
     private String type;
     private Long documentId;

@@ -1,9 +1,9 @@
 package com.mtmn.smartdoc.service;
 
-import com.mtmn.smartdoc.dto.DashboardStatisticsDTO;
-import com.mtmn.smartdoc.dto.UserActivityDTO;
-import com.mtmn.smartdoc.entity.User;
-import com.mtmn.smartdoc.entity.UserActivity;
+import com.mtmn.smartdoc.dto.DashboardStatisticsDto;
+import com.mtmn.smartdoc.dto.UserActivityDto;
+import com.mtmn.smartdoc.po.User;
+import com.mtmn.smartdoc.po.UserActivity;
 import com.mtmn.smartdoc.repository.DocumentRepository;
 import com.mtmn.smartdoc.repository.UserActivityRepository;
 import com.mtmn.smartdoc.repository.UserRepository;
@@ -20,6 +20,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * @author charmingdaidai
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -71,11 +74,11 @@ public class DashboardService {
     /**
      * 获取用户的仪表盘统计数据
      */
-    public DashboardStatisticsDTO getUserStatistics(Authentication authentication) {
+    public DashboardStatisticsDto getUserStatistics(Authentication authentication) {
         User user = getUserFromAuthentication(authentication);
         if (user == null) {
             log.warn("无法获取用户统计: 用户未找到");
-            return new DashboardStatisticsDTO(0, 0, 0, 0, 0, 0);
+            return new DashboardStatisticsDto(0, 0, 0, 0, 0, 0);
         }
         
         // 获取用户的文档总数
@@ -88,7 +91,7 @@ public class DashboardService {
         long summaryCount = userActivityRepository.countByUserIdAndActivityType(user.getId(), "SUMMARY");
         long polishCount = userActivityRepository.countByUserIdAndActivityType(user.getId(), "POLISH");
         
-        return DashboardStatisticsDTO.builder()
+        return DashboardStatisticsDto.builder()
                 .documents(documentCount)
                 .analysis(analysisCount)
                 .keywords(keywordsCount)
@@ -101,7 +104,7 @@ public class DashboardService {
     /**
      * 获取用户的最近活动
      */
-    public List<UserActivityDTO> getUserRecentActivities(Authentication authentication, int limit) {
+    public List<UserActivityDto> getUserRecentActivities(Authentication authentication, int limit) {
         User user = getUserFromAuthentication(authentication);
         if (user == null) {
             log.warn("无法获取用户活动: 用户未找到");
@@ -119,8 +122,8 @@ public class DashboardService {
     /**
      * 将实体转换为DTO
      */
-    private UserActivityDTO convertToDTO(UserActivity activity) {
-        UserActivityDTO dto = UserActivityDTO.builder()
+    private UserActivityDto convertToDTO(UserActivity activity) {
+        UserActivityDto dto = UserActivityDto.builder()
                 .id(activity.getId())
                 .type(activity.getActivityType())
                 .documentId(activity.getDocumentId())
@@ -130,7 +133,7 @@ public class DashboardService {
                 .build();
         
         // 设置友好的时间表示
-        dto.setTimestamp(UserActivityDTO.formatTimestamp(activity.getCreatedAt()));
+        dto.setTimestamp(UserActivityDto.formatTimestamp(activity.getCreatedAt()));
         
         return dto;
     }

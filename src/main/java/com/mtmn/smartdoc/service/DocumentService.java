@@ -1,7 +1,7 @@
 package com.mtmn.smartdoc.service;
 
-import com.mtmn.smartdoc.entity.Document;
-import com.mtmn.smartdoc.entity.User;
+import com.mtmn.smartdoc.po.Document;
+import com.mtmn.smartdoc.po.User;
 import com.mtmn.smartdoc.repository.DocumentRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +12,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * @author charmingdaidai
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor

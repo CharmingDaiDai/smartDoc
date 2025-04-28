@@ -1,6 +1,6 @@
 package com.mtmn.smartdoc.service;
 
-import com.mtmn.smartdoc.entity.User;
+import com.mtmn.smartdoc.po.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -16,6 +16,9 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
+/**
+ * @author charmingdaidai
+ */
 @Service
 public class JwtService {
 

@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 
 /**
  * 全局异常处理器
+ * @author charmingdaidai
  */
 @Slf4j
 @RestControllerAdvice

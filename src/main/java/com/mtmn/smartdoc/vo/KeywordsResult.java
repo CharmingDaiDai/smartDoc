@@ -1,21 +1,24 @@
-package com.mtmn.smartdoc.dto;
+package com.mtmn.smartdoc.vo;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
+/**
+ * @author charmingdaidai
+ */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class SummaryResult {
-    // 文档摘要结果
-    private String summary;
-    // 摘要生成时间戳
+public class KeywordsResult {
+    // 提取的关键词列表
+    private List<String> keywords;
+    // 关键词提取时间戳
     private long timestamp;
     // 文档原始长度
     private int originalLength;
-    // 摘要长度
-    private int summaryLength;
 }

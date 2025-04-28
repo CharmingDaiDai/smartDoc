@@ -1,6 +1,6 @@
 package com.mtmn.smartdoc.repository;
 
-import com.mtmn.smartdoc.entity.UserActivity;
+import com.mtmn.smartdoc.po.UserActivity;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -11,6 +11,9 @@ import org.springframework.stereotype.Repository;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * @author charmingdaidai
+ */
 @Repository
 public interface UserActivityRepository extends JpaRepository<UserActivity, Long> {
     

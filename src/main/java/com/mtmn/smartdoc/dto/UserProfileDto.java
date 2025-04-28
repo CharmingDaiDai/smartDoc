@@ -7,12 +7,13 @@ import lombok.NoArgsConstructor;
 
 /**
  * 用户个人资料DTO
+ * @author charmingdaidai
  */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UserProfileDTO {
+public class UserProfileDto {
     private Long id;
     private String username;
     private String email;

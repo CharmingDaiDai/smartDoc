@@ -11,6 +11,7 @@ import java.util.Map;
 /**
  * 模型配置类
  * 用于统一管理不同的模型配置
+ * @author charmingdaidai
  */
 @Configuration
 @ConfigurationProperties(prefix = "models")

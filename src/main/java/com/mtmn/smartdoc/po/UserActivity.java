@@ -1,4 +1,4 @@
-package com.mtmn.smartdoc.entity;
+package com.mtmn.smartdoc.po;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -8,6 +8,9 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
+/**
+ * @author charmingdaidai
+ */
 @Entity
 @Table(name = "user_activities")
 @Data

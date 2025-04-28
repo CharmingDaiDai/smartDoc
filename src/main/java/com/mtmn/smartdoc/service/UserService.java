@@ -2,8 +2,8 @@ package com.mtmn.smartdoc.service;
 
 import com.mtmn.smartdoc.dto.ChangePasswordRequest;
 import com.mtmn.smartdoc.dto.UpdateProfileRequest;
-import com.mtmn.smartdoc.dto.UserProfileDTO;
-import com.mtmn.smartdoc.entity.User;
+import com.mtmn.smartdoc.dto.UserProfileDto;
+import com.mtmn.smartdoc.po.User;
 import com.mtmn.smartdoc.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,6 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 用户服务
+ * @author charmingdaidai
  */
 @Slf4j
 @Service
@@ -31,7 +32,7 @@ public class UserService {
      * @param username 用户名
      * @return 用户个人资料DTO
      */
-    public UserProfileDTO getUserProfile(String username) {
+    public UserProfileDto getUserProfile(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
         
@@ -46,7 +47,7 @@ public class UserService {
      * @return 更新后的用户个人资料DTO
      */
     @Transactional
-    public UserProfileDTO updateProfile(String username, UpdateProfileRequest request) {
+    public UserProfileDto updateProfile(String username, UpdateProfileRequest request) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
         
@@ -71,7 +72,7 @@ public class UserService {
      * @return 更新后的用户个人资料DTO
      */
     @Transactional
-    public UserProfileDTO uploadAvatar(String username, MultipartFile file) {
+    public UserProfileDto uploadAvatar(String username, MultipartFile file) {
         if (file.isEmpty()) {
             throw new RuntimeException("头像文件不能为空");
         }
@@ -137,8 +138,8 @@ public class UserService {
     /**
      * 将用户实体转换为DTO
      */
-    private UserProfileDTO convertToDTO(User user) {
-        UserProfileDTO dto = UserProfileDTO.builder()
+    private UserProfileDto convertToDTO(User user) {
+        UserProfileDto dto = UserProfileDto.builder()
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())

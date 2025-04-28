@@ -1,10 +1,13 @@
-package com.mtmn.smartdoc.dto;
+package com.mtmn.smartdoc.vo;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * @author charmingdaidai
+ */
 @Data
 @Builder
 @AllArgsConstructor

@@ -3,7 +3,7 @@ package com.mtmn.smartdoc.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mtmn.smartdoc.config.ModelConfig;
-import com.mtmn.smartdoc.dto.SecurityResult;
+import com.mtmn.smartdoc.vo.SecurityResult;
 import dev.langchain4j.model.chat.ChatLanguageModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import lombok.RequiredArgsConstructor;

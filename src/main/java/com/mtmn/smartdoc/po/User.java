@@ -1,4 +1,4 @@
-package com.mtmn.smartdoc.entity;
+package com.mtmn.smartdoc.po;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -13,6 +13,9 @@ import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * @author charmingdaidai
+ */
 @Data
 @Builder
 @NoArgsConstructor

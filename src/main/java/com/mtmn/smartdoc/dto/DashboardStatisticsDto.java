@@ -5,11 +5,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+/**
+ * @author charmingdaidai
+ */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class DashboardStatisticsDTO {
+public class DashboardStatisticsDto {
     private long documents;  // 用户文档总数
     private long analysis;   // 文档分析总数
     private long keywords;   // 关键词提取数

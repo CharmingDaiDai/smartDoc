@@ -3,8 +3,8 @@ package com.mtmn.smartdoc.controller;
 import com.mtmn.smartdoc.common.ApiResponse;
 import com.mtmn.smartdoc.dto.ChangePasswordRequest;
 import com.mtmn.smartdoc.dto.UpdateProfileRequest;
-import com.mtmn.smartdoc.dto.UserProfileDTO;
-import com.mtmn.smartdoc.entity.User;
+import com.mtmn.smartdoc.dto.UserProfileDto;
+import com.mtmn.smartdoc.po.User;
 import com.mtmn.smartdoc.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -17,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 用户个人资料控制器
+ * @author charmingdaidai
  */
 @Slf4j
 @RestController
@@ -29,21 +30,21 @@ public class ProfileController {
     
     @GetMapping
     @Operation(summary = "获取个人资料", description = "获取当前登录用户的个人资料")
-    public ApiResponse<UserProfileDTO> getUserProfile(@AuthenticationPrincipal User user) {
+    public ApiResponse<UserProfileDto> getUserProfile(@AuthenticationPrincipal User user) {
         log.info("获取用户个人资料: {}", user.getUsername());
-        UserProfileDTO profile = userService.getUserProfile(user.getUsername());
+        UserProfileDto profile = userService.getUserProfile(user.getUsername());
         return ApiResponse.success(profile);
     }
     
     @PutMapping
     @Operation(summary = "更新个人资料", description = "更新当前登录用户的个人资料")
-    public ApiResponse<UserProfileDTO> updateProfile(
+    public ApiResponse<UserProfileDto> updateProfile(
             @AuthenticationPrincipal User user,
             @RequestBody UpdateProfileRequest request) {
         
         log.info("更新用户个人资料: {}", user.getUsername());
         try {
-            UserProfileDTO updatedProfile = userService.updateProfile(user.getUsername(), request);
+            UserProfileDto updatedProfile = userService.updateProfile(user.getUsername(), request);
             return ApiResponse.success("个人资料更新成功", updatedProfile);
         } catch (Exception e) {
             log.error("更新个人资料失败: {}", e.getMessage(), e);
@@ -53,13 +54,13 @@ public class ProfileController {
     
     @PostMapping(value = "/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "上传头像", description = "上传或更新当前登录用户的头像")
-    public ApiResponse<UserProfileDTO> uploadAvatar(
+    public ApiResponse<UserProfileDto> uploadAvatar(
             @AuthenticationPrincipal User user,
             @RequestParam("file") MultipartFile file) {
         
         log.info("上传用户头像: {}", user.getUsername());
         try {
-            UserProfileDTO updatedProfile = userService.uploadAvatar(user.getUsername(), file);
+            UserProfileDto updatedProfile = userService.uploadAvatar(user.getUsername(), file);
             return ApiResponse.success("头像上传成功", updatedProfile);
         } catch (Exception e) {
             log.error("上传头像失败: {}", e.getMessage(), e);

@@ -1,10 +1,13 @@
 package com.mtmn.smartdoc.service;
 
-import com.mtmn.smartdoc.dto.KeywordsResult;
-import com.mtmn.smartdoc.dto.PolishResult;
-import com.mtmn.smartdoc.dto.SecurityResult;
-import com.mtmn.smartdoc.dto.SummaryResult;
+import com.mtmn.smartdoc.vo.KeywordsResult;
+import com.mtmn.smartdoc.vo.PolishResult;
+import com.mtmn.smartdoc.vo.SecurityResult;
+import com.mtmn.smartdoc.vo.SummaryResult;
 
+/**
+ * @author charmingdaidai
+ */
 public interface AnalysisService {
     
     /**

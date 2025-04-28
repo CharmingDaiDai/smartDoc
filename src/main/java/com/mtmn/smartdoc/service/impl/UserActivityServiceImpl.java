@@ -1,6 +1,6 @@
 package com.mtmn.smartdoc.service.impl;
 
-import com.mtmn.smartdoc.entity.UserActivity;
+import com.mtmn.smartdoc.po.UserActivity;
 import com.mtmn.smartdoc.repository.UserActivityRepository;
 import com.mtmn.smartdoc.service.UserActivityService;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +14,7 @@ import java.util.List;
 
 /**
  * 用户活动服务实现类
+ * @author charmingdaidai
  */
 @Service
 @RequiredArgsConstructor

@@ -1,12 +1,12 @@
 package com.mtmn.smartdoc.controller;
 
 import com.mtmn.smartdoc.common.ApiResponse;
-import com.mtmn.smartdoc.dto.KeywordsResult;
-import com.mtmn.smartdoc.dto.PolishResult;
-import com.mtmn.smartdoc.dto.SecurityResult;
-import com.mtmn.smartdoc.dto.SummaryResult;
-import com.mtmn.smartdoc.entity.Document;
-import com.mtmn.smartdoc.entity.User;
+import com.mtmn.smartdoc.vo.KeywordsResult;
+import com.mtmn.smartdoc.vo.PolishResult;
+import com.mtmn.smartdoc.vo.SecurityResult;
+import com.mtmn.smartdoc.vo.SummaryResult;
+import com.mtmn.smartdoc.po.Document;
+import com.mtmn.smartdoc.po.User;
 import com.mtmn.smartdoc.repository.DocumentRepository;
 import com.mtmn.smartdoc.service.AnalysisService;
 import com.mtmn.smartdoc.service.UserActivityService;
@@ -21,6 +21,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * @author charmingdaidai
+ */
 @RestController
 @RequestMapping("/api/analysis")
 @RequiredArgsConstructor

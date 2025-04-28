@@ -1,11 +1,14 @@
 package com.mtmn.smartdoc.repository;
 
-import com.mtmn.smartdoc.entity.User;
+import com.mtmn.smartdoc.po.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
 
+/**
+ * @author charmingdaidai
+ */
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUsername(String username);

@@ -1,12 +1,15 @@
 package com.mtmn.smartdoc.repository;
 
-import com.mtmn.smartdoc.entity.Document;
-import com.mtmn.smartdoc.entity.User;
+import com.mtmn.smartdoc.po.Document;
+import com.mtmn.smartdoc.po.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+/**
+ * @author charmingdaidai
+ */
 @Repository
 public interface DocumentRepository extends JpaRepository<Document, Long> {
     

@@ -2,9 +2,9 @@ package com.mtmn.smartdoc.controller;
 
 import com.mtmn.smartdoc.common.ApiResponse;
 import com.mtmn.smartdoc.dto.DocumentDto;
-import com.mtmn.smartdoc.entity.Document;
-import com.mtmn.smartdoc.entity.User;
-import com.mtmn.smartdoc.entity.UserActivity;
+import com.mtmn.smartdoc.po.Document;
+import com.mtmn.smartdoc.po.User;
+import com.mtmn.smartdoc.po.UserActivity;
 import com.mtmn.smartdoc.service.DocumentService;
 import com.mtmn.smartdoc.service.UserActivityService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,6 +22,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * @author charmingdaidai
+ */
 @Slf4j
 @RestController
 @RequestMapping("/api/documents")

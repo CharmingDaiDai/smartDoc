@@ -1,6 +1,6 @@
 package com.mtmn.smartdoc.config;
 
-import com.mtmn.smartdoc.entity.User;
+import com.mtmn.smartdoc.po.User;
 import com.mtmn.smartdoc.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -19,6 +19,9 @@ import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * @author charmingdaidai
+ */
 @Configuration
 @RequiredArgsConstructor
 @Log4j2
