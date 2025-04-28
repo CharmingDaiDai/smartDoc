@@ -33,3 +33,5 @@ build/
 .vscode/
 *.log
 *.py
+.DS_Store
+docs
