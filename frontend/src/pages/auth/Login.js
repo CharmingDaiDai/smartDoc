@@ -1,220 +1,191 @@
 import React, { useState } from 'react';
-import { Button, Card, Divider, Form, Input, Typography, Row, Col, Carousel, Space } from 'antd';
-import { LockOutlined, UserOutlined, FileTextOutlined, SafetyCertificateOutlined, RocketOutlined, CrownOutlined } from '@ant-design/icons';
+import { 
+  Button, 
+  Card, 
+  Divider, 
+  Form, 
+  Input, 
+  Typography, 
+  Row, 
+  Col, 
+  Alert,
+  message,
+  Space 
+} from 'antd';
+import { 
+  LockOutlined, 
+  UserOutlined, 
+  GithubOutlined,
+  WechatOutlined,
+  QqOutlined
+} from '@ant-design/icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import '../../styles/auth.css';
 
 const { Title, Text, Paragraph } = Typography;
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const onFinish = async (values) => {
     setLoading(true);
+    setError('');
     try {
       const success = await login(values);
       if (success) {
         navigate('/dashboard');
+      } else {
+        setError('登录失败，请检查用户名和密码');
       }
+    } catch (err) {
+      setError('登录时发生错误，请稍后再试');
     } finally {
       setLoading(false);
     }
   };
 
-  // 系统特点和主要功能
-  const features = [
-    {
-      icon: <FileTextOutlined style={{ fontSize: 32 }} />,
-      title: '智能文档管理',
-      description: '多格式支持、在线预览与检索，让文档管理更轻松'
-    },
-    {
-      icon: <SafetyCertificateOutlined style={{ fontSize: 32 }} />,
-      title: '智能分析引擎',
-      description: '关键词提取、文本润色、安全审查和摘要生成，深度挖掘文档价值'
-    },
-    {
-      icon: <RocketOutlined style={{ fontSize: 32 }} />,
-      title: '先进AI技术',
-      description: '基于Langchain4j框架与大语言模型，实现高精度智能文档处理'
-    },
-    {
-      icon: <CrownOutlined style={{ fontSize: 32 }} />,
-      title: 'VIP增值服务',
-      description: '更大存储空间、更高并发性能和定制化分析模型'
-    }
-  ];
+  const handleSocialLogin = (platform) => {
+    message.info(`正在使用${platform}登录，此功能正在开发中...`);
+    // 实际调用第三方登录API的代码会在这里
+  };
 
   return (
-    <div style={{ 
-      height: '100vh',
-      width: '100vw',
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-      overflow: 'hidden',
-      margin: 0,
-      padding: 0
-    }}>
-      <Row style={{ width: '100%', height: '100%' }} justify="center" align="middle">
-        <Col xs={24} sm={24} md={22} lg={20} xl={18} xxl={16}>
-          <Card 
+    <div className="login-container">
+      <Row className="login-row">
+        <Col xs={24} md={12} className="login-left">
+          <div className="login-left-content">
+            <div className="brand-logo">
+              {/* Use the image from the public folder */}
+              <img src="/logo192.png" alt="SmartDoc Logo" className="brand-logo-img" />
+              <Title level={3} className="brand-title">SmartDoc</Title>
+            </div>
+            <Title level={2} className="welcome-title">欢迎回来</Title>
+            <Paragraph className="welcome-subtitle">
+              登录您的账户以使用智能文档系统的全部功能
+            </Paragraph>
+            <img
+              src="/login-illustration.svg"
+              alt="Login"
+              className="login-illustration"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.style.display = 'none';
+              }}
+            />
+          </div>
+        </Col>
+
+        <Col xs={24} md={12} className="login-right">
+          <Card
             bordered={false}
-            style={{ 
-              borderRadius: '16px',
-              boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)',
-              overflow: 'hidden',
-              height: '90vh',
-              display: 'flex',
-              flexDirection: 'column'
-            }}
-            bodyStyle={{ padding: 0, height: '100%' }}
+            className="login-card"
           >
-            <Row style={{ height: '100%' }}>
-              {/* 左侧系统介绍 */}
-              <Col xs={0} sm={0} md={14} lg={14} xl={14} 
-                style={{ 
-                  background: 'linear-gradient(120deg, #1890ff 0%, #096dd9 100%)', 
-                  padding: '40px',
-                  color: 'white',
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column'
-                }}
+            <div className="login-header">
+              <Title level={3}>用户登录</Title>
+              <Text type="secondary">请输入您的账户信息</Text>
+            </div>
+
+            {error && (
+              <Alert
+                message={error}
+                type="error"
+                showIcon
+                style={{ marginBottom: 24 }}
+              />
+            )}
+
+            <Form
+              name="login"
+              initialValues={{ remember: true }}
+              onFinish={onFinish}
+              size="large"
+              layout="vertical"
+            >
+              <Form.Item
+                name="username"
+                rules={[{ required: true, message: '请输入您的用户名!' }]}
               >
-                <div style={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
-                  <div>
-                    <Title level={1} style={{ color: 'white', marginBottom: 30 }}>
-                      智能文档系统
-                    </Title>
-                    <Paragraph style={{ color: 'rgba(255,255,255,0.85)', fontSize: 16, marginBottom: 40 }}>
-                      利用先进的AI技术，为您提供从文档管理、智能分析到知识推理的一站式解决方案。
-                    </Paragraph>
-                  </div>
-                  
-                  <Carousel autoplay dots={{ className: 'carousel-dots' }} style={{ flex: 1 }}>
-                    {features.map((feature, index) => (
-                      <div key={index} style={{ padding: '40px 20px' }}>
-                        <div style={{ textAlign: 'center', marginBottom: 30 }}>
-                          {feature.icon}
-                        </div>
-                        <Title level={3} style={{ color: 'white', textAlign: 'center', marginTop: 0 }}>
-                          {feature.title}
-                        </Title>
-                        <Paragraph style={{ color: 'rgba(255,255,255,0.85)', textAlign: 'center', fontSize: 16 }}>
-                          {feature.description}
-                        </Paragraph>
-                      </div>
-                    ))}
-                  </Carousel>
-                  
-                  <div style={{ marginTop: 30 }}>
-                    <Paragraph style={{ color: 'rgba(255,255,255,0.7)', textAlign: 'center', fontSize: 13 }}>
-                      © 2025 智能文档系统 V1.0
-                    </Paragraph>
-                  </div>
-                </div>
-              </Col>
-              
-              {/* 移动端视图 - 顶部标题区域 */}
-              <Col xs={24} sm={24} md={0} style={{ 
-                padding: '30px', 
-                background: 'linear-gradient(120deg, #1890ff 0%, #096dd9 100%)',
-                textAlign: 'center'
-              }}>
-                <Title level={2} style={{ color: 'white', marginBottom: 10 }}>
-                  智能文档系统
-                </Title>
-                <Paragraph style={{ color: 'rgba(255,255,255,0.85)', fontSize: 14 }}>
-                  AI驱动的一站式文档智能化平台
-                </Paragraph>
-              </Col>
-              
-              {/* 右侧登录表单 */}
-              <Col 
-                xs={24} sm={24} md={10} lg={10} xl={10} 
-                style={{ 
-                  padding: '40px', 
-                  display: 'flex', 
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  height: '100%'
-                }}
+                <Input
+                  prefix={<UserOutlined />}
+                  placeholder="用户名"
+                />
+              </Form.Item>
+
+              <Form.Item
+                name="password"
+                rules={[{ required: true, message: '请输入您的密码!' }]}
               >
-                <div style={{ textAlign: 'center', marginBottom: 30 }}>
-                  <Title level={2}>欢迎回来</Title>
-                  <Text type="secondary">登录您的账户以继续使用</Text>
-                </div>
-                
-                <Form
-                  name="login"
-                  initialValues={{ remember: true }}
-                  onFinish={onFinish}
-                  size="large"
-                  layout="vertical"
+                <Input.Password
+                  prefix={<LockOutlined />}
+                  placeholder="密码"
+                />
+              </Form.Item>
+
+              <div className="remember-forgot">
+                <Link to="/forgot-password" className="forgot-link">
+                  忘记密码?
+                </Link>
+              </div>
+
+              <Form.Item>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  className="login-button"
+                  loading={loading}
                 >
-                  <Form.Item
-                    name="username"
-                    rules={[{ required: true, message: '请输入您的用户名!' }]}
-                  >
-                    <Input 
-                      prefix={<UserOutlined />} 
-                      placeholder="用户名" 
-                      size="large"
-                    />
-                  </Form.Item>
+                  登录
+                </Button>
+              </Form.Item>
 
-                  <Form.Item
-                    name="password"
-                    rules={[{ required: true, message: '请输入您的密码!' }]}
-                  >
-                    <Input.Password
-                      prefix={<LockOutlined />}
-                      placeholder="密码"
-                      size="large"
-                    />
-                  </Form.Item>
+              <Divider className="login-divider">
+                <span className="divider-text">或使用社交账号登录</span>
+              </Divider>
 
-                  <Form.Item>
-                    <Button 
-                      type="primary" 
-                      htmlType="submit" 
-                      style={{ width: '100%', height: '46px', borderRadius: '8px' }}
-                      loading={loading}
-                      size="large"
-                    >
-                      登录
-                    </Button>
-                  </Form.Item>
-                  
-                  <Divider plain>或者</Divider>
-                  
-                  <div style={{ textAlign: 'center' }}>
-                    <Space>
-                      <Text type="secondary">还没有账户?</Text>
-                      <Link to="/register">
-                        <Button type="link" style={{ padding: 0 }}>立即注册</Button>
-                      </Link>
-                    </Space>
-                  </div>
-                </Form>
-              </Col>
-            </Row>
+              <div className="social-login">
+                <Button
+                  type="default"
+                  icon={<GithubOutlined />}
+                  size="large"
+                  className="social-button github"
+                  onClick={() => handleSocialLogin('GitHub')}
+                >
+                  GitHub
+                </Button>
+                <Button
+                  type="default"
+                  icon={<WechatOutlined />}
+                  size="large"
+                  className="social-button wechat"
+                  onClick={() => handleSocialLogin('微信')}
+                >
+                  微信
+                </Button>
+                <Button
+                  type="default"
+                  icon={<QqOutlined />}
+                  size="large"
+                  className="social-button qq"
+                  onClick={() => handleSocialLogin('QQ')}
+                >
+                  QQ
+                </Button>
+              </div>
+
+              <div className="register-prompt">
+                <Text type="secondary">还没有账户? </Text>
+                <Link to="/register" className="register-link">
+                  立即注册
+                </Link>
+              </div>
+            </Form>
           </Card>
         </Col>
       </Row>
-      
-      <style jsx>{`
-        .carousel-dots li button {
-          background: rgba(255, 255, 255, 0.3) !important;
-        }
-        .carousel-dots li.slick-active button {
-          background: white !important;
-        }
-      `}</style>
     </div>
   );
 };

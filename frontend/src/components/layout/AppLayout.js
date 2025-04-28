@@ -18,7 +18,7 @@ import {
 } from '@ant-design/icons';
 import {Outlet, useLocation, useNavigate} from 'react-router-dom';
 import {useAuth} from '../../context/AuthContext';
-import './layout-styles.css'; // 我们将创建一个新的CSS文件用于布局样式
+import '../../styles/components/layout.css'; // 我们将创建一个新的CSS文件用于布局样式
 
 const { Header, Sider, Content } = Layout;
 const { Title, Text } = Typography;

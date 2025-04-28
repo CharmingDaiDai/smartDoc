@@ -1,6 +1,8 @@
 import React from 'react';
 import {Navigate, Route, Routes} from 'react-router-dom';
 import AppLayout from '../components/layout/AppLayout';
+import PublicLayout from '../components/layout/PublicLayout';
+import HomePage from '../pages/HomePage';
 import Login from '../pages/auth/Login';
 import Register from '../pages/auth/Register';
 import Dashboard from '../pages/dashboard/Dashboard';
@@ -16,9 +18,12 @@ import ProtectedRoute from '../components/ProtectedRoute';
 const AppRoutes = () => {
   return (
     <Routes>
-      {/* 公共路由 */}
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+      {/* 公共路由 - 无需认证 */}
+      <Route path="/" element={<PublicLayout />}>
+        <Route index element={<HomePage />} />
+        <Route path="login" element={<Login />} />
+        <Route path="register" element={<Register />} />
+      </Route>
       
       {/* 保护的路由 - 需要认证 */}
       <Route path="/" element={
@@ -26,8 +31,6 @@ const AppRoutes = () => {
           <AppLayout />
         </ProtectedRoute>
       }>
-        {/* 默认路由重定向到仪表盘 */}
-        <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
         
         {/* 文档管理路由 */}
@@ -63,8 +66,8 @@ const AppRoutes = () => {
         {/* 其他路由可在此处添加 */}
       </Route>
       
-      {/* 未匹配路由 - 重定向到登录页面 */}
-      <Route path="*" element={<Navigate to="/login" replace />} />
+      {/* 未匹配路由 - 重定向到首页 */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 };
