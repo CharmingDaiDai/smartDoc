@@ -9,10 +9,12 @@ CREATE TABLE IF NOT EXISTS `documents` (
   `keywords` varchar(500) DEFAULT NULL,
   `sensitive_info` TEXT DEFAULT NULL,
   `categories` varchar(500) DEFAULT NULL,
-  `user_id` bigint(20) NOT NULL,
+  `user_id` bigint(20) DEFAULT NULL,
+  `knowledge_base_id` bigint(20) DEFAULT NULL COMMENT '所属知识库ID',
   `created_at` datetime DEFAULT NULL,
   `updated_at` datetime DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `FK_documents_user` (`user_id`),
+  KEY `idx_knowledge_base_id` (`knowledge_base_id`),
   CONSTRAINT `FK_documents_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
