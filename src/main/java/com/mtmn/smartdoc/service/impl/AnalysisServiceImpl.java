@@ -1,32 +1,23 @@
 package com.mtmn.smartdoc.service.impl;
 
-import com.mtmn.smartdoc.vo.KeywordsResult;
-import com.mtmn.smartdoc.vo.PolishResult;
-import com.mtmn.smartdoc.vo.SecurityResult;
-import com.mtmn.smartdoc.vo.SummaryResult;
 import com.mtmn.smartdoc.po.Document;
 import com.mtmn.smartdoc.repository.DocumentRepository;
 import com.mtmn.smartdoc.service.AnalysisService;
 import com.mtmn.smartdoc.service.EmbeddingService;
 import com.mtmn.smartdoc.service.FileService;
 import com.mtmn.smartdoc.service.LLMService;
+import com.mtmn.smartdoc.vo.KeywordsResult;
+import com.mtmn.smartdoc.vo.PolishResult;
+import com.mtmn.smartdoc.vo.SecurityResult;
+import com.mtmn.smartdoc.vo.SummaryResult;
 import jakarta.annotation.Resource;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**

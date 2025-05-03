@@ -38,6 +38,12 @@
   margin-bottom: 30px;
 }
 
+.brand-logo-img {
+  width: 60px; /* 调整到合适的宽度，比如60px */
+  height: 60px; /* 保持比例，或者也可以只设置宽度 */
+  margin-right: 12px; /* 图片和文字之间稍微留点距离 */
+}
+
 .welcome-title {
   color: white !important;
   margin-bottom: 16px !important;

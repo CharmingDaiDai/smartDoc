@@ -32,11 +32,13 @@ public class ModelConfig {
     /**
      * 当前激活的大语言模型ID
      */
+    @Getter @Setter
     private String activeLlm = "glm";
     
     /**
      * 当前激活的嵌入模型ID
      */
+    @Getter @Setter
     private String activeEmbedding = "bge-m3";
     
     /**
