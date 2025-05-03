@@ -1,11 +1,32 @@
 import React, {useState} from 'react';
 import {
-  Alert, Button, Card, Input, message, Modal, Radio, Space, Spin, 
-  Typography, Row, Col, Avatar, Tooltip, Divider, Badge, Skeleton
+    Alert,
+    Avatar,
+    Badge,
+    Button,
+    Card,
+    Col,
+    Divider,
+    Input,
+    message,
+    Modal,
+    Radio,
+    Row,
+    Skeleton,
+    Space,
+    Spin,
+    Tooltip,
+    Typography
 } from 'antd';
 import {
-  CopyOutlined, FileTextOutlined, FileSearchOutlined, LoadingOutlined,
-  InfoCircleOutlined, CheckCircleOutlined, BookOutlined, ReadOutlined
+    BookOutlined,
+    CheckCircleOutlined,
+    CopyOutlined,
+    FileSearchOutlined,
+    FileTextOutlined,
+    InfoCircleOutlined,
+    LoadingOutlined,
+    ReadOutlined
 } from '@ant-design/icons';
 import {documentAPI} from '../../services/api';
 import DocumentSelector from '../../components/analysis/DocumentSelector';

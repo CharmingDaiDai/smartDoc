@@ -1,56 +1,65 @@
 package com.mtmn.smartdoc.service.impl;
 
 import com.mtmn.smartdoc.dto.AuthenticationRequest;
-import com.mtmn.smartdoc.vo.AuthenticationResponse;
-import com.mtmn.smartdoc.vo.GitHubUserInfoResponse;
-import com.mtmn.smartdoc.vo.RegisterRequest;
 import com.mtmn.smartdoc.po.User;
 import com.mtmn.smartdoc.repository.UserRepository;
 import com.mtmn.smartdoc.service.AuthenticationService;
 import com.mtmn.smartdoc.service.JwtService;
-import io.jsonwebtoken.ExpiredJwtException;
+import com.mtmn.smartdoc.service.MinioService;
+import com.mtmn.smartdoc.vo.AuthenticationResponse;
+import com.mtmn.smartdoc.vo.GitHubUserInfoResponse;
+import com.mtmn.smartdoc.vo.RegisterRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.context.annotation.Bean;
 import org.springframework.http.*;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
+
+import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-
 
 /**
  * @author charmingdaidai
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Value("${spring.security.oauth2.client.github.client-id}")
     private String clientId;
 
-    @Value("${spring.security.oauth2.client.github.secret}")
+    @Value("${spring.security.oauth2.client.github.client-secret}")
     private String clientSecret;
 
-    @Value("${github.redirect.uri}")
+    @Value("${spring.security.oauth2.client.github.redirectUri}")
     private String redirectUri;
 
-    @Value("$spring.security.oauth2.client.github.scope")
+    @Value("${spring.security.oauth2.client.github.scope}")
     private String scope;
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
-    private final RestTemplate restTemplate = new RestTemplate();
 
-
+    private final RestTemplate restTemplate;
+    private final MinioService minioService;
 
     @Override
     public AuthenticationResponse register(RegisterRequest request) {
@@ -90,7 +99,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         // 获取用户
         var user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow();
+                .orElseThrow(() -> new UsernameNotFoundException("用户不存在"));
+
+        if (!user.isEnabled()) {
+            throw new DisabledException("用户已被禁用");
+        }
 
         // 更新最后登录时间
         user.setLastLogin(LocalDateTime.now());
@@ -111,9 +124,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         String state = UUID.randomUUID().toString();
         // 保存state到session或缓存以便后续验证
 
-        return UriComponentsBuilder.fromHttpUrl("https://github.com/login/oauth/authorize") // fixme 解决硬编码
+        return UriComponentsBuilder.fromHttpUrl("https://github.com/login/oauth/authorize")
                 .queryParam("client_id", clientId)
-                .queryParam("redirect_uri", redirectUri) // fixme 这里的重定向链接是什么意思
+                .queryParam("redirect_uri", redirectUri)
                 .queryParam("scope", scope)
                 .queryParam("state", state)
                 .build().toUriString();
@@ -121,102 +134,118 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Override
     public AuthenticationResponse authenticateWithGithub(String code, String state) {
-        // 1. 验证state以防CSRF
-
-        // 2. 用授权码换取访问令牌
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-
-        Map<String, String> requestBody = Map.of(
-                "client_id", clientId,
-                "client_secret", clientSecret,
-                "code", code,
-                "redirect_uri", redirectUri
-        );
-
-        ResponseEntity<Map> tokenResponse = restTemplate.exchange(
-                "https://github.com/login/oauth/access_token",
-                HttpMethod.POST,
-                new HttpEntity<>(requestBody, headers),
-                Map.class
-        );
-
-        String accessToken = (String) tokenResponse.getBody().get("access_token");
-
-        // 3. 获取GitHub用户信息
-        HttpHeaders userInfoHeaders = new HttpHeaders();
-        userInfoHeaders.setBearerAuth(accessToken);
-        userInfoHeaders.set("Accept", "application/json");
-
-        ResponseEntity<GitHubUserInfoResponse> userInfoResponse = restTemplate.exchange(
-                "https://api.github.com/user",
-                HttpMethod.GET,
-                new HttpEntity<>(userInfoHeaders),
-                GitHubUserInfoResponse.class
-        );
-
-        GitHubUserInfoResponse githubUser = userInfoResponse.getBody();
-
-        // 4. 查找或创建用户
-        User user = userRepository.findByGithubId(githubUser.getId())
-                .orElseGet(() -> {
-                    // 创建新用户
-                    User newUser = new User();
-                    newUser.setGithubId(githubUser.getId());
-                    // 使用GitHub用户名
-                    newUser.setUsername(githubUser.getLogin());
-                    newUser.setEmail(githubUser.getEmail());
-                    // 设置其他需要的字段
-                    return userRepository.save(newUser);
-                });
-
-        // 5. 生成JWT令牌
-        String jwtToken = jwtService.generateToken(user);
-        String refreshToken = jwtService.generateRefreshToken(user);
-
-        return AuthenticationResponse.builder()
-                .accessToken(jwtToken)
-                .refreshToken(refreshToken)
-                .build();
-    }
-
-    /**
-     * 刷新令牌
-     *
-     * @param refreshToken 刷新令牌
-     * @return 新的认证响应，包含新的访问令牌和刷新令牌
-     */
-    @Override
-    public AuthenticationResponse refreshToken(String refreshToken) {
         try {
-            // 从refreshToken中提取用户名
-            String username = jwtService.extractUsername(refreshToken);
-            if (username == null) {
-                throw new BadCredentialsException("无效的刷新令牌");
+            // 1. 用授权码换取访问令牌
+//            HttpHeaders headers = new HttpHeaders();
+//            headers.setContentType(MediaType.APPLICATION_JSON);
+//            headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+//
+//            Map<String, String> requestBody = Map.of(
+//                    "client_id", clientId,
+//                    "client_secret", clientSecret,
+//                    "code", code,
+//                    "redirect_uri", redirectUri
+//            );
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+            MultiValueMap<String, String> requestBody = new LinkedMultiValueMap<>();
+            requestBody.add("client_id", clientId);
+            requestBody.add("client_secret", clientSecret);
+            requestBody.add("code", code);
+            requestBody.add("redirect_uri", redirectUri);
+
+            ResponseEntity<Map> tokenResponse = restTemplate.exchange(
+                    "https://github.com/login/oauth/access_token",
+                    HttpMethod.POST,
+                    new HttpEntity<>(requestBody, headers),
+                    Map.class
+            );
+
+            if (tokenResponse.getBody() == null || !tokenResponse.getBody().containsKey("access_token")) {
+                throw new RuntimeException("获取GitHub访问令牌失败");
             }
 
-            // 获取用户
-            User user = userRepository.findByUsername(username)
-                    .orElseThrow(() -> new BadCredentialsException("用户不存在"));
+            String accessToken = (String) tokenResponse.getBody().get("access_token");
 
-            // 验证刷新令牌有效性
-            if (!jwtService.isTokenValid(refreshToken, user)) {
-                throw new BadCredentialsException("刷新令牌已过期或无效");
+            // 2. 获取GitHub用户信息
+            HttpHeaders userInfoHeaders = new HttpHeaders();
+            userInfoHeaders.setBearerAuth(accessToken);
+            userInfoHeaders.set("Accept", "application/json");
+
+            ResponseEntity<GitHubUserInfoResponse> userInfoResponse = restTemplate.exchange(
+                    "https://api.github.com/user",
+                    HttpMethod.GET,
+                    new HttpEntity<>(userInfoHeaders),
+                    GitHubUserInfoResponse.class
+            );
+
+            GitHubUserInfoResponse githubUser = userInfoResponse.getBody();
+
+            if (githubUser == null) {
+                throw new UsernameNotFoundException("GitHub 认证失败: 获取用户信息失败");
             }
 
-            // 生成新的访问令牌和刷新令牌
-            String accessToken = jwtService.generateToken(user);
-            String newRefreshToken = jwtService.generateRefreshToken(user);
+            String gitId = githubUser.getId().toString();
+            String avatarUrl = githubUser.getAvatarUrl();
+            String minioAvatarPath = null;
+            
+            // 下载并上传GitHub头像到MinIO
+            if (avatarUrl != null && !avatarUrl.isEmpty()) {
+                try {
+                    // 使用新的方法从URL直接下载并上传到MinIO
+                    String fileName = "github_avatar_" + gitId + ".jpg";
+                    minioAvatarPath = minioService.uploadFileFromUrl(avatarUrl, fileName);
+                    log.info("GitHub头像成功上传到MinIO: {}", minioAvatarPath);
+                } catch (Exception e) {
+                    log.error("下载或上传GitHub用户头像失败: {}", e.getMessage(), e);
+                    // 发生错误不中断主流程，继续执行
+                }
+            }
+
+            // 3. 查找或创建用户
+            String finalMinioAvatarPath = minioAvatarPath;
+            User user = userRepository.findByGithubId(gitId)
+                    .orElseGet(() -> {
+                        // 创建新用户
+                        User newUser = User.builder()
+                                .githubId(gitId)
+                                .username(githubUser.getLogin() + "_github") // 确保用户名不冲突
+                                .email(githubUser.getEmail())
+                                .avatarPath(finalMinioAvatarPath) // 使用MinIO中的头像路径
+                                .password(passwordEncoder.encode(UUID.randomUUID().toString())) // 随机密码
+                                .vip(false)
+                                .createdAt(LocalDateTime.now())
+                                .enabled(true)
+                                .build();
+
+                        return userRepository.save(newUser);
+                    });
+
+            // 4. 更新用户信息（如果是已存在用户）
+            if (user.getId() != null) {
+
+                if (user.getAvatarPath() == null && minioAvatarPath != null) {
+                    user.setAvatarPath(minioAvatarPath);
+                }
+
+                // 更新最后登录时间
+                user.setLastLogin(LocalDateTime.now());
+
+                user = userRepository.save(user);
+
+            }
+
+            // 5. 生成JWT令牌
+            String jwtToken = jwtService.generateToken(user);
+            String refreshToken = jwtService.generateRefreshToken(user);
 
             return AuthenticationResponse.builder()
-                    .accessToken(accessToken)
-                    .refreshToken(newRefreshToken)
+                    .accessToken(jwtToken)
+                    .refreshToken(refreshToken)
                     .build();
-        } catch (ExpiredJwtException e) {
-            throw new BadCredentialsException("刷新令牌已过期");
         } catch (Exception e) {
-            throw new BadCredentialsException("刷新令牌处理失败: " + e.getMessage());
+            throw new RuntimeException("GitHub 登录处理失败: " + e.getMessage(), e);
         }
     }
-
 }

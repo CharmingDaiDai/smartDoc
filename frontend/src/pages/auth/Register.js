@@ -1,28 +1,16 @@
-import React, { useState } from "react";
+import React, {useState} from "react";
+import {Alert, Button, Card, Checkbox, Col, Divider, Form, Input, message, Row, Typography,} from "antd";
 import {
-  Button,
-  Card,
-  Divider,
-  Form,
-  Input,
-  Typography,
-  Row,
-  Col,
-  Alert,
-  message,
-  Checkbox,
-} from "antd";
-import {
-  LockOutlined,
-  UserOutlined,
-  MailOutlined,
-  GithubOutlined,
-  WechatOutlined,
-  QqOutlined,
-  SafetyOutlined,
+    GithubOutlined,
+    LockOutlined,
+    MailOutlined,
+    QqOutlined,
+    SafetyOutlined,
+    UserOutlined,
+    WechatOutlined,
 } from "@ant-design/icons";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
+import {Link, useNavigate} from "react-router-dom";
+import {useAuth} from "../../context/AuthContext";
 import "../../styles/auth.css";
 
 const { Title, Text, Paragraph } = Typography;
@@ -37,13 +25,24 @@ const Register = () => {
     setLoading(true);
     setError("");
     try {
-      const success = await register(values);
+      // 确保传递正确的注册数据给register函数
+      const userData = {
+        username: values.username,
+        email: values.email,
+        password: values.password,
+        // 移除确认密码字段，后端API不需要
+        // confirmPassword: values.confirmPassword
+      };
+      
+      const success = await register(userData);
       if (success) {
+        message.success('注册成功！');
         navigate("/dashboard");
       } else {
         setError("注册失败，请稍后重试");
       }
     } catch (err) {
+      console.error('注册错误:', err);
       setError("注册时发生错误，请稍后再试");
     } finally {
       setLoading(false);

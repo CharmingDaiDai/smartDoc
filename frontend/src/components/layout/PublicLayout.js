@@ -1,8 +1,8 @@
 import React from 'react';
-import { Layout, Button, Space, Avatar, Dropdown } from 'antd';
-import { UserOutlined, LoginOutlined, LogoutOutlined } from '@ant-design/icons';
-import { Link, Outlet, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import {Avatar, Button, Dropdown, Layout, Space} from 'antd';
+import {LoginOutlined, LogoutOutlined, UserOutlined} from '@ant-design/icons';
+import {Outlet, useNavigate} from 'react-router-dom';
+import {useAuth} from '../../context/AuthContext';
 import './layout-styles.css';
 
 const { Content, Footer } = Layout;

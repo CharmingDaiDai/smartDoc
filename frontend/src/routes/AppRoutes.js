@@ -5,6 +5,7 @@ import PublicLayout from '../components/layout/PublicLayout';
 import HomePage from '../pages/HomePage';
 import Login from '../pages/auth/Login';
 import Register from '../pages/auth/Register';
+import GitHubCallback from '../pages/auth/callback/GitHubCallback';
 import Dashboard from '../pages/dashboard/Dashboard';
 import SummaryAnalysis from '../pages/analysis/SummaryAnalysis';
 import KeywordsAnalysis from '../pages/analysis/KeywordsAnalysis';
@@ -23,6 +24,7 @@ const AppRoutes = () => {
         <Route index element={<HomePage />} />
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
+        <Route path="auth/callback/github" element={<GitHubCallback />} />
       </Route>
       
       {/* 保护的路由 - 需要认证 */}

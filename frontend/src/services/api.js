@@ -2,6 +2,7 @@ import axios from 'axios';
 import {message} from 'antd';
 
 const BASE_URL = 'http://localhost:8080';
+// const BASE_URL = 'http://3s62k66540.51vip.biz:59292';
 
 // 创建一个axios实例
 const api = axios.create({
@@ -70,10 +71,22 @@ api.interceptors.response.use(
       const apiError = errorResponse.data;
       if (apiError.code && apiError.message) {
         message.error(apiError.message);
+      } else if (apiError.message) {
+        // 处理只有message没有code的情况
+        message.error(apiError.message);
+      } else if (typeof apiError === 'string') {
+        // 处理纯字符串错误消息
+        message.error(apiError);
+      } else {
+        // 处理其他情况
+        message.error(`请求失败: ${errorResponse.status}`);
       }
     } else if (error.message) {
       // 其他错误消息
       message.error(error.message);
+    } else {
+      // 未知错误
+      message.error('网络请求失败，请稍后再试');
     }
 
     const originalRequest = error.config;
@@ -142,6 +155,10 @@ export const authAPI = {
   login: (credentials) => api.post('/api/auth/login', credentials),
   register: (userData) => api.post('/api/auth/register', userData),
   refreshToken: (refreshData) => api.post('/api/auth/refresh-token', refreshData),
+  // 添加GitHub登录API
+  githubLogin: () => api.post('/api/auth/login/github'),
+  // 使用授权码交换token - 使用POST请求方式，将code作为查询参数传递
+  exchangeAuthCode: (code) => api.post(`/api/auth/exchange-token?code=${encodeURIComponent(code)}`),
 };
 
 // 仪表盘相关API

@@ -1,15 +1,15 @@
 package com.mtmn.smartdoc.controller;
 
 import com.mtmn.smartdoc.common.ApiResponse;
-import com.mtmn.smartdoc.vo.KeywordsResult;
-import com.mtmn.smartdoc.vo.PolishResult;
-import com.mtmn.smartdoc.vo.SecurityResult;
-import com.mtmn.smartdoc.vo.SummaryResult;
 import com.mtmn.smartdoc.po.Document;
 import com.mtmn.smartdoc.po.User;
 import com.mtmn.smartdoc.repository.DocumentRepository;
 import com.mtmn.smartdoc.service.AnalysisService;
 import com.mtmn.smartdoc.service.UserActivityService;
+import com.mtmn.smartdoc.vo.KeywordsResult;
+import com.mtmn.smartdoc.vo.PolishResult;
+import com.mtmn.smartdoc.vo.SecurityResult;
+import com.mtmn.smartdoc.vo.SummaryResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

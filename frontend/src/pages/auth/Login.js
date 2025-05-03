@@ -1,27 +1,10 @@
-import React, { useState } from 'react';
-import { 
-  Button, 
-  Card, 
-  Divider, 
-  Form, 
-  Input, 
-  Typography, 
-  Row, 
-  Col, 
-  Alert,
-  message,
-  Space 
-} from 'antd';
-import { 
-  LockOutlined, 
-  UserOutlined, 
-  GithubOutlined,
-  WechatOutlined,
-  QqOutlined
-} from '@ant-design/icons';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
+import React, {useState} from 'react';
+import {Alert, Button, Card, Col, Divider, Form, Input, message, Row, Typography} from 'antd';
+import {GithubOutlined, LockOutlined, QqOutlined, UserOutlined, WechatOutlined} from '@ant-design/icons';
+import {Link, useNavigate} from 'react-router-dom';
+import {useAuth} from '../../context/AuthContext';
 import '../../styles/auth.css';
+import {authAPI} from '../../services/api';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -35,22 +18,49 @@ const Login = () => {
     setLoading(true);
     setError('');
     try {
-      const success = await login(values);
+      // 调用认证上下文中的login函数，该函数会调用authAPI
+      const success = await login({
+        username: values.username,
+        password: values.password
+      });
+      
       if (success) {
+        message.success('登录成功！');
         navigate('/dashboard');
       } else {
         setError('登录失败，请检查用户名和密码');
       }
     } catch (err) {
+      console.error('登录错误:', err);
       setError('登录时发生错误，请稍后再试');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSocialLogin = (platform) => {
-    message.info(`正在使用${platform}登录，此功能正在开发中...`);
-    // 实际调用第三方登录API的代码会在这里
+  const handleSocialLogin = async (platform) => {
+    if (platform === 'GitHub') {
+      try {
+        setLoading(true);
+        // 使用authAPI调用GitHub登录接口
+        const response = await authAPI.githubLogin();
+        
+        if (response && response.data) {
+          // 跳转到GitHub授权页面
+          window.location.href = response.data;
+        } else {
+          message.error('获取GitHub授权链接失败');
+        }
+      } catch (error) {
+        console.error('GitHub登录请求失败:', error);
+        message.error('GitHub登录请求失败，请稍后再试');
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      message.info(`正在使用${platform}登录，此功能正在开发中...`);
+      // 实际调用第三方登录API的代码会在这里
+    }
   };
 
   return (

@@ -1,12 +1,35 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState} from 'react';
 import {
-  Alert, Button, Card, Input, message, Modal, Radio, Space, Spin, Tabs, Tooltip, Typography,
-  Row, Col, Avatar, Divider, Badge, Skeleton
+    Alert,
+    Avatar,
+    Badge,
+    Button,
+    Card,
+    Col,
+    Input,
+    message,
+    Modal,
+    Radio,
+    Row,
+    Skeleton,
+    Space,
+    Spin,
+    Tabs,
+    Tooltip,
+    Typography
 } from 'antd';
 import {
-  CopyOutlined, DiffOutlined, FileTextOutlined, FormOutlined,
-  InfoCircleOutlined, CheckCircleOutlined, EditOutlined, LoadingOutlined,
-  CommentOutlined, SwitcherOutlined, ReadOutlined
+    CheckCircleOutlined,
+    CommentOutlined,
+    CopyOutlined,
+    DiffOutlined,
+    EditOutlined,
+    FileTextOutlined,
+    FormOutlined,
+    InfoCircleOutlined,
+    LoadingOutlined,
+    ReadOutlined,
+    SwitcherOutlined
 } from '@ant-design/icons';
 import {documentAPI} from '../../services/api';
 import DocumentSelector from '../../components/analysis/DocumentSelector';

@@ -34,7 +34,7 @@ public class User implements UserDetails {
     @Column(nullable = false)
     private String password;
 
-    @Column(nullable = false, unique = true)
+    @Column(unique = true)
     private String email;
 
     @Column(name = "full_name")
@@ -45,6 +45,9 @@ public class User implements UserDetails {
 
     @Column(nullable = false)
     private boolean vip;
+    
+    @Column(name = "github_id", unique = true)
+    private String githubId;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

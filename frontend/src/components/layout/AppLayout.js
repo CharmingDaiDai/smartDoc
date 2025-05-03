@@ -1,20 +1,17 @@
-import React, {useState, useEffect} from 'react';
-import {
-  Avatar, Badge, Dropdown, Layout, Menu, theme, Typography, 
-  Button, Divider, Space, Tooltip
-} from 'antd';
+import React, {useEffect, useState} from 'react';
+import {Avatar, Badge, Button, Divider, Dropdown, Layout, Menu, Space, theme, Tooltip, Typography} from 'antd';
 import {
     AppstoreOutlined,
+    BellOutlined,
     CrownOutlined,
     DashboardOutlined,
     FileTextOutlined,
     LogoutOutlined,
     MenuFoldOutlined,
     MenuUnfoldOutlined,
-    UserOutlined,
-    BellOutlined,
+    QuestionCircleOutlined,
     SettingOutlined,
-    QuestionCircleOutlined
+    UserOutlined
 } from '@ant-design/icons';
 import {Outlet, useLocation, useNavigate} from 'react-router-dom';
 import {useAuth} from '../../context/AuthContext';
