@@ -93,7 +93,7 @@ export const AuthProvider = ({ children }) => {
                   ...prev,
                   avatarUrl: profileResponse.data.avatarUrl,
                   email: profileResponse.data.email,
-                  fullName: profileResponse.data.fullName
+                  // fullName: profileResponse.data.fullName
                 }));
               }
             } catch (profileError) {

@@ -58,7 +58,7 @@ public class UserService {
         }
         
         user.setEmail(request.getEmail());
-        user.setFullName(request.getFullName());
+        // user.setFullName(request.getFullName());
         
         User updatedUser = userRepository.save(user);
         return convertToDTO(updatedUser);
@@ -143,7 +143,7 @@ public class UserService {
                 .id(user.getId())
                 .username(user.getUsername())
                 .email(user.getEmail())
-                .fullName(user.getFullName())
+                // .fullName(user.getFullName())
                 .vip(user.isVip())
                 .build();
         

@@ -67,7 +67,7 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         var user = User.builder()
                 .username(request.getUsername())
                 .email(request.getEmail())
-                .fullName(request.getFullName())
+                // .fullName(request.getFullName())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .vip(false)
                 .createdAt(LocalDateTime.now())

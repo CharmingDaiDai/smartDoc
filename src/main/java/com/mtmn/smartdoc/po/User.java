@@ -37,8 +37,8 @@ public class User implements UserDetails {
     @Column(unique = true)
     private String email;
 
-    @Column(name = "full_name")
-    private String fullName;
+    // @Column(name = "full_name")
+    // private String fullName;
     
     @Column(name = "avatar_path")
     private String avatarPath;

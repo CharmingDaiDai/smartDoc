@@ -17,7 +17,7 @@ public class UserProfileDto {
     private Long id;
     private String username;
     private String email;
-    private String fullName;
+    // private String fullName;
     private boolean vip;
     private String avatarUrl;
 }

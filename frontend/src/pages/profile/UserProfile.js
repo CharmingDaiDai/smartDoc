@@ -26,7 +26,7 @@ const UserProfile = () => {
       // 设置表单初始值
       profileForm.setFieldsValue({
         email: response.data.email,
-        fullName: response.data.fullName
+        // fullName: response.data.fullName
       });
     } catch (error) {
       console.error('获取用户资料失败:', error);
@@ -154,7 +154,7 @@ const UserProfile = () => {
                   </div>
                   
                   <Typography.Title level={4}>
-                    {userProfile?.fullName || currentUser?.username}
+                    {currentUser?.username}
                   </Typography.Title>
                   
                   <Text type="secondary">
@@ -187,7 +187,7 @@ const UserProfile = () => {
                     onFinish={handleUpdateProfile}
                     initialValues={{
                       email: userProfile?.email,
-                      fullName: userProfile?.fullName
+                      // fullName: userProfile?.fullName
                     }}
                   >
                     <Form.Item
@@ -216,18 +216,7 @@ const UserProfile = () => {
                       />
                     </Form.Item>
                     
-                    <Form.Item
-                      name="fullName"
-                      label="全名"
-                      rules={[
-                        { required: true, message: '请输入全名!' }
-                      ]}
-                    >
-                      <Input 
-                        prefix={<IdcardOutlined />}
-                        placeholder="全名"
-                      />
-                    </Form.Item>
+
                     
                     <Form.Item>
                       <Button
