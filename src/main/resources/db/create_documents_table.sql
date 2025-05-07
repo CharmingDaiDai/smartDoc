@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS `documents` (
   `keywords` varchar(500) DEFAULT NULL,
   `sensitive_info` TEXT DEFAULT NULL,
   `categories` varchar(500) DEFAULT NULL,
+  `indexed` TINYINT(1) DEFAULT NULL,
   `user_id` bigint(20) DEFAULT NULL,
   `knowledge_base_id` bigint(20) DEFAULT NULL COMMENT '所属知识库ID',
   `created_at` datetime DEFAULT NULL,

@@ -109,7 +109,8 @@ public class ModelConfig {
         private String baseUrl;
         private String modelName;
         private String modelId;  // 添加模型ID字段
-        
+        private String description;
+
         /**
          * 获取模型ID
          * @return 模型ID，如果未设置则返回模型名称

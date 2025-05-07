@@ -37,4 +37,9 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
      * 检查文档是否属于特定用户
      */
     boolean existsByIdAndUser(Long id, User user);
+    
+    /**
+     * 根据知识库ID查询所有文档（按创建时间降序）
+     */
+    List<Document> findByKnowledgeBaseIdOrderByCreatedAtDesc(Long knowledgeBaseId);
 }

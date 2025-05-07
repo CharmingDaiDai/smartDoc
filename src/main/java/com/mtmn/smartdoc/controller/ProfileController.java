@@ -9,7 +9,7 @@ import com.mtmn.smartdoc.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -19,7 +19,7 @@ import org.springframework.web.multipart.MultipartFile;
  * 用户个人资料控制器
  * @author charmingdaidai
  */
-@Slf4j
+@Log4j2
 @RestController
 @RequestMapping("/api/profile")
 @RequiredArgsConstructor

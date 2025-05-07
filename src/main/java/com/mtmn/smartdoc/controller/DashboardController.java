@@ -7,6 +7,7 @@ import com.mtmn.smartdoc.service.DashboardService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -22,6 +23,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("/api/dashboard")
 @Tag(name = "仪表盘接口", description = "提供仪表盘数据统计和用户活动记录")
+@Log4j2
 public class DashboardController {
 
     private final DashboardService dashboardService;

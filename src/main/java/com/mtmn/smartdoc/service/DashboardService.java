@@ -8,7 +8,7 @@ import com.mtmn.smartdoc.repository.DocumentRepository;
 import com.mtmn.smartdoc.repository.UserActivityRepository;
 import com.mtmn.smartdoc.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -23,7 +23,7 @@ import java.util.stream.Collectors;
 /**
  * @author charmingdaidai
  */
-@Slf4j
+@Log4j2
 @Service
 @RequiredArgsConstructor
 public class DashboardService {

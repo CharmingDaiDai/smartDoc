@@ -10,10 +10,8 @@ import com.mtmn.smartdoc.vo.AuthenticationResponse;
 import com.mtmn.smartdoc.vo.GitHubUserInfoResponse;
 import com.mtmn.smartdoc.vo.RegisterRequest;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.context.annotation.Bean;
 import org.springframework.http.*;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.DisabledException;
@@ -26,10 +24,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
-
-import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -38,7 +33,7 @@ import java.util.UUID;
  */
 @Service
 @RequiredArgsConstructor
-@Slf4j
+@Log4j2
 public class AuthenticationServiceImpl implements AuthenticationService {
 
     @Value("${spring.security.oauth2.client.github.client-id}")

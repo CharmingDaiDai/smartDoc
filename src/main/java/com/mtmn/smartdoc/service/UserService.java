@@ -6,7 +6,7 @@ import com.mtmn.smartdoc.dto.UserProfileDto;
 import com.mtmn.smartdoc.po.User;
 import com.mtmn.smartdoc.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -17,7 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
  * 用户服务
  * @author charmingdaidai
  */
-@Slf4j
+@Log4j2
 @Service
 @RequiredArgsConstructor
 public class UserService {

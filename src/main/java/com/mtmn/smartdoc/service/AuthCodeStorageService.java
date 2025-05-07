@@ -1,7 +1,7 @@
 package com.mtmn.smartdoc.service;
 
 import com.mtmn.smartdoc.vo.AuthenticationResponse;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author charmingdaidai
  */
 @Service
-@Slf4j
+@Log4j2
 // TODO 换成 Redis
 public class AuthCodeStorageService {
     

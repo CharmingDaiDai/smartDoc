@@ -2,7 +2,6 @@ package com.mtmn.smartdoc.controller;
 
 import com.mtmn.smartdoc.common.ApiResponse;
 import com.mtmn.smartdoc.dto.AuthenticationRequest;
-import com.mtmn.smartdoc.dto.TokenRefreshRequest;
 import com.mtmn.smartdoc.service.AuthCodeStorageService;
 import com.mtmn.smartdoc.service.AuthenticationService;
 import com.mtmn.smartdoc.vo.AuthenticationResponse;
@@ -11,7 +10,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
@@ -24,7 +23,7 @@ import java.util.UUID;
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 @Tag(name = "认证", description = "用户认证和注册接口")
-@Slf4j
+@Log4j2
 public class AuthController {
 
     private final AuthenticationService authenticationService;

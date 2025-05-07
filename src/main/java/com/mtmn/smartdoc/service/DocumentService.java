@@ -4,7 +4,7 @@ import com.mtmn.smartdoc.po.Document;
 import com.mtmn.smartdoc.po.User;
 import com.mtmn.smartdoc.repository.DocumentRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -15,7 +15,7 @@ import java.util.Optional;
 /**
  * @author charmingdaidai
  */
-@Slf4j
+@Log4j2
 @Service
 @RequiredArgsConstructor
 public class DocumentService {
@@ -42,7 +42,7 @@ public class DocumentService {
      * @return 文档对象
      */
     @Transactional
-    public Document uploadDocument(MultipartFile file, String title, User user) {
+    public Document uploadDocument(MultipartFile file, String title, User user, Long kid) {
         String originalFilename = file.getOriginalFilename();
         String fileType = file.getContentType();
         long fileSize = file.getSize();
@@ -58,6 +58,8 @@ public class DocumentService {
                 .fileSize(fileSize)
                 .filePath(filePath)
                 .user(user)
+                .knowledgeBaseId(kid)
+                .indexed(false)
                 .build();
         
         return documentRepository.save(document);
@@ -162,5 +164,15 @@ public class DocumentService {
         
         Document document = documentOpt.get();
         return minioService.getFileUrl(document.getFilePath());
+    }
+
+    /**
+     * 根据知识库ID获取文档列表
+     * 
+     * @param knowledgeBaseId 知识库ID
+     * @return 文档列表
+     */
+    public List<Document> getDocumentsByKnowledgeBaseId(Long knowledgeBaseId) {
+        return documentRepository.findByKnowledgeBaseIdOrderByCreatedAtDesc(knowledgeBaseId);
     }
 }

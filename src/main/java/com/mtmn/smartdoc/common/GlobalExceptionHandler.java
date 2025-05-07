@@ -1,7 +1,7 @@
 package com.mtmn.smartdoc.common;
 
 import jakarta.validation.ConstraintViolationException;
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
  * 全局异常处理器
  * @author charmingdaidai
  */
-@Slf4j
+@Log4j2
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     

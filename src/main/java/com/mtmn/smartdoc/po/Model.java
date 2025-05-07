@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 
 /**
+ * 用户定义的AI模型实体类
  * @author charmingdaidai
  */
 @Data
@@ -16,54 +17,32 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
-@Table(name = "documents")
-public class Document {
+@Table(name = "models")
+public class Model {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String title;
-
-    @Column(nullable = false)
-    private String fileName;
-
-    @Column(nullable = false)
-    private String fileType;
-
-    @Column(nullable = false)
-    private Long fileSize;
-
-    @Column(nullable = false)
-    private String filePath;
-
-    @Column(length = 1000)
-    private String summary;
-
-    @Column(length = 500)
-    private String keywords;
-
-    @Column(columnDefinition = "TEXT")
-    private String sensitiveInfo;
-
-    @Column(length = 500)
-    private String categories;
-
-    @Column(name = "knowledge_base_id")
-    private Long knowledgeBaseId;
-
-    @Column(name = "indexed")
-    private Boolean indexed;
-
-    // 修改 user 字段的 nullable 属性
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = true)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
-
+    
+    @Column(name = "model_type", nullable = false, length = 20)
+    private String modelType;
+    
+    @Column(name = "base_url", nullable = false)
+    private String baseUrl;
+    
+    @Column(name = "api_key", nullable = false)
+    private String apiKey;
+    
+    @Column(name = "model_name", nullable = false, length = 100)
+    private String modelName;
+    
     @Column(name = "created_at")
     private LocalDateTime createdAt;
-
+    
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
