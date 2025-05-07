@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { message, Spin } from 'antd';
-import { useAuth } from '../../../context/AuthContext';
-import { authAPI } from '../../../services/api';
+import React, {useEffect, useState} from 'react';
+import {useLocation, useNavigate} from 'react-router-dom';
+import {message, Spin} from 'antd';
+import {useAuth} from '../../../context/AuthContext';
+import {authAPI} from '../../../services/api';
 
 /**
  * GitHub登录回调处理组件

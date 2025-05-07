@@ -14,6 +14,9 @@ import SecurityAnalysis from '../pages/analysis/SecurityAnalysis';
 import DocumentManagement from '../pages/documents/DocumentManagement';
 import UserProfile from '../pages/profile/UserProfile';
 import VipMembership from '../pages/vip/VipMembership';
+import KnowledgeBaseManagement from '../pages/knowledge_base/KnowledgeBaseManagement';
+import RAGChat from '../pages/knowledge_base/RAGChat';
+import KnowledgeBaseDocuments from '../pages/knowledge_base/docs/KnowledgeBaseDocuments';
 import ProtectedRoute from '../components/ProtectedRoute';
 
 const AppRoutes = () => {
@@ -37,6 +40,15 @@ const AppRoutes = () => {
         
         {/* 文档管理路由 */}
         <Route path="documents" element={<DocumentManagement />} />
+        
+        {/* 知识库相关路由 */}
+        <Route path="knowledge_base">
+          <Route index element={<KnowledgeBaseManagement />} />
+          <Route path="rag" element={<RAGChat />} /> {/* 添加默认的知识库问答路由 */}
+          <Route path="rag/:id" element={<RAGChat />} />
+          {/* 添加知识库文档管理路由 */}
+          <Route path="docs/:id" element={<KnowledgeBaseDocuments />} />
+        </Route>
         
         {/* 文档分析相关路由 */}
         <Route path="analysis">

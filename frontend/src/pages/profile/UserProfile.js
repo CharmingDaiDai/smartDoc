@@ -1,6 +1,6 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import {Avatar, Button, Card, Col, Divider, Form, Input, message, Row, Spin, Tabs, Typography, Upload} from 'antd';
-import {IdcardOutlined, LockOutlined, MailOutlined, UploadOutlined, UserOutlined} from '@ant-design/icons';
+import {LockOutlined, MailOutlined, UploadOutlined, UserOutlined} from '@ant-design/icons';
 import {useAuth} from '../../context/AuthContext';
 import {profileAPI} from '../../services/api';
 

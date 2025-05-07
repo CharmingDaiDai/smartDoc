@@ -114,3 +114,39 @@ knife4j:
     enable-footer: false
     enable-footer-custom: true
     footer-custom-content: Copyright © 2025 智能文档系统 | CharmingDaiDai
+
+# RAG 方法
+rag:
+  # 默认使用的 RAG 方法
+  default-method: naive
+
+  # 普通的RAG方法
+  naive:
+    name: RAG
+    description: 普通的 RAG 方法
+    index:
+      chunkSize: 512
+      chunkOverlap: 100
+    search:
+      topK: 5
+
+  # HiSem 基础配置
+  hisem:
+    name: HiSem-RAG-Fast
+    description: 层级语义驱动的 RAG 方法（不构建树）
+    index:
+      chunkSize: 2048
+      anAbstract: false
+    search:
+      maxRes: 15
+
+  # 使用树结构的高级语义检索方法
+  hisemTree:
+    name: HiSem-RAG-Tree
+    description: 层级语义驱动的 RAG 方法（构建树）
+    index:
+      chunkSize: 2048
+      titleEnhance: true
+      anAbstract: true
+    search:
+      maxRes: 15

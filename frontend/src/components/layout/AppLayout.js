@@ -3,6 +3,7 @@ import {Avatar, Badge, Button, Divider, Dropdown, Layout, Menu, Space, theme, To
 import {
     AppstoreOutlined,
     BellOutlined,
+    BookOutlined,
     CrownOutlined,
     DashboardOutlined,
     FileTextOutlined,
@@ -178,6 +179,21 @@ const AppLayout = () => {
       label: '文档管理',
     },
     {
+      key: 'knowledge_base',
+      icon: <BookOutlined />,
+      label: '知识库',
+      children: [
+        {
+          key: '/knowledge_base',
+          label: '知识库管理',
+        },
+        {
+          key: '/knowledge_base/rag',
+          label: '知识库问答',
+        }
+      ],
+    },
+    {
       key: 'analysis',
       icon: <AppstoreOutlined />,
       label: '文档分析',
@@ -260,7 +276,7 @@ const AppLayout = () => {
             theme="light"
             mode="inline"
             selectedKeys={[location.pathname]}
-            defaultOpenKeys={['analysis', 'vip']}
+            defaultOpenKeys={['analysis', 'knowledge_base', 'vip']}
             items={sideMenuItems}
             onClick={({key}) => navigate(key)}
             className="sider-menu"

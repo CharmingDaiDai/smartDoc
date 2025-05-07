@@ -19,6 +19,13 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: ${JWT_ISSUER_URI:http://localhost:8080}
+      client:
+        github:
+          client-id: Ov23likkGTPTqjQuzHfV
+          client-secret: 4fa66252792406a6d2938166a1ae7980e8d745e0
+          redirectUri: http://localhost:8080/api/auth/callback/github
+#          redirectUri: http://localhost:8080/dashboard
+          scope: read:user,user:email
   servlet:
     multipart:
       max-file-size: 200MB
@@ -40,12 +47,14 @@ application:
       expiration: 86400000 # 一天
       refresh-token:
         expiration: 604800000 # 一周
+  database:
+    initialize: false # 控制是否在启动时初始化数据库表和测试数据
 
 # 模型配置
 models:
   # 当前激活的模型
-  active-llm: glm
-  active-embedding: bge-m3
+  activeLlm: glm
+  activeEmbedding: bge-m3
   
   # 大语言模型配置
   llm:
@@ -65,13 +74,51 @@ models:
   # 嵌入模型配置
   embedding:
     bge-m3:
+      description: 支持 8K 长度的输入
       api-key: notnull
       base-url: http://10.0.30.172:9997/v1/
       model-name: bge-m3
     openai:
+      description: OpenAI 的嵌入模型
       api-key: ${OPENAI_API_KEY:your-openai-api-key}
       base-url: https://api.openai.com/v1
       model-name: text-embedding-ada-002
+
+# RAG 方法
+rag:
+  # 默认使用的 RAG 方法
+  default-method: naive
+
+  # 普通的RAG方法
+  naive:
+    name: RAG
+    description: 普通的 RAG 方法
+    index:
+      chunkSize: 512
+      chunkOverlap: 100
+    search:
+      topK: 5
+
+  # HiSem 基础配置
+  hisem:
+    name: HiSem-RAG-Fast
+    description: 层级语义驱动的 RAG 方法（不构建树）
+    index:
+      chunkSize: 2048
+      anAbstract: false
+    search:
+      maxRes: 10
+
+  # 使用树结构的高级语义检索方法
+  hisemTree:
+    name: HiSem-RAG-Tree
+    description: 层级语义驱动的 RAG 方法（构建树）
+    index:
+      chunkSize: 2048
+      titleEnhance: true
+      anAbstract: true
+    search:
+      maxRes: 10
 
 # Milvus配置
 milvus:

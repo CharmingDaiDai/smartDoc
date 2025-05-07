@@ -217,4 +217,31 @@ export const profileAPI = {
   changePassword: (data) => api.put('/api/profile/password', data),
 };
 
+// RAG方法相关API
+export const ragMethodAPI = {
+  // 获取所有可用的RAG方法及其参数
+  getAllMethods: () => api.get('/api/kb/listMethods'),
+  
+  // 获取所有可用的嵌入模型
+  getEmbeddingModels: () => api.get('/api/kb/listEmbeddingModels'),
+  
+  // 获取特定RAG方法的详细信息
+  getMethodDetails: (methodId) => api.get(`/api/kb/listMethods`).then(response => {
+    if (response.data && response.data.data) {
+      // 从所有方法中找到指定ID的方法
+      const method = response.data.data.find(m => m.id === methodId);
+      if (method) {
+        return Promise.resolve({ data: method });
+      }
+    }
+    return Promise.reject(new Error('未找到指定的RAG方法'));
+  }),
+  
+  // 获取指定知识库使用的RAG方法
+  getMethodForKnowledgeBase: (kbId) => api.get(`/api/kb/${kbId}/rag-method`),
+
+  // 执行RAG查询
+  executeQuery: (payload) => api.post('/api/knowledge-base/query', payload)
+};
+
 export default api;
