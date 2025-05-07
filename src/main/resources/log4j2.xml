@@ -6,13 +6,13 @@
     </Properties>
     <Appenders>
         <Console name="Console" target="SYSTEM_OUT">
-            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <PatternLayout pattern="%highlight{${LOG_PATTERN}}{FATAL=red blink, ERROR=red, WARN=yellow bold, INFO=green, DEBUG=cyan, TRACE=white}"/>
         </Console>
 
         <RollingFile name="appLog"
                      fileName="${APP_LOG_ROOT}/application.log"
                      filePattern="${APP_LOG_ROOT}/application-%d{yyyy-MM-dd}-%i.log">
-            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <PatternLayout pattern="%highlight{${LOG_PATTERN}}{FATAL=red blink, ERROR=red, WARN=yellow bold, INFO=green, DEBUG=cyan, TRACE=white}"/>
             <Policies>
                 <SizeBasedTriggeringPolicy size="19500KB"/>
                 <TimeBasedTriggeringPolicy interval="1"/>
@@ -23,7 +23,7 @@
         <RollingFile name="errorLog"
                      fileName="${APP_LOG_ROOT}/error.log"
                      filePattern="${APP_LOG_ROOT}/error-%d{yyyy-MM-dd}-%i.log">
-            <PatternLayout pattern="${LOG_PATTERN}"/>
+            <PatternLayout pattern="%highlight{${LOG_PATTERN}}{FATAL=red blink, ERROR=red, WARN=yellow bold, INFO=green, DEBUG=cyan, TRACE=white}"/>
             <Policies>
                 <SizeBasedTriggeringPolicy size="19500KB"/>
                 <TimeBasedTriggeringPolicy interval="1"/>
