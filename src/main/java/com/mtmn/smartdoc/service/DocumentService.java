@@ -1,6 +1,6 @@
 package com.mtmn.smartdoc.service;
 
-import com.mtmn.smartdoc.po.Document;
+import com.mtmn.smartdoc.po.DocumentPO;
 import com.mtmn.smartdoc.po.User;
 import com.mtmn.smartdoc.repository.DocumentRepository;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +29,7 @@ public class DocumentService {
      * @param user 用户
      * @return 文档列表
      */
-    public List<Document> getUserDocuments(User user) {
+    public List<DocumentPO> getUserDocuments(User user) {
         return documentRepository.findByUserOrderByCreatedAtDesc(user);
     }
 
@@ -42,7 +42,7 @@ public class DocumentService {
      * @return 文档对象
      */
     @Transactional
-    public Document uploadDocument(MultipartFile file, String title, User user, Long kid) {
+    public DocumentPO uploadDocument(MultipartFile file, String title, User user, Long kid) {
         String originalFilename = file.getOriginalFilename();
         String fileType = file.getContentType();
         long fileSize = file.getSize();
@@ -51,7 +51,7 @@ public class DocumentService {
         String filePath = minioService.uploadFile(file, originalFilename);
         
         // 创建文档记录
-        Document document = Document.builder()
+        DocumentPO document = DocumentPO.builder()
                 .title(title)
                 .fileName(originalFilename)
                 .fileType(fileType)
@@ -80,12 +80,12 @@ public class DocumentService {
         }
         
         // 获取文档信息
-        Optional<Document> documentOpt = documentRepository.findById(documentId);
+        Optional<DocumentPO> documentOpt = documentRepository.findById(documentId);
         if (documentOpt.isEmpty()) {
             return false;
         }
         
-        Document document = documentOpt.get();
+        DocumentPO document = documentOpt.get();
         
         // 删除MinIO中的文件
         try {
@@ -127,8 +127,8 @@ public class DocumentService {
      * @param user 用户
      * @return 文档对象
      */
-    public Optional<Document> getDocumentById(Long documentId, User user) {
-        Optional<Document> documentOpt = documentRepository.findById(documentId);
+    public Optional<DocumentPO> getDocumentById(Long documentId, User user) {
+        Optional<DocumentPO> documentOpt = documentRepository.findById(documentId);
         
         // 验证文档是否属于该用户
         if (documentOpt.isPresent() && documentOpt.get().getUser().getId().equals(user.getId())) {
@@ -145,7 +145,7 @@ public class DocumentService {
      * @return 更新后的文档
      */
     @Transactional
-    public Document updateDocument(Document document) {
+    public DocumentPO updateDocument(DocumentPO document) {
         return documentRepository.save(document);
     }
     
@@ -157,12 +157,12 @@ public class DocumentService {
      * @return 文档URL
      */
     public String getDocumentUrl(Long documentId, User user) {
-        Optional<Document> documentOpt = getDocumentById(documentId, user);
+        Optional<DocumentPO> documentOpt = getDocumentById(documentId, user);
         if (documentOpt.isEmpty()) {
             return null;
         }
         
-        Document document = documentOpt.get();
+        DocumentPO document = documentOpt.get();
         return minioService.getFileUrl(document.getFilePath());
     }
 
@@ -172,7 +172,7 @@ public class DocumentService {
      * @param knowledgeBaseId 知识库ID
      * @return 文档列表
      */
-    public List<Document> getDocumentsByKnowledgeBaseId(Long knowledgeBaseId) {
+    public List<DocumentPO> getDocumentsByKnowledgeBaseId(Long knowledgeBaseId) {
         return documentRepository.findByKnowledgeBaseIdOrderByCreatedAtDesc(knowledgeBaseId);
     }
 }

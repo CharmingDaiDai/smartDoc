@@ -1,6 +1,6 @@
 package com.mtmn.smartdoc.repository;
 
-import com.mtmn.smartdoc.po.Document;
+import com.mtmn.smartdoc.po.DocumentPO;
 import com.mtmn.smartdoc.po.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -11,7 +11,7 @@ import java.util.List;
  * @author charmingdaidai
  */
 @Repository
-public interface DocumentRepository extends JpaRepository<Document, Long> {
+public interface DocumentRepository extends JpaRepository<DocumentPO, Long> {
     
     /**
      * 根据用户ID统计文档数量
@@ -26,12 +26,12 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
     /**
      * 根据用户查询所有文档（按创建时间降序）
      */
-    List<Document> findByUserOrderByCreatedAtDesc(User user);
+    List<DocumentPO> findByUserOrderByCreatedAtDesc(User user);
     
     /**
      * 根据用户ID查询所有文档（按创建时间降序）
      */
-    List<Document> findByUserIdOrderByCreatedAtDesc(Long userId);
+    List<DocumentPO> findByUserIdOrderByCreatedAtDesc(Long userId);
     
     /**
      * 检查文档是否属于特定用户
@@ -41,5 +41,5 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
     /**
      * 根据知识库ID查询所有文档（按创建时间降序）
      */
-    List<Document> findByKnowledgeBaseIdOrderByCreatedAtDesc(Long knowledgeBaseId);
+    List<DocumentPO> findByKnowledgeBaseIdOrderByCreatedAtDesc(Long knowledgeBaseId);
 }

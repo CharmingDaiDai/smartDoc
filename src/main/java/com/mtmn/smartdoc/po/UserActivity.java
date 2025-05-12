@@ -47,7 +47,7 @@ public class UserActivity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "document_id", insertable = false, updatable = false)
-    private Document document;
+    private DocumentPO document;
 
     /**
      * 活动类型枚举
