@@ -1,6 +1,6 @@
 package com.mtmn.smartdoc.service.impl;
 
-import com.mtmn.smartdoc.po.Document;
+import com.mtmn.smartdoc.po.DocumentPO;
 import com.mtmn.smartdoc.repository.DocumentRepository;
 import com.mtmn.smartdoc.service.AnalysisService;
 import com.mtmn.smartdoc.service.EmbeddingService;
@@ -177,7 +177,7 @@ public class AnalysisServiceImpl implements AnalysisService {
     @Transactional
     public SummaryResult generateSummaryFromDocument(Long documentId) {
         // 查找文档
-        Document document = documentRepository.findById(documentId)
+        DocumentPO document = documentRepository.findById(documentId)
                 .orElseThrow(() -> new EntityNotFoundException("文档不存在，ID: " + documentId));
         
         // 读取文档内容
@@ -264,7 +264,7 @@ public class AnalysisServiceImpl implements AnalysisService {
     @Transactional
     public KeywordsResult extractKeywordsFromDocument(Long documentId) {
         // 查找文档
-        Document document = documentRepository.findById(documentId)
+        DocumentPO document = documentRepository.findById(documentId)
                 .orElseThrow(() -> new EntityNotFoundException("文档不存在，ID: " + documentId));
         
         // 读取文档内容
@@ -369,7 +369,7 @@ public class AnalysisServiceImpl implements AnalysisService {
     @Transactional
     public PolishResult polishDocumentFromDocument(Long documentId, String polishType) {
         // 查找文档
-        Document document = documentRepository.findById(documentId)
+        DocumentPO document = documentRepository.findById(documentId)
                 .orElseThrow(() -> new EntityNotFoundException("文档不存在，ID: " + documentId));
         
         // 读取文档内容
@@ -516,7 +516,7 @@ public class AnalysisServiceImpl implements AnalysisService {
     @Transactional
     public SecurityResult detectSensitiveInfoFromDocument(Long documentId) {
         // 查找文档
-        Document document = documentRepository.findById(documentId)
+        DocumentPO document = documentRepository.findById(documentId)
                 .orElseThrow(() -> new EntityNotFoundException("文档不存在，ID: " + documentId));
         
         // 读取文档内容
@@ -544,7 +544,7 @@ public class AnalysisServiceImpl implements AnalysisService {
      * 读取文档内容
      * 从文件存储服务（如MinIO）中获取文件内容
      */
-    private String readDocumentContent(Document document) {
+    private String readDocumentContent(DocumentPO document) {
         if (document == null || document.getFilePath() == null) {
             log.warn("文档或文档路径为空，无法读取内容");
             return "";

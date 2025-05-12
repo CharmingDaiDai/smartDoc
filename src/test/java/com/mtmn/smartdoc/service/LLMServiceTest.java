@@ -1,6 +1,6 @@
 package com.mtmn.smartdoc.service;
 
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -22,7 +22,7 @@ public class LLMServiceTest {
     @Test
     public void testCreateChatModel() {
         // 安排
-        ChatLanguageModel chatModel = llmService.createChatModel();
+        ChatModel chatModel = llmService.createChatModel();
 
         assertNotNull(chatModel);
     }
@@ -34,7 +34,7 @@ public class LLMServiceTest {
     public void testGenerateSummary() {
         // 安排
         String text = "这是一段需要生成摘要的测试文本";
-        ChatLanguageModel chatModel = llmService.createChatModel();
+        ChatModel chatModel = llmService.createChatModel();
         
         String summary = llmService.generateSummary(text);
         
@@ -49,7 +49,7 @@ public class LLMServiceTest {
         // 安排
         String question = "测试问题";
         String context = "测试上下文";
-        ChatLanguageModel chatModel = llmService.createChatModel();
+        ChatModel chatModel = llmService.createChatModel();
         
         String answer = llmService.answerQuestion(question, context);
         

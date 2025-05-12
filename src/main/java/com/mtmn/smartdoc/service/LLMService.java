@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mtmn.smartdoc.config.ModelConfig;
 import com.mtmn.smartdoc.vo.SecurityResult;
-import dev.langchain4j.model.chat.ChatLanguageModel;
+import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -29,14 +29,14 @@ public class LLMService {
 
     private final ModelConfig modelConfig;
     // 缓存已创建的模型实例，避免重复创建
-    private final Map<String, ChatLanguageModel> modelCache = new ConcurrentHashMap<>();
+    private final Map<String, ChatModel> modelCache = new ConcurrentHashMap<>();
     // 创建ObjectMapper实例用于JSON处理
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     /**
      * 创建聊天语言模型 - 使用当前激活的模型配置
      */
-    public ChatLanguageModel createChatModel() {
+    public ChatModel createChatModel() {
         return createChatModel(modelConfig.getActiveLlm());
     }
 
@@ -46,7 +46,7 @@ public class LLMService {
      * @param modelId 模型ID，如果为null则使用当前激活的模型
      * @return 对应的聊天语言模型实例
      */
-    public ChatLanguageModel createChatModel(String modelId) {
+    public ChatModel createChatModel(String modelId) {
         // 如果未指定modelId，使用当前激活的模型
         String targetModelId = modelId == null ?
                 modelConfig.getActiveLlm() :
@@ -114,7 +114,7 @@ public class LLMService {
      */
     public String generateSummary(String text, String modelId) {
         log.info("生成文本摘要，使用模型：{}", modelId == null ? "默认" : modelId);
-        ChatLanguageModel model = createChatModel(modelId);
+        ChatModel model = createChatModel(modelId);
 
         String prompt = String.format(
                 "请为以下文本生成一个简洁、准确的摘要：%n%n%s",
@@ -131,7 +131,7 @@ public class LLMService {
 
     public List<String> extractKeywords(String text, String modelId) {
         log.info("提取关键词，使用模型：{}", modelId == null ? "默认" : modelId);
-        ChatLanguageModel model = createChatModel(modelId);
+        ChatModel model = createChatModel(modelId);
 
         // 构造 Prompt（严格返回 {"keywords":[…]}）
         String prompt = String.format(
@@ -192,7 +192,7 @@ public class LLMService {
 
     public String polishDocument(String text, String polishType, String modelId) {
         log.info("润色文档，类型：{}，使用模型：{}", polishType, modelId == null ? "默认" : modelId);
-        ChatLanguageModel model = createChatModel(modelId);
+        ChatModel model = createChatModel(modelId);
 
         // 根据不同的润色类型构造不同的提示词
         String prompt = switch (polishType) {
@@ -227,7 +227,7 @@ public class LLMService {
 
     public List<SecurityResult.SensitiveInfo> detectSensitiveInfo(String text, String modelId) {
         log.info("检测敏感信息，使用模型：{}", modelId == null ? "默认" : modelId);
-        ChatLanguageModel model = createChatModel(modelId);
+        ChatModel model = createChatModel(modelId);
 
         String prompt = String.format(
                 """
@@ -358,7 +358,7 @@ public class LLMService {
      */
     public String answerQuestion(String question, String context, String modelId) {
         log.info("根据上下文回答问题，使用模型：{}", modelId == null ? "默认" : modelId);
-        ChatLanguageModel model = createChatModel(modelId);
+        ChatModel model = createChatModel(modelId);
 
         String prompt = "请基于以下上下文回答问题。如果上下文中没有相关信息，请回答\"我没有足够的信息来回答这个问题。\"\n\n"
                 + "上下文：{{context}}\n\n"
@@ -384,7 +384,7 @@ public class LLMService {
      */
     public String executePrompt(String promptTemplate, Map<String, Object> variables, String modelId) {
         log.info("执行自定义提示词，使用模型：{}", modelId == null ? "默认" : modelId);
-        ChatLanguageModel model = createChatModel(modelId);
+        ChatModel model = createChatModel(modelId);
 
         return model.chat(promptTemplate);
     }
