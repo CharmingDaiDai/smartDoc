@@ -54,18 +54,19 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public String readPdfContent(InputStream inputStream) {
-        try (PDDocument document = PDDocument.load(inputStream)) {
-            PDFTextStripper stripper = new PDFTextStripper();
-            // 设置提取顺序为由上到下，由左到右
-            stripper.setSortByPosition(true);
-            // 提取文本
-            String content = stripper.getText(document);
-            log.debug("成功提取PDF文件内容，长度：{}", content.length());
-            return content;
-        } catch (IOException e) {
-            log.error("读取PDF文件内容出错：{}", e.getMessage(), e);
-            return "读取PDF文件内容出错：" + e.getMessage();
-        }
+        return null;
+//        try (PDDocument document = PDDocument.load(inputStream)) {
+//            PDFTextStripper stripper = new PDFTextStripper();
+//            // 设置提取顺序为由上到下，由左到右
+//            stripper.setSortByPosition(true);
+//            // 提取文本
+//            String content = stripper.getText(document);
+//            log.debug("成功提取PDF文件内容，长度：{}", content.length());
+//            return content;
+//        } catch (IOException e) {
+//            log.error("读取PDF文件内容出错：{}", e.getMessage(), e);
+//            return "读取PDF文件内容出错：" + e.getMessage();
+//        }
     }
 
     @Override

@@ -1,24 +1,51 @@
 package com.mtmn.smartdoc.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mtmn.smartdoc.common.ApacheTikaDocumentParser;
 import com.mtmn.smartdoc.common.ApiResponse;
-import com.mtmn.smartdoc.config.ModelConfig;
-import com.mtmn.smartdoc.config.RagConfig;
+import com.mtmn.smartdoc.config.*;
 import com.mtmn.smartdoc.dto.CreateKBRequest;
 import com.mtmn.smartdoc.dto.KnowledgeBaseDTO;
-import com.mtmn.smartdoc.po.Document;
+import com.mtmn.smartdoc.po.DocumentPO;
 import com.mtmn.smartdoc.po.KnowledgeBase;
 import com.mtmn.smartdoc.po.User;
 import com.mtmn.smartdoc.repository.DocumentRepository;
 import com.mtmn.smartdoc.repository.KnowledgeBaseRepository;
 import com.mtmn.smartdoc.service.DocumentService;
+import com.mtmn.smartdoc.service.EmbeddingService;
 import com.mtmn.smartdoc.service.KnowledgeBaseService;
+import com.mtmn.smartdoc.service.MinioService;
 import com.mtmn.smartdoc.vo.DocumentVO;
+import dev.langchain4j.data.embedding.Embedding;
+import dev.langchain4j.data.segment.TextSegment;
+import dev.langchain4j.data.document.Document;
+import dev.langchain4j.data.document.DocumentSplitter;
+import dev.langchain4j.data.document.splitter.DocumentSplitters;
+import dev.langchain4j.model.embedding.EmbeddingModel;
+
+import java.io.InputStream;
+
+import dev.langchain4j.rag.content.Content;
+import dev.langchain4j.rag.content.retriever.ContentRetriever;
+import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
+import dev.langchain4j.rag.query.Query;
+import dev.langchain4j.store.embedding.EmbeddingStore;
+import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
+import dev.langchain4j.store.embedding.milvus.MilvusEmbeddingStore;
+import io.milvus.common.clientenum.ConsistencyLevelEnum;
+import io.milvus.param.IndexType;
+import io.milvus.param.MetricType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
@@ -37,10 +64,12 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
 
     private final KnowledgeBaseRepository knowledgeBaseRepository;
     private final DocumentRepository documentRepository;
-    private final RagConfig ragConfig;
     private final ModelConfig modelConfig;
     private final ObjectMapper objectMapper;
     private final DocumentService documentService;
+    private final EmbeddingService embeddingService;
+    //    private final MilvusService milvusService;
+    private final MinioService minioService;
 
     @Override
     public ApiResponse<List<KnowledgeBaseDTO>> listKnowledgeBase(User user) {
@@ -64,6 +93,15 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
         // 参数校验
         if (createKBRequest == null || !StringUtils.hasText(createKBRequest.getName())) {
             return ApiResponse.error("知识库名称不能为空");
+        }
+
+        // 查询用户是否有已经存在的同名称知识库
+        List<KnowledgeBase> existingKbs = knowledgeBaseRepository.findByUserOrderByCreatedAtDesc(user);
+        boolean nameExists = existingKbs.stream()
+                .anyMatch(kb -> kb.getName().equals(createKBRequest.getName().trim()));
+
+        if (nameExists) {
+            return ApiResponse.error("已存在同名知识库，请更换名称后重试");
         }
 
         try {
@@ -91,7 +129,6 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
     @Override
     @Transactional
     public ApiResponse<Boolean> deleteKnowledgeBase(Long knowledgeBaseId, User user) {
-        // TODO 知识库的索引也要删除
         log.info("删除知识库，ID：{}，用户：{}", knowledgeBaseId, user.getUsername());
 
         // 参数校验
@@ -125,6 +162,8 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
 
             // 删除知识库
             knowledgeBaseRepository.delete(knowledgeBase);
+
+            // TODO 知识库的索引也要删除
 
             log.info("知识库删除成功，ID：{}", knowledgeBaseId);
             return ApiResponse.success("知识库删除成功", true);
@@ -225,7 +264,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
             }
 
             // 获取知识库的文档列表
-            List<Document> documents = documentRepository.findByKnowledgeBaseIdOrderByCreatedAtDesc(knowledgeBaseId);
+            List<DocumentPO> documents = documentRepository.findByKnowledgeBaseIdOrderByCreatedAtDesc(knowledgeBaseId);
 
             // 将 Document 实体转换为 DocumentVO
             List<DocumentVO> documentVOs = documents.stream()
@@ -251,11 +290,13 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
     }
 
     /**
-     * @param id
-     * @param user
-     * @param files
-     * @param titles
-     * @return
+     * 批量向指定知识库添加文档
+     *
+     * @param id     知识库ID，字符串格式
+     * @param user   当前登录用户
+     * @param files  要上传的文件列表
+     * @param titles 与 files 数组一一对应的文档标题列表
+     * @return 每个布尔值表示对应文档的上传结果（true：成功，false：失败）
      */
     @Override
     public ApiResponse<List<Boolean>> addDocs(String id, User user, MultipartFile[] files, String[] titles) {
@@ -264,7 +305,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
         try {
             for (int i = 0; i < files.length; i++) {
                 if (!files[i].isEmpty()) {
-                    Document document = documentService.uploadDocument(files[i], titles[i], user, Long.valueOf(id));
+                    DocumentPO document = documentService.uploadDocument(files[i], titles[i], user, Long.valueOf(id));
 
                     if (null != document) {
                         uploaded.add(true);
@@ -283,7 +324,229 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
             log.error("Error batch uploading documents: {}", e.getMessage(), e);
             return ApiResponse.error("文档批量上传失败: " + e.getMessage());
         }
+    }
 
+    /**
+     * @param id
+     * @return
+     */
+    @Override
+    public ApiResponse<String> buildIndex(String id) {
+        /*
+        根据知识库 id 从知识库查询信息 embedding index
+        根据知识库 id 从文档库中查询知识库的文档（没有被索引的）
+        根据 embedding 模型和 rag 方法开始构建索引
+        获取文档内容，文档切分，向量库构建
+         */
+        Optional<KnowledgeBase> knowledgeBaseOpt = knowledgeBaseRepository.findById(Long.valueOf(id));
+
+        if (knowledgeBaseOpt.isEmpty()) {
+            return ApiResponse.error("知识库不存在");
+        }
+
+        KnowledgeBase knowledgeBase = knowledgeBaseOpt.get();
+
+        String kbName = knowledgeBase.getName();
+
+        String ragMethodName = knowledgeBase.getRag();
+
+        String embeddingModelName = knowledgeBase.getEmbeddingModel();
+
+        String indexParam = knowledgeBase.getIndexParam();
+
+        try {
+            // 使用 RagConfigFactory 创建 RAG 配置对象
+            BaseRagConfig ragConfig = RagConfigFactory.createRagConfig(ragMethodName, embeddingModelName, indexParam);
+
+            // 查询未被索引的文档
+            List<DocumentPO> documentPOList = documentRepository.findByKnowledgeBaseIdOrderByCreatedAtDesc(Long.valueOf(id))
+                    .stream()
+                    .filter(doc -> !Boolean.TRUE.equals(doc.getIndexed()))
+                    .toList();
+
+            if (documentPOList.isEmpty()) {
+                return ApiResponse.success("没有未被索引的文档");
+            }
+
+            List<Document> documents = new ArrayList<>();
+
+            ApacheTikaDocumentParser documentParser = new ApacheTikaDocumentParser();
+
+            for (DocumentPO documentPO : documentPOList) {
+                String filePath = documentPO.getFilePath();
+                String fileUrl = minioService.getFileUrl(filePath);
+
+                try (InputStream inputStream = minioService.getFileContent(filePath)) {
+                    // 使用Apache Tika解析器解析文档
+                    Document document = documentParser.parse(inputStream);
+                    documents.add(document);
+
+                    log.debug("成功从URL加载文档, 文档路径: {}", filePath);
+                } catch (Exception e) {
+                    log.error("解析文档失败: {}, 错误: {}", filePath, e.getMessage(), e);
+                }
+            }
+
+            List<Boolean> success = buildIndex(kbName, ragConfig, documents);
+
+            for (int i = 0; i < success.size(); i++) {
+                // TODO 没成功的现在没有提示
+                if (success.get(i)) {
+                    // 更新文档的索引状态
+                    DocumentPO documentPO = documentPOList.get(i);
+                    documentPO.setIndexed(true);
+                    documentRepository.save(documentPO);
+                }
+            }
+
+            return ApiResponse.success("索引构建成功：");
+        } catch (Exception e) {
+            log.error("索引构建失败", e);
+            return ApiResponse.error("索引构建失败：" + e.getMessage());
+        }
+    }
+
+    private List<Boolean> buildIndex(String kbName, BaseRagConfig ragConfig, List<Document> documents) {
+        String embeddingModelName = ragConfig.getEmbeddingModel();
+
+        // 创建Embedding模型
+        EmbeddingModel embeddingModel = embeddingService.createEmbeddingModel(embeddingModelName);
+        log.info("使用嵌入模型：{} 创建索引", embeddingModelName);
+
+        List<Boolean> success = new ArrayList<>();
+
+        try {
+            if (ragConfig instanceof NaiveRagConfig naiveConfig) {
+                // 获取配置参数
+                Integer chunkSize = naiveConfig.getChunkSize();
+                Integer chunkOverlap = naiveConfig.getChunkOverlap();
+
+                log.info("使用朴素RAG配置，块大小：{}，重叠大小：{}", chunkSize, chunkOverlap);
+
+                Long userId = getCurrentUserId();
+                if (null == userId) {
+                    throw new BadCredentialsException("请登录");
+                }
+
+                String collectionName = getStoreKnowledgeBaseName(kbName);
+
+                MilvusEmbeddingStore embeddingStore = MilvusEmbeddingStore.builder()
+                        .host("10.0.30.172")
+                        .port(19530)
+                        .databaseName(userId.toString())
+                        // Name of the collection 知识库名称 + userId
+                        .collectionName(collectionName)
+                        .dimension(embeddingModel.dimension())
+                        .indexType(IndexType.FLAT)
+                        .metricType(MetricType.COSINE)
+//                        .username("username")
+//                        .password("password")
+                        // Consistency level
+                        .consistencyLevel(ConsistencyLevelEnum.EVENTUALLY)
+                        .autoFlushOnInsert(true)
+                        .idFieldName("id")
+                        .textFieldName("text")
+                        .metadataFieldName("metadata")
+                        .vectorFieldName("vector")
+                        .build();
+
+                for (Document document : documents) {
+                    log.debug("处理文档，元数据：{}", document.metadata());
+
+                    if (document.text() != null && !document.text().isEmpty()) {
+                        log.debug("文档内容预览：{}", document.text().substring(0, Math.min(200, document.text().length())) + "...");
+
+                        // 使用配置的chunkSize和chunkOverlap进行文档切分
+                        DocumentSplitter splitter = DocumentSplitters.recursive(chunkSize, chunkOverlap);
+                        List<TextSegment> segments = splitter.split(document);
+
+                        log.info("文档已切分为{}个片段", segments.size());
+
+                        // 将文档片段转换为向量并存入向量库
+                        if (segments.isEmpty()) {
+                            log.warn("文档内容为空，跳过处理");
+                            continue;
+                        }
+
+                        List<Embedding> embeddings = embeddingModel.embedAll(segments).content();
+
+                        embeddingStore.addAll(embeddings, segments);
+
+//                        ContentRetriever contentRetriever = EmbeddingStoreContentRetriever.builder()
+//                                .embeddingStore(embeddingStore)
+//                                .embeddingModel(embeddingModel)
+//                                .maxResults(2)
+//                                .minScore(0.3)
+//                                .build();
+//
+//                        List<Content> contents = contentRetriever.retrieve(new Query("计算机工程"));
+//
+//                        log.debug(contents);
+
+                        success.add(true);
+
+                        continue;
+                    }
+
+                    success.add(false);
+                }
+
+                // TODO: 完成向量库参数构建和文档入向量库的操作
+
+            } else if (ragConfig instanceof HiSemRagConfig hiSemConfig) {
+                // 获取配置参数
+                Integer chunkSize = hiSemConfig.getChunkSize();
+                Boolean generateAbstract = hiSemConfig.getGenerateAbstract();
+
+                log.info("使用层次语义RAG配置，块大小：{}，生成摘要：{}", chunkSize, generateAbstract);
+
+                // 层次语义RAG处理示例
+                for (Document document : documents) {
+                    if (generateAbstract) {
+                        // 调用Embedding模型生成文档摘要
+                        String docText = document.text().substring(0, Math.min(1000, document.text().length()));
+                        float[] docEmbedding = embeddingModel.embed(docText).content().vector();
+                        log.debug("文档摘要向量维度: {}", docEmbedding.length);
+
+                        // TODO: 实现层次语义RAG的索引构建逻辑
+                    }
+                }
+            }
+
+            // 返回索引构建成功
+            return success;
+
+        } catch (Exception e) {
+            log.error("构建索引过程中发生错误: {}", e.getMessage(), e);
+            return success;
+        }
+    }
+
+    /**
+     * 获取当前登录用户的ID
+     *
+     * @return 当前登录用户ID
+     */
+    private Long getCurrentUserId() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated()) {
+            Object principal = authentication.getPrincipal();
+            if (principal instanceof User) {
+                return ((User) principal).getId();
+            } else if (principal instanceof UserDetails) {
+                // 如果是自定义的UserDetails实现，可能需要强制转换为您的User类
+                String username = ((UserDetails) principal).getUsername();
+                // 这里可以根据username查询用户ID，或者扩展UserDetails接口添加getId方法
+                log.warn("无法直接获取用户ID，仅获取到用户名: {}", username);
+                return null;
+            }
+        }
+        log.warn("未能获取到当前登录用户");
+        return null;
+    }
+
+    private String getStoreKnowledgeBaseName(String kbName) {
+        return kbName + "_" + getCurrentUserId();
     }
 
 }

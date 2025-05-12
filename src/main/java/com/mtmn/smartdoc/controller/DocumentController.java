@@ -2,7 +2,7 @@ package com.mtmn.smartdoc.controller;
 
 import com.mtmn.smartdoc.common.ApiResponse;
 import com.mtmn.smartdoc.dto.DocumentDto;
-import com.mtmn.smartdoc.po.Document;
+import com.mtmn.smartdoc.po.DocumentPO;
 import com.mtmn.smartdoc.po.User;
 import com.mtmn.smartdoc.po.UserActivity;
 import com.mtmn.smartdoc.service.DocumentService;
@@ -38,7 +38,7 @@ public class DocumentController {
     @GetMapping
     @Operation(summary = "获取用户文档列表", description = "获取当前用户的所有文档")
     public ApiResponse<List<DocumentDto>> getUserDocuments(@AuthenticationPrincipal User user) {
-        List<Document> documents = documentService.getUserDocuments(user);
+        List<DocumentPO> documents = documentService.getUserDocuments(user);
         List<DocumentDto> documentDtos = documents.stream()
                 .map(this::convertToDto)
                 .collect(Collectors.toList());
@@ -57,7 +57,7 @@ public class DocumentController {
         }
         
         try {
-            Document document = documentService.uploadDocument(file, title, user, null);
+            DocumentPO document = documentService.uploadDocument(file, title, user, null);
             
             // 记录文档上传活动
             userActivityService.recordActivity(
@@ -91,7 +91,7 @@ public class DocumentController {
         try {
             for (int i = 0; i < files.length; i++) {
                 if (!files[i].isEmpty()) {
-                    Document document = documentService.uploadDocument(files[i], titles[i], user, null);
+                    DocumentPO document = documentService.uploadDocument(files[i], titles[i], user, null);
                     uploadedDocs.add(convertToDto(document));
                     
                     // 记录文档上传活动
@@ -119,9 +119,9 @@ public class DocumentController {
             @AuthenticationPrincipal User user) {
         
         // 先获取文档信息，以便记录活动
-        Optional<Document> documentOpt = documentService.getDocumentById(id, user);
+        Optional<DocumentPO> documentOpt = documentService.getDocumentById(id, user);
         if (documentOpt.isPresent()) {
-            Document document = documentOpt.get();
+            DocumentPO document = documentOpt.get();
             boolean deleted = documentService.deleteDocument(id, user);
             
             if (deleted) {
@@ -149,7 +149,7 @@ public class DocumentController {
             @AuthenticationPrincipal User user) {
         
         // 先获取所有要删除的文档信息
-        List<Document> documentsToDelete = new ArrayList<>();
+        List<DocumentPO> documentsToDelete = new ArrayList<>();
         for (Long docId : documentIds) {
             documentService.getDocumentById(docId, user).ifPresent(documentsToDelete::add);
         }
@@ -159,7 +159,7 @@ public class DocumentController {
         // 记录批量删除活动
         if (deletedCount > 0) {
             String docTitles = documentsToDelete.stream()
-                    .map(Document::getTitle)
+                    .map(DocumentPO::getTitle)
                     .collect(Collectors.joining(", "));
                     
             userActivityService.recordActivity(
@@ -181,9 +181,9 @@ public class DocumentController {
             @Parameter(description = "文档ID") @PathVariable Long id,
             @AuthenticationPrincipal User user) {
         
-        Optional<Document> documentOpt = documentService.getDocumentById(id, user);
+        Optional<DocumentPO> documentOpt = documentService.getDocumentById(id, user);
         if (documentOpt.isPresent()) {
-            Document document = documentOpt.get();
+            DocumentPO document = documentOpt.get();
             DocumentDto dto = convertToDto(document);
             
             // 获取文件访问URL
@@ -209,7 +209,7 @@ public class DocumentController {
     /**
      * 将Document实体转换为DocumentDto
      */
-    private DocumentDto convertToDto(Document document) {
+    private DocumentDto convertToDto(DocumentPO document) {
         return DocumentDto.builder()
                 .id(document.getId())
                 .title(document.getTitle())

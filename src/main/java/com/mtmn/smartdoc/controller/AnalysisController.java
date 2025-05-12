@@ -1,7 +1,7 @@
 package com.mtmn.smartdoc.controller;
 
 import com.mtmn.smartdoc.common.ApiResponse;
-import com.mtmn.smartdoc.po.Document;
+import com.mtmn.smartdoc.po.DocumentPO;
 import com.mtmn.smartdoc.po.User;
 import com.mtmn.smartdoc.repository.DocumentRepository;
 import com.mtmn.smartdoc.service.AnalysisService;
@@ -56,9 +56,9 @@ public class AnalysisController {
             SummaryResult summary = analysisService.generateSummaryFromDocument(documentId);
             
             // 获取文档信息并记录用户活动
-            Optional<Document> documentOpt = documentRepository.findById(documentId);
+            Optional<DocumentPO> documentOpt = documentRepository.findById(documentId);
             if (documentOpt.isPresent()) {
-                Document document = documentOpt.get();
+                DocumentPO document = documentOpt.get();
                 userActivityService.recordSummaryAnalysis(user.getId(), documentId, document.getTitle());
                 log.info("用户 {} 生成了文档 {} 的摘要", user.getUsername(), document.getTitle());
             }
@@ -99,9 +99,9 @@ public class AnalysisController {
             KeywordsResult keywords = analysisService.extractKeywordsFromDocument(documentId);
             
             // 获取文档信息并记录用户活动
-            Optional<Document> documentOpt = documentRepository.findById(documentId);
+            Optional<DocumentPO> documentOpt = documentRepository.findById(documentId);
             if (documentOpt.isPresent()) {
-                Document document = documentOpt.get();
+                DocumentPO document = documentOpt.get();
                 userActivityService.recordKeywordsAnalysis(user.getId(), documentId, document.getTitle());
                 log.info("用户 {} 提取了文档 {} 的关键词", user.getUsername(), document.getTitle());
             }
@@ -144,9 +144,9 @@ public class AnalysisController {
             PolishResult polished = analysisService.polishDocumentFromDocument(documentId, polishType);
             
             // 获取文档信息并记录用户活动
-            Optional<Document> documentOpt = documentRepository.findById(documentId);
+            Optional<DocumentPO> documentOpt = documentRepository.findById(documentId);
             if (documentOpt.isPresent()) {
-                Document document = documentOpt.get();
+                DocumentPO document = documentOpt.get();
                 userActivityService.recordPolishAnalysis(user.getId(), documentId, document.getTitle());
                 log.info("用户 {} 润色了文档 {}", user.getUsername(), document.getTitle());
             }
@@ -187,9 +187,9 @@ public class AnalysisController {
             SecurityResult security = analysisService.detectSensitiveInfoFromDocument(documentId);
             
             // 获取文档信息并记录用户活动
-            Optional<Document> documentOpt = documentRepository.findById(documentId);
+            Optional<DocumentPO> documentOpt = documentRepository.findById(documentId);
             if (documentOpt.isPresent()) {
-                Document document = documentOpt.get();
+                DocumentPO document = documentOpt.get();
                 userActivityService.recordSecurityAnalysis(user.getId(), documentId, document.getTitle());
                 log.info("用户 {} 对文档 {} 进行了敏感信息检测", user.getUsername(), document.getTitle());
             }

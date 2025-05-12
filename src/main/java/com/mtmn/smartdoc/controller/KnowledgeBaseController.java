@@ -182,8 +182,19 @@ public class KnowledgeBaseController {
 
     @PostMapping("index/{id}")
     @Operation(summary = "构建知识库索引", description = "构建知识库索引")
-    public ApiResponse<Boolean> buildIndex(@PathVariable String id, @AuthenticationPrincipal User user){
+    public ApiResponse<String> buildIndex(@PathVariable String id, @AuthenticationPrincipal User user){
+        log.info("构建知识库索引，知识库ID：{}，用户：{}", id, user.getUsername());
         // TODO
-        return null;
+        return knowledgeBaseService.buildIndex(id);
+    }
+
+    @GetMapping("kbqa/{id}")
+    @Operation(summary = "知识库问答", description = "知识库问答")
+    public ApiResponse<String> kbqa(@PathVariable String id, @AuthenticationPrincipal User user){
+        // 需要查询参数（检索参数）、用户问题
+
+        log.info("知识库问答，知识库ID：{}，用户：{}", id, user.getUsername());
+        // TODO
+        return knowledgeBaseService.buildIndex(id);
     }
 }

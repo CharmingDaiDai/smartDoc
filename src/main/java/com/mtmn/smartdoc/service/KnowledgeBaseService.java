@@ -69,4 +69,6 @@ public interface KnowledgeBaseService {
     ApiResponse<List<DocumentVO>> listKnowledgeBaseDocs(Long knowledgeBaseId, User user);
 
     ApiResponse<List<Boolean>> addDocs(String id, User user, MultipartFile[] files, String[] titles);
+
+    ApiResponse<String> buildIndex(String id);
 }
