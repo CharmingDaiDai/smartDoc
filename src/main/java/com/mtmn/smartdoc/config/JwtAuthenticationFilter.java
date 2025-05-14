@@ -41,6 +41,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String jwt;
         final String username;
         
+        // 判断是否为流式响应请求
+        boolean isStreamRequest = request.getRequestURI().contains("/api/kb/chat/") && 
+            ("text/event-stream".equals(request.getHeader("Accept")) || 
+             request.getRequestURI().endsWith(".stream"));
+        
         // 如果没有Authorization头或不是Bearer token，则直接放行
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
@@ -69,22 +74,58 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                             new WebAuthenticationDetailsSource().buildDetails(request)
                     );
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+                    
+                    // 对于流式请求，记录额外日志
+                    if (isStreamRequest) {
+                        log.debug("流式请求认证成功: {}", request.getRequestURI());
+                    }
                 }
             }
         } catch (ExpiredJwtException e) {
             log.warn("JWT令牌已过期: {}", e.getMessage());
-            // 令牌过期，不设置身份验证，继续请求处理
+            // 流式请求中的令牌过期处理
+            if (isStreamRequest && !response.isCommitted()) {
+                handleStreamingError(response, "Token expired");
+                return; // 不继续处理过期的流式请求
+            }
         } catch (MalformedJwtException | SignatureException e) {
             log.warn("无效的JWT令牌: {}", e.getMessage());
-            // 令牌无效，不设置身份验证，继续请求处理
+            // 流式请求中的无效令牌处理
+            if (isStreamRequest && !response.isCommitted()) {
+                handleStreamingError(response, "Invalid token");
+                return; // 不继续处理无效令牌的流式请求
+            }
         } catch (JwtException e) {
             log.warn("JWT解析异常: {}", e.getMessage());
-            // 其他JWT异常，不设置身份验证，继续请求处理
+            // 流式请求中的JWT异常处理
+            if (isStreamRequest && !response.isCommitted()) {
+                handleStreamingError(response, "Token error");
+                return; // 不继续处理令牌有问题的流式请求
+            }
         } catch (Exception e) {
             log.error("处理JWT时发生未预期的异常: {}", e.getMessage());
-            // 其他异常，不设置身份验证，继续请求处理
+            // 流式请求中的其他异常处理
+            if (isStreamRequest && !response.isCommitted()) {
+                handleStreamingError(response, "Authentication error");
+                return; // 不继续处理发生异常的流式请求
+            }
         }
         
         filterChain.doFilter(request, response);
+    }
+    
+    /**
+     * 处理流式请求的认证错误
+     * 
+     * @param response HttpServletResponse
+     * @param errorMessage 错误消息
+     * @throws IOException 如果写入响应时发生错误
+     */
+    private void handleStreamingError(HttpServletResponse response, String errorMessage) throws IOException {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setContentType("text/event-stream");
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write("event: error\ndata: " + errorMessage + "\n\n");
+        response.flushBuffer();
     }
 }

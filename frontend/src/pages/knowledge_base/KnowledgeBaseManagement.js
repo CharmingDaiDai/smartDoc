@@ -1,44 +1,44 @@
-import React, { useEffect, useState } from "react";
+import React, {useEffect, useState} from "react";
 import {
-  Avatar,
-  Badge,
-  Button,
-  Card,
-  Col,
-  Divider,
-  Empty,
-  Form,
-  Input,
-  message,
-  Modal,
-  Progress,
-  Radio,
-  Row,
-  Select,
-  Space,
-  Spin,
-  Table,
-  Tag,
-  Tooltip,
-  Typography,
-  App,
+    App,
+    Avatar,
+    Badge,
+    Button,
+    Card,
+    Col,
+    Divider,
+    Empty,
+    Form,
+    Input,
+    message,
+    Modal,
+    Progress,
+    Radio,
+    Row,
+    Select,
+    Space,
+    Spin,
+    Table,
+    Tag,
+    Tooltip,
+    Typography,
 } from "antd";
 import {
-  BookOutlined,
-  BuildOutlined,
-  DeleteOutlined,
-  ExclamationCircleOutlined,
-  EyeOutlined,
-  FileTextOutlined,
-  PlusOutlined,
-  QuestionCircleOutlined,
-  UploadOutlined,
+    BookOutlined,
+    BuildOutlined,
+    DeleteOutlined,
+    ExclamationCircleOutlined,
+    EyeOutlined,
+    FileTextOutlined,
+    PlusOutlined,
+    QuestionCircleOutlined,
+    UploadOutlined,
 } from "@ant-design/icons";
-import { useAuth } from "../../context/AuthContext";
-import api, { ragMethodAPI } from "../../services/api";
+import {useAuth} from "../../context/AuthContext";
+import api, {ragMethodAPI} from "../../services/api";
 import RagMethodParams from "../../components/knowledge_base/RagMethodParams";
-import { ragMethods } from "../../config/ragConfig";
-import { useNavigate } from "react-router-dom";
+import {ragMethods} from "../../config/ragConfig";
+import {useNavigate} from "react-router-dom";
 
 const { Title, Paragraph, Text } = Typography;
 const { Search } = Input;
@@ -578,7 +578,11 @@ const KnowledgeBaseManagement = () => {
     if (loading) {
       return (
         <div style={{ textAlign: "center", padding: "50px 0" }}>
-          <Spin size="large" tip="加载知识库中..." />
+          <Spin size="large">
+            <div style={{ padding: "50px", textAlign: "center" }}>
+              <p>加载知识库中...</p>
+            </div>
+          </Spin>
         </div>
       );
     }
@@ -816,7 +820,11 @@ const KnowledgeBaseManagement = () => {
               renderKnowledgeBaseCards()
             ) : loading ? (
               <div style={{ textAlign: "center", padding: "50px 0" }}>
-                <Spin size="large" tip="加载知识库中..." />
+                <Spin size="large">
+                  <div style={{ padding: "50px", textAlign: "center" }}>
+                    <p>加载知识库中...</p>
+                  </div>
+                </Spin>
               </div>
             ) : filteredKnowledgeBases.length === 0 ? (
               <Empty

@@ -1,5 +1,6 @@
 package com.mtmn.smartdoc.service.impl;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mtmn.smartdoc.common.ApacheTikaDocumentParser;
 import com.mtmn.smartdoc.common.ApiResponse;
@@ -11,26 +12,21 @@ import com.mtmn.smartdoc.po.KnowledgeBase;
 import com.mtmn.smartdoc.po.User;
 import com.mtmn.smartdoc.repository.DocumentRepository;
 import com.mtmn.smartdoc.repository.KnowledgeBaseRepository;
-import com.mtmn.smartdoc.service.DocumentService;
-import com.mtmn.smartdoc.service.EmbeddingService;
-import com.mtmn.smartdoc.service.KnowledgeBaseService;
-import com.mtmn.smartdoc.service.MinioService;
+import com.mtmn.smartdoc.service.*;
 import com.mtmn.smartdoc.vo.DocumentVO;
-import dev.langchain4j.data.embedding.Embedding;
-import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.DocumentSplitter;
 import dev.langchain4j.data.document.splitter.DocumentSplitters;
+import dev.langchain4j.data.embedding.Embedding;
+import dev.langchain4j.data.segment.TextSegment;
+import dev.langchain4j.model.chat.response.ChatResponse;
+import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
 import dev.langchain4j.model.embedding.EmbeddingModel;
-
-import java.io.InputStream;
-
+import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import dev.langchain4j.rag.content.Content;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.rag.query.Query;
-import dev.langchain4j.store.embedding.EmbeddingStore;
-import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
 import dev.langchain4j.store.embedding.milvus.MilvusEmbeddingStore;
 import io.milvus.common.clientenum.ConsistencyLevelEnum;
 import io.milvus.param.IndexType;
@@ -39,17 +35,20 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.multipart.MultipartFile;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Sinks;
 
+import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.UUID;
+import java.util.stream.IntStream;
 
 /**
  * @author charmingdaidai
@@ -152,6 +151,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
 
             // 删除知识库中的所有文档
             // 注意：此处仅更新文档的knowledgeBaseId为null，不删除文档本身
+            // TODO 删除 Minio 中的文档
             documentRepository.findAll().stream()
                     .filter(doc -> Objects.equals(doc.getKnowledgeBaseId(), knowledgeBaseId))
                     .forEach(doc -> {
@@ -223,7 +223,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
                     // 使用TypeReference处理泛型类型转换
                     Map<String, Object> ragParams = objectMapper.readValue(
                             knowledgeBase.getIndexParam(),
-                            new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {
+                            new TypeReference<Map<String, Object>>() {
                             }
                     );
                     dto.setRagParams(ragParams);
@@ -433,7 +433,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
                 MilvusEmbeddingStore embeddingStore = MilvusEmbeddingStore.builder()
                         .host("10.0.30.172")
                         .port(19530)
-                        .databaseName(userId.toString())
+//                        .databaseName(userId.toString())
                         // Name of the collection 知识库名称 + userId
                         .collectionName(collectionName)
                         .dimension(embeddingModel.dimension())
@@ -443,7 +443,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
 //                        .password("password")
                         // Consistency level
                         .consistencyLevel(ConsistencyLevelEnum.EVENTUALLY)
-                        .autoFlushOnInsert(true)
+                        .autoFlushOnInsert(false)
                         .idFieldName("id")
                         .textFieldName("text")
                         .metadataFieldName("metadata")
@@ -472,17 +472,6 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
 
                         embeddingStore.addAll(embeddings, segments);
 
-//                        ContentRetriever contentRetriever = EmbeddingStoreContentRetriever.builder()
-//                                .embeddingStore(embeddingStore)
-//                                .embeddingModel(embeddingModel)
-//                                .maxResults(2)
-//                                .minScore(0.3)
-//                                .build();
-//
-//                        List<Content> contents = contentRetriever.retrieve(new Query("计算机工程"));
-//
-//                        log.debug(contents);
-
                         success.add(true);
 
                         continue;
@@ -490,9 +479,6 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
 
                     success.add(false);
                 }
-
-                // TODO: 完成向量库参数构建和文档入向量库的操作
-
             } else if (ragConfig instanceof HiSemRagConfig hiSemConfig) {
                 // 获取配置参数
                 Integer chunkSize = hiSemConfig.getChunkSize();
@@ -546,7 +532,198 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
     }
 
     private String getStoreKnowledgeBaseName(String kbName) {
-        return kbName + "_" + getCurrentUserId();
+        return "kb_" + getCurrentUserId() + "_" + kbName;
     }
 
+    private final LLMService llmService;
+
+    /**
+     * @param id
+     * @param question
+     * @param topk
+     * @param qr
+     * @param qd
+     * @return
+     */
+    @Override
+    public Flux<String> naiveQa(String id, String question, int topk, boolean qr, boolean qd) {
+        Optional<KnowledgeBase> knowledgeBaseOpt = knowledgeBaseRepository.findById(Long.valueOf(id));
+
+        if (knowledgeBaseOpt.isEmpty()) {
+            log.error("知识库: {}, 不存在，请确认知识库ID是否正确。", id);
+            // 发送错误信息
+            return sendFluxMessage("知识库不存在，请确认知识库ID是否正确。");
+        }
+
+        KnowledgeBase knowledgeBase = knowledgeBaseOpt.get();
+
+        String kbName = knowledgeBase.getName();
+
+        String ragMethodName = knowledgeBase.getRag();
+
+        String embeddingModelName = knowledgeBase.getEmbeddingModel();
+
+        try {
+            // 使用 RagConfigFactory 创建 RAG 配置对象
+            BaseRagConfig ragConfig = RagConfigFactory.createRagConfig(ragMethodName, embeddingModelName, "{}");
+
+            // 创建Embedding模型
+            EmbeddingModel embeddingModel = embeddingService.createEmbeddingModel(embeddingModelName);
+
+            String collectionName = getStoreKnowledgeBaseName(kbName);
+
+            MilvusEmbeddingStore embeddingStore = MilvusEmbeddingStore.builder()
+                    .host("10.0.30.172")
+                    .port(19530)
+                    .collectionName(collectionName)
+                    .dimension(embeddingModel.dimension())
+
+                    .metricType(MetricType.COSINE)
+                    .consistencyLevel(ConsistencyLevelEnum.EVENTUALLY)
+                    .autoFlushOnInsert(false)
+                    .idFieldName("id")
+                    .textFieldName("text")
+                    .metadataFieldName("metadata")
+                    .vectorFieldName("vector")
+                    .build();
+
+            ContentRetriever contentRetriever = EmbeddingStoreContentRetriever.builder()
+                    .embeddingStore(embeddingStore)
+                    .embeddingModel(embeddingModel)
+                    .maxResults(topk)
+                    .build();
+
+            List<Content> contents = new ArrayList<>(contentRetriever.retrieve(new Query(question)));
+
+            if (contents.isEmpty()) {
+                log.warn("知识库中没有找到与您问题相关的信息。");
+                return sendFluxMessage("知识库中没有找到与您问题相关的信息。");
+            }
+
+            // 构建提示词
+            String promptTemplate = """
+                    请基于以下已知信息回答用户的问题。如果已知信息不足以回答问题，请回答根据已知信息无法回答。
+                    
+                    已知信息：
+                    %s
+                    
+                    用户问题：%s
+                    
+                    请根据上述已知信息回答问题，保持专业、准确。
+                    """;
+
+            // 准备检索到的文档列表和提示词片段
+            List<String> docContents = new ArrayList<>();
+            StringBuilder contextBuilder = new StringBuilder();
+
+            // 使用IntStream处理文档片段
+            IntStream.range(0, contents.size()).forEach(i -> {
+                String segmentText = contents.get(i).textSegment().text();
+                contextBuilder.append(String.format("【片段%d】\n%s\n\n", i + 1, segmentText));
+//                docContents.add(String.format("出处 [%d] %s\n\n", i + 1, segmentText));
+                docContents.add(segmentText);
+            });
+
+            String prompt = String.format(promptTemplate, contextBuilder.toString(), question);
+
+            return handleStreamingChatResponse(prompt, docContents);
+        } catch (Exception e) {
+            log.error("RAG问答处理失败", e);
+            // 生成错误对象的新格式响应
+            String errorMessage = "抱歉，处理您的问题时遇到了错误：" + e.getMessage();
+            String escapedError = errorMessage.replace("\"", "\\\"").replace("\n", "\\n");
+            return sendFluxMessage("escapedError");
+        }
+    }
+
+    /**
+     * 构建SSE消息响应格式
+     *
+     * @param content 消息内容
+     * @return 格式化的SSE消息 Json字符串
+     */
+    private String buildJsonSseMessage(String content, List<String> docs) {
+        try {
+            Map<String, Object> message = new HashMap<>();
+            message.put("id", "chat" + UUID.randomUUID());
+            message.put("object", "chat.completion.chunk");
+
+            List<Map<String, Object>> choices = new ArrayList<>();
+            Map<String, Object> choice = new HashMap<>();
+            Map<String, String> delta = new HashMap<>();
+
+            if (null != docs) {
+                message.put("docs", docs);
+                return "data: " + objectMapper.writeValueAsString(message) + "\n\n";
+            }
+
+            delta.put("content", content);
+            choice.put("delta", delta);
+            choice.put("role", "assistant");
+            choices.add(choice);
+            message.put("choices", choices);
+
+            return "data: " + objectMapper.writeValueAsString(message) + "\n\n";
+        } catch (Exception e) {
+            log.error("构建SSE消息失败", e);
+            return "data: {\"error\":\"构建消息失败\"}\n\n";
+        }
+    }
+
+    /**
+     * 创建包含消息的SSE流
+     *
+     * @param message 信息内容
+     * @return 格式化的消息流
+     */
+    private Flux<String> sendFluxMessage(String message) {
+        Sinks.Many<String> sink = Sinks.many().unicast().onBackpressureBuffer();
+        sink.tryEmitNext(buildJsonSseMessage(message, null));
+        sink.tryEmitNext("data: [DONE]\n\n");
+        sink.tryEmitComplete();
+        return sink.asFlux();
+    }
+
+    /**
+     * 处理流式聊天响应
+     *
+     * @param prompt      提示词
+     * @param docContents 检索到的文档内容列表（可以为null）
+     * @return 格式化的SSE消息流
+     */
+    private Flux<String> handleStreamingChatResponse(String prompt, List<String> docContents) {
+        // 创建流式聊天模型
+        OpenAiStreamingChatModel streamingChatModel = llmService.createStreamingChatModel(null);
+
+        // 创建响应处理的Sink
+        Sinks.Many<String> sink = Sinks.many().unicast().onBackpressureBuffer();
+
+        // 如果有文档内容，先发送检索到的文档信息
+        if (docContents != null && !docContents.isEmpty()) {
+            sink.tryEmitNext(buildJsonSseMessage("", docContents));
+        }
+
+        // 处理流式响应
+        streamingChatModel.chat(prompt, new StreamingChatResponseHandler() {
+            @Override
+            public void onPartialResponse(String partialResponse) {
+                String escapedContent = partialResponse.replace("\"", "\\\"").replace("\n", "\\n");
+                sink.tryEmitNext(buildJsonSseMessage(escapedContent, null));
+            }
+
+            @Override
+            public void onCompleteResponse(ChatResponse completeResponse) {
+                sink.tryEmitNext("data: [DONE]\n\n");
+                sink.tryEmitComplete();
+            }
+
+            @Override
+            public void onError(Throwable error) {
+                log.error("聊天响应处理出错", error);
+                sink.tryEmitError(error);
+            }
+        });
+
+        return sink.asFlux();
+    }
 }

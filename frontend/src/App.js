@@ -1,6 +1,6 @@
 import React from 'react';
 import {BrowserRouter} from 'react-router-dom';
-import {ConfigProvider} from 'antd';
+import {App as AntdApp, ConfigProvider} from 'antd';
 import zhCN from 'antd/lib/locale/zh_CN';
 import './styles/app.css';
 import AppRoutes from './routes/AppRoutes';
@@ -19,7 +19,9 @@ function App() {
     >
       <BrowserRouter>
         <AuthProvider>
-          <AppRoutes />
+          <AntdApp>
+            <AppRoutes />
+          </AntdApp>
         </AuthProvider>
       </BrowserRouter>
     </ConfigProvider>

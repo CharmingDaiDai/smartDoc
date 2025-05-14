@@ -12,7 +12,11 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
   if (loading) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <Spin size="large" tip="加载中..." />
+        <Spin size="large">
+          <div style={{ padding: "50px", textAlign: "center" }}>
+            <p>加载中...</p>
+          </div>
+        </Spin>
       </div>
     );
   }

@@ -6,16 +6,10 @@ package com.mtmn.smartdoc.common;
  * @description 使用Apache Tika实现的文档解析器
  * @date 2025/5/9 15:02
  */
-import static dev.langchain4j.internal.Utils.getOrDefault;
-import static dev.langchain4j.internal.Utils.isNullOrBlank;
 
 import dev.langchain4j.data.document.BlankDocumentException;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.DocumentParser;
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Supplier;
 import org.apache.tika.exception.ZeroByteFileException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.AutoDetectParser;
@@ -23,6 +17,14 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.BodyContentHandler;
 import org.xml.sax.ContentHandler;
+
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.function.Supplier;
+
+import static dev.langchain4j.internal.Utils.getOrDefault;
+import static dev.langchain4j.internal.Utils.isNullOrBlank;
 
 /**
  * 使用Apache Tika库将文件解析为{@link Document}对象，自动检测文件格式。

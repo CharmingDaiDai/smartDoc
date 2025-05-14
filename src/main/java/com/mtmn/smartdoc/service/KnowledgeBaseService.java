@@ -6,6 +6,7 @@ import com.mtmn.smartdoc.dto.KnowledgeBaseDTO;
 import com.mtmn.smartdoc.po.User;
 import com.mtmn.smartdoc.vo.DocumentVO;
 import org.springframework.web.multipart.MultipartFile;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 import java.util.Map;
@@ -71,4 +72,6 @@ public interface KnowledgeBaseService {
     ApiResponse<List<Boolean>> addDocs(String id, User user, MultipartFile[] files, String[] titles);
 
     ApiResponse<String> buildIndex(String id);
+
+    Flux<String> naiveQa(String id, String question, int topk, boolean qr, boolean qd);
 }

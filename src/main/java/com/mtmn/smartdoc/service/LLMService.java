@@ -6,6 +6,7 @@ import com.mtmn.smartdoc.config.ModelConfig;
 import com.mtmn.smartdoc.vo.SecurityResult;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
+import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.stereotype.Service;
@@ -66,6 +67,33 @@ public class LLMService {
                     .modelName(config.getModelName())
                     .build();
         });
+    }
+
+    public OpenAiStreamingChatModel createStreamingChatModel() {
+        return createStreamingChatModel(modelConfig.getActiveLlm());
+    }
+
+    public OpenAiStreamingChatModel createStreamingChatModel(String modelId){
+        // 如果未指定modelId，使用当前激活的模型
+        String targetModelId = modelId == null ?
+                modelConfig.getActiveLlm() :
+                modelId;
+
+        // 获取模型配置
+        ModelConfig.ModelProperties config = modelConfig.getLlmConfig(targetModelId);
+        if (config == null) {
+            log.warn("未找到模型配置：{}，将使用默认模型", targetModelId);
+            config = modelConfig.getActiveLlmConfig();
+        }
+        
+        log.info("创建流式聊天语言模型: {}", config.getModelName());
+        
+        // 构建并返回流式模型
+        return OpenAiStreamingChatModel.builder()
+                .apiKey(config.getApiKey())
+                .baseUrl(config.getBaseUrl())
+                .modelName(config.getModelName())
+                .build();
     }
 
     /**

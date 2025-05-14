@@ -219,29 +219,40 @@ export const profileAPI = {
 
 // RAG方法相关API
 export const ragMethodAPI = {
-  // 获取所有可用的RAG方法及其参数
-  getAllMethods: () => api.get('/api/kb/listMethods'),
-  
   // 获取所有可用的嵌入模型
   getEmbeddingModels: () => api.get('/api/kb/listEmbeddingModels'),
-  
-  // 获取特定RAG方法的详细信息
-  getMethodDetails: (methodId) => api.get(`/api/kb/listMethods`).then(response => {
-    if (response.data && response.data.data) {
-      // 从所有方法中找到指定ID的方法
-      const method = response.data.data.find(m => m.id === methodId);
-      if (method) {
-        return Promise.resolve({ data: method });
-      }
-    }
-    return Promise.reject(new Error('未找到指定的RAG方法'));
-  }),
-  
-  // 获取指定知识库使用的RAG方法
-  getMethodForKnowledgeBase: (kbId) => api.get(`/api/kb/${kbId}/rag-method`),
+  // 获取RAG方法详情
+  getMethodDetails: (methodId) => api.get(`/api/rag/methods/${methodId}`),
+};
 
-  // 执行RAG查询
-  executeQuery: (payload) => api.post('/api/knowledge-base/query', payload)
+// 知识库相关API
+export const knowledgeBaseAPI = {
+  // 获取所有知识库列表
+  getKnowledgeBases: () => api.get('/api/kb/list'),
+  // 获取单个知识库详情
+  getKnowledgeBase: (id) => api.get(`/api/kb/${id}`),
+  // 创建新知识库
+  createKnowledgeBase: (data) => api.post('/api/kb/create', data),
+  // 删除知识库
+  deleteKnowledgeBase: (id) => api.delete(`/api/kb/${id}`),
+  // 构建知识库索引
+  buildIndex: (id) => api.post(`/api/kb/index/${id}`),
+  // 知识库问答
+  queryKnowledgeBase: (data) => api.post('/api/kb/rag', data),
+  // 流式知识库问答 (SSE)
+  // 使用api.get方法会自动通过拦截器添加认证头
+  streamQueryKnowledgeBase: (id, question, topk) => 
+    api.get(`/api/kb/kbqa/${id}?question=${encodeURIComponent(question)}&topk=${topk || 5}`),
+  // 获取知识库文档列表
+  getDocuments: (id) => api.get(`/api/kb/listDocs/${id}`),
+  // 上传文档到知识库
+  uploadDocuments: (id, formData) => api.post(`/api/kb/addDocs/${id}`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  }),
+  // 删除知识库文档
+  deleteDocuments: (kbId, docIds) => api.post(`/api/kb/deleteDocs/${kbId}`, docIds),
 };
 
 export default api;

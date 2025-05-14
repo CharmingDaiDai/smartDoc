@@ -13,8 +13,9 @@ const { Title, Text, Paragraph } = Typography;
  * @param {string} props.methodId - 当前选择的RAG方法ID
  * @param {Function} props.onChange - 参数变更时的回调函数
  * @param {boolean} props.showSearchParams - 是否显示搜索参数，默认为true
+ * @param {boolean} props.showIndexParams - 是否显示索引参数，默认为true
  */
-const RagMethodParams = ({ methodId, onChange, showSearchParams = true }) => {
+const RagMethodParams = ({ methodId, onChange, showSearchParams = true, showIndexParams = true }) => {
   const [loading, setLoading] = useState(false);
   const [methodDetails, setMethodDetails] = useState(null);
   const [formValues, setFormValues] = useState({});
@@ -35,9 +36,9 @@ const RagMethodParams = ({ methodId, onChange, showSearchParams = true }) => {
         setMethodDetails(method);
         
         // 合并索引参数和搜索参数作为表单初始值
-        // 根据showSearchParams决定是否包含搜索参数
+        // 根据showIndexParams和showSearchParams决定要包含的参数
         const initialValues = {
-          ...method.indexParams,
+          ...(showIndexParams ? method.indexParams : {}),
           ...(showSearchParams ? method.searchParams : {})
         };
         
@@ -94,14 +95,28 @@ const RagMethodParams = ({ methodId, onChange, showSearchParams = true }) => {
       
       case 'slider':
         return (
-          <Slider
-            value={formValues[paramName]}
-            onChange={(value) => handleParamChange(paramName, value)}
-            min={paramConfig.min}
-            max={paramConfig.max}
-            step={paramConfig.step || 1}
-            marks={paramConfig.marks}
-          />
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <Slider
+              value={formValues[paramName]}
+              onChange={(value) => handleParamChange(paramName, value)}
+              min={paramConfig.min}
+              max={paramConfig.max}
+              step={paramConfig.step || 1}
+              marks={paramConfig.marks}
+              tooltip={{ formatter: (value) => `${value}` }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '4px' }}>
+              <InputNumber
+                size="small"
+                min={paramConfig.min}
+                max={paramConfig.max}
+                value={formValues[paramName]}
+                onChange={(value) => handleParamChange(paramName, value)}
+                style={{ width: '60px' }}
+              />
+              {paramConfig.unit && <Text type="secondary">{paramConfig.unit}</Text>}
+            </div>
+          </div>
         );
         
       case 'select':
@@ -179,7 +194,9 @@ const RagMethodParams = ({ methodId, onChange, showSearchParams = true }) => {
   }
 
   // 确定默认展开的面板
-  const defaultActiveKeys = showSearchParams ? ['indexParams', 'searchParams'] : ['indexParams'];
+  const defaultActiveKeys = [];
+  if (showIndexParams) defaultActiveKeys.push('indexParams');
+  if (showSearchParams) defaultActiveKeys.push('searchParams');
 
   return (
     <Card 
@@ -191,82 +208,76 @@ const RagMethodParams = ({ methodId, onChange, showSearchParams = true }) => {
           </Tooltip>
         </div>
       }
+      bodyStyle={{ padding: '12px 24px' }}
     >
       <Paragraph type="secondary" style={{ marginBottom: 16 }}>
         {methodDetails.description}
       </Paragraph>
       
-      <Collapse defaultActiveKey={defaultActiveKeys} expandIconPosition="right">
-        {Object.keys(methodDetails.indexParams || {}).length > 0 && (
-          <Panel 
-            header={<Title level={5}>索引参数</Title>} 
-            key="indexParams"
-            extra={<Text type="secondary">配置文档索引方式</Text>}
-          >
-            <Paragraph type="secondary" style={{ marginBottom: 16 }}>
-              这些参数影响文档如何被分割和索引，对检索效果有重要影响
-            </Paragraph>
-            
-            <Form layout="vertical">
-              {Object.entries(methodDetails.indexParams || {}).map(([paramName, paramValue]) => {
-                const example = getParamExample(paramName);
-                return (
-                  <Form.Item 
-                    key={`index-${paramName}`}
-                    label={
-                      <span>
-                        {getParamDisplayName(paramName)} 
-                        <Tooltip title={getParamDescription(paramName)}>
-                          <QuestionCircleOutlined style={{ marginLeft: 4 }} />
-                        </Tooltip>
-                      </span>
-                    }
-                    tooltip={example}
-                    extra={example && <Text type="secondary" style={{ fontSize: '12px' }}>{example}</Text>}
-                  >
-                    {renderParamField(paramName, paramValue)}
-                  </Form.Item>
-                );
-              })}
-            </Form>
-          </Panel>
-        )}
-        
-        {showSearchParams && Object.keys(methodDetails.searchParams || {}).length > 0 && (
-          <Panel 
-            header={<Title level={5}>搜索参数</Title>} 
-            key="searchParams"
-            extra={<Text type="secondary">配置检索和生成策略</Text>}
-          >
-            <Paragraph type="secondary" style={{ marginBottom: 16 }}>
-              这些参数决定了如何检索相关文档片段并生成回答
-            </Paragraph>
-            
-            <Form layout="vertical">
-              {Object.entries(methodDetails.searchParams || {}).map(([paramName, paramValue]) => {
-                const example = getParamExample(paramName);
-                return (
-                  <Form.Item 
-                    key={`search-${paramName}`}
-                    label={
-                      <span>
-                        {getParamDisplayName(paramName)}
-                        <Tooltip title={getParamDescription(paramName)}>
-                          <QuestionCircleOutlined style={{ marginLeft: 4 }} />
-                        </Tooltip>
-                      </span>
-                    }
-                    tooltip={example}
-                    extra={example && <Text type="secondary" style={{ fontSize: '12px' }}>{example}</Text>}
-                  >
-                    {renderParamField(paramName, paramValue)}
-                  </Form.Item>
-                );
-              })}
-            </Form>
-          </Panel>
-        )}
-      </Collapse>
+      {/* 直接显示参数，不使用Collapse */}
+      {showIndexParams && Object.keys(methodDetails.indexParams || {}).length > 0 && (
+        <div className="param-section" style={{ marginBottom: 16 }}>
+          <Title level={5} style={{ marginBottom: 8 }}>索引参数</Title>
+          <Paragraph type="secondary" style={{ marginBottom: 16 }}>
+            这些参数影响文档如何被分割和索引，对检索效果有重要影响
+          </Paragraph>
+          
+          <Form layout="vertical">
+            {Object.entries(methodDetails.indexParams || {}).map(([paramName, paramValue]) => {
+              const example = getParamExample(paramName);
+              return (
+                <Form.Item 
+                  key={`index-${paramName}`}
+                  label={
+                    <span>
+                      {getParamDisplayName(paramName)} 
+                      <Tooltip title={getParamDescription(paramName)}>
+                        <QuestionCircleOutlined style={{ marginLeft: 4 }} />
+                      </Tooltip>
+                    </span>
+                  }
+                  tooltip={example}
+                  extra={example && <Text type="secondary" style={{ fontSize: '12px' }}>{example}</Text>}
+                >
+                  {renderParamField(paramName, paramValue)}
+                </Form.Item>
+              );
+            })}
+          </Form>
+        </div>
+      )}
+      
+      {showSearchParams && Object.keys(methodDetails.searchParams || {}).length > 0 && (
+        <div className="param-section">
+          <Title level={5} style={{ marginBottom: 8 }}>搜索参数</Title>
+          <Paragraph type="secondary" style={{ marginBottom: 16 }}>
+            这些参数决定了如何检索相关文档片段并生成回答
+          </Paragraph>
+          
+          <Form layout="vertical">
+            {Object.entries(methodDetails.searchParams || {}).map(([paramName, paramValue]) => {
+              const example = getParamExample(paramName);
+              return (
+                <Form.Item 
+                  key={`search-${paramName}`}
+                  label={
+                    <span>
+                      {getParamDisplayName(paramName)}
+                      <Tooltip title={getParamDescription(paramName)}>
+                        <QuestionCircleOutlined style={{ marginLeft: 4 }} />
+                      </Tooltip>
+                    </span>
+                  }
+                  tooltip={example}
+                  extra={example && <Text type="secondary" style={{ fontSize: '12px' }}>{example}</Text>}
+                >
+                  {renderParamField(paramName, paramValue)}
+                </Form.Item>
+              );
+            })}
+          </Form>
+        </div>
+      )}
     </Card>
   );
 };

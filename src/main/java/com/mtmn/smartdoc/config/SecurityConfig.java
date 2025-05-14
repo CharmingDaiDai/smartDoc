@@ -2,9 +2,11 @@ package com.mtmn.smartdoc.config;
 
 import com.mtmn.smartdoc.repository.UserRepository;
 import com.mtmn.smartdoc.service.JwtService;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -49,6 +51,13 @@ public class SecurityConfig {
                 .requestMatchers("/doc.html", "/webjars/**", "/v3/api-docs/**").permitAll()
                 .requestMatchers("/").permitAll()
                 .requestMatchers("/error").permitAll()
+                .requestMatchers("/api/kb/chat/**").permitAll()
+                // // 流式响应接口 - 需要提前进行验证，避免在流式输出过程中进行安全检查
+                // .requestMatchers(request -> 
+                //     request.getRequestURI().contains("/api/kb/chat/") && 
+                //     (MediaType.TEXT_EVENT_STREAM_VALUE.equals(request.getHeader("Accept")) ||
+                //      request.getRequestURI().endsWith(".stream")))
+                // .authenticated() // 仅执行基本身份验证，不做额外权限检查
                 // 要求认证的路径
                 .requestMatchers("/api/users/**").authenticated()
                 .requestMatchers("/api/documents/**").authenticated()
@@ -61,7 +70,29 @@ public class SecurityConfig {
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
             .authenticationProvider(authenticationProvider())
-            .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+            // 禁用响应提交后的异常处理，防止流式响应中断
+            .exceptionHandling(exceptionHandling -> 
+                exceptionHandling.authenticationEntryPoint((request, response, authException) -> {
+                    // 针对流式响应的特殊处理
+                    boolean isStreamRequest = request.getRequestURI().contains("/api/kb/chat/") && 
+                        (MediaType.TEXT_EVENT_STREAM_VALUE.equals(request.getHeader("Accept")) || 
+                         request.getRequestURI().endsWith(".stream"));
+                    
+                    if (response.isCommitted()) {
+                        // 响应已经提交，不要尝试写入错误信息
+                        return;
+                    } else if (isStreamRequest && !response.isCommitted()) {
+                        // 流式请求但响应尚未提交，发送401状态但不终止连接
+                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                        response.getWriter().write("event: error\ndata: Unauthorized\n\n");
+                        response.flushBuffer();
+                    } else {
+                        // 普通请求，发送标准401响应
+                        response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized");
+                    }
+                })
+            );
 
         return http.build();
     }
@@ -69,12 +100,12 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("*"));  // 允许所有来源，生产环境建议设置具体的前端域名
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));
-        configuration.setExposedHeaders(List.of("Authorization"));
-        configuration.setAllowCredentials(false);  // 不允许发送凭证
-        configuration.setMaxAge(3600L);  // 预检请求的有效期，单位为秒
+        configuration.setAllowedOrigins(List.of("*"));  // 允许所有来源
+        configuration.setAllowedMethods(List.of("*"));  // 允许所有HTTP方法
+        configuration.setAllowedHeaders(List.of("*"));  // 允许所有请求头
+        configuration.setExposedHeaders(List.of("*"));  // 暴露所有响应头
+        configuration.setAllowCredentials(false);      // 不允许发送凭证（与允许所有来源冲突）
+        configuration.setMaxAge(3600L);                // 预检请求的有效期，单位为秒
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
