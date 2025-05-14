@@ -39,7 +39,6 @@ import { createAuthEventSource } from "../../utils/eventSourceAuth";
 const { Title, Paragraph, Text } = Typography;
 const { TextArea } = Input;
 const { Option } = Select;
-const { Panel } = Collapse;
 
 const RAGChat = () => {
   // 调试模式开关 - 设置为true时会在控制台输出更多日志
@@ -573,7 +572,7 @@ const RAGChat = () => {
       if (data.docs) {
         // 确保docs是数组
         if (Array.isArray(data.docs)) {
-          console.log("发现文档出处数组:", data.docs);
+          // console.log("发现文档出处数组:", data.docs);
           result.docs = data.docs;
         } 
         // 处理可能是字符串的情况
@@ -923,6 +922,34 @@ const RAGChat = () => {
       setActiveKey(keys);
     };
 
+    // 定义折叠面板的items
+    const collapseItems = [
+      {
+        key: 'sources',
+        label: (
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <Text strong className="source-header">
+              查看参考出处
+            </Text>
+            <span className="sources-count">{sources.length}</span>
+          </div>
+        ),
+        children: (
+          <div 
+            style={{ 
+              maxHeight: sources.length > 3 ? "300px" : "auto", 
+              overflowY: sources.length > 3 ? "auto" : "visible"
+            }}
+            className="chat-scroll-area"
+          >
+            {sources.map((source, idx) => (
+              <SourceItem key={source.id || idx} source={source} />
+            ))}
+          </div>
+        )
+      }
+    ];
+
     return (
       <div style={{ marginTop: "12px" }}>
         <Collapse 
@@ -932,31 +959,8 @@ const RAGChat = () => {
           activeKey={activeKey}
           onChange={onCollapseChange}
           className="source-collapse"
-        >
-          <Panel 
-            header={
-              <div style={{ display: 'flex', alignItems: 'center' }}>
-                <Text strong className="source-header">
-                  查看参考出处
-                </Text>
-                <span className="sources-count">{sources.length}</span>
-              </div>
-            } 
-            key="sources"
-          >
-            <div 
-              style={{ 
-                maxHeight: sources.length > 3 ? "300px" : "auto", 
-                overflowY: sources.length > 3 ? "auto" : "visible"
-              }}
-              className="chat-scroll-area"
-            >
-              {sources.map((source, idx) => (
-                <SourceItem key={source.id || idx} source={source} />
-              ))}
-            </div>
-          </Panel>
-        </Collapse>
+          items={collapseItems}
+        />
       </div>
     );
   };
@@ -1108,36 +1112,38 @@ const RAGChat = () => {
                     onChange={handleKnowledgeBaseChange}
                     notFoundContent={
                       kbSelectLoading ? (
-                        <Spin size="small" />
+                      <Spin size="small" />
                       ) : (
-                        <Text type="secondary">无可用知识库</Text>
+                      <Text type="secondary">无可用知识库</Text>
                       )
                     }
-                  >
+                    >
                     {knowledgeBases.map((kb) => (
                       <Option key={kb.id} value={kb.id}>
-                        {kb.name}
+                      {kb.name}
                       </Option>
                     ))}
-                  </Select>
-                </div>
-              }
-              style={{
-                borderRadius: "8px",
-                boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
-                display: "flex",
-                flexDirection: "column",
-                height: "calc(100vh - 220px)",
-              }}
-              bodyStyle={{
-                flex: 1,
-                display: "flex",
-                flexDirection: "column",
-                padding: "12px 24px",
-                overflowY: "hidden",
-              }}
-            >
-              {detailsLoading ? (
+                    </Select>
+                  </div>
+                  }
+                  style={{
+                  borderRadius: "8px",
+                  boxShadow: "0 2px 8px rgba(0, 0, 0, 0.05)",
+                  display: "flex",
+                  flexDirection: "column",
+                  height: "calc(100vh - 220px)",
+                  }}
+                  styles={{
+                  body: {
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    padding: "12px 24px",
+                    overflowY: "hidden",
+                  },
+                  }}
+                >
+                  {detailsLoading ? (
                 // Show spinner while loading details of a selected KB
                 <div
                   style={{
