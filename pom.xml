@@ -11,7 +11,7 @@
         <java.version>17</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <spring-boot.version>3.0.2</spring-boot.version>
+        <spring-boot.version>3.2.2</spring-boot.version>
     </properties>
     <dependencies>
         <dependency>
@@ -56,7 +56,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
-        
+
         <!-- Mockito Inline 支持静态方法模拟 -->
         <dependency>
             <groupId>org.mockito</groupId>
@@ -64,40 +64,76 @@
             <version>4.8.0</version>
             <scope>test</scope>
         </dependency>
-        
+
         <dependency>
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
-        
+
         <!-- MinIO 客户端依赖 -->
         <dependency>
             <groupId>io.minio</groupId>
             <artifactId>minio</artifactId>
             <version>8.5.6</version>
         </dependency>
-        
-        <!-- LangChain4j 核心依赖 -->
+
+        <!--        &lt;!&ndash; LangChain4j 核心依赖 &ndash;&gt;-->
+        <!--        <dependency>-->
+        <!--            <groupId>dev.langchain4j</groupId>-->
+        <!--            <artifactId>langchain4j</artifactId>-->
+        <!--            <version>1.0.0-rc1</version>-->
+        <!--        </dependency>-->
+
+        <!--        &lt;!&ndash; LangChain4j OpenAI 集成 &ndash;&gt;-->
+        <!--        <dependency>-->
+        <!--            <groupId>dev.langchain4j</groupId>-->
+        <!--            <artifactId>langchain4j-open-ai</artifactId>-->
+        <!--            <version>1.0.0-rc1</version>-->
+        <!--        </dependency>-->
+
+        <!--LangChain4j Spring boot 依赖-->
         <dependency>
             <groupId>dev.langchain4j</groupId>
-            <artifactId>langchain4j</artifactId>
-            <version>1.0.0-beta3</version>
+            <artifactId>langchain4j-spring-boot-starter</artifactId>
+            <version>1.0.0-beta4</version>
         </dependency>
 
-        <!-- LangChain4j OpenAI 集成 -->
         <dependency>
             <groupId>dev.langchain4j</groupId>
-            <artifactId>langchain4j-open-ai</artifactId>
-            <version>1.0.0-beta3</version>
+            <artifactId>langchain4j-open-ai-spring-boot-starter</artifactId>
+            <version>1.0.0-beta4</version>
         </dependency>
 
-        <!-- Milvus 客户端 -->
         <dependency>
-            <groupId>io.milvus</groupId>
-            <artifactId>milvus-sdk-java</artifactId>
-            <version>2.5.2</version>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-document-parser-apache-tika</artifactId>
+            <version>1.0.0-beta4</version>
         </dependency>
+
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-document-parser-apache-poi</artifactId>
+            <version>1.0.0-beta4</version>
+        </dependency>
+
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-milvus</artifactId>
+            <version>1.0.0-beta4</version>
+        </dependency>
+
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-reactor</artifactId>
+            <version>1.0.0-beta4</version>
+        </dependency>
+<!--        &lt;!&ndash; Milvus 客户端 &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>io.milvus</groupId>-->
+<!--            <artifactId>milvus-sdk-java</artifactId>-->
+<!--            <version>2.5.2</version>-->
+<!--        </dependency>-->
 
         <!-- JsonWebToken 支持 -->
         <dependency>
@@ -118,43 +154,12 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- Apache Commons IO -->
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>2.11.0</version>
-        </dependency>
-
-        <!-- Apache POI - 用于处理各种文档格式 -->
-        <dependency>
-            <groupId>org.apache.poi</groupId>
-            <artifactId>poi</artifactId>
-            <version>5.2.3</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.poi</groupId>
-            <artifactId>poi-ooxml</artifactId>
-            <version>5.2.3</version>
-        </dependency>
-
-        <!-- PDF处理库 -->
-        <dependency>
-            <groupId>org.apache.pdfbox</groupId>
-            <artifactId>pdfbox</artifactId>
-            <version>2.0.27</version>
-        </dependency>
-
-        <!-- Tika - 内容分析工具 -->
-        <dependency>
-            <groupId>org.apache.tika</groupId>
-            <artifactId>tika-core</artifactId>
-            <version>2.7.0</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.tika</groupId>
-            <artifactId>tika-parsers-standard-package</artifactId>
-            <version>2.7.0</version>
-        </dependency>
+<!--        &lt;!&ndash; Apache Commons IO &ndash;&gt;-->
+<!--        <dependency>-->
+<!--            <groupId>commons-io</groupId>-->
+<!--            <artifactId>commons-io</artifactId>-->
+<!--            <version>2.11.0</version>-->
+<!--        </dependency>-->
 
         <!-- 排除 SpringBoot 默认的 Logback 日志 -->
         <dependency>
@@ -203,6 +208,7 @@
                     <source>17</source>
                     <target>17</target>
                     <encoding>UTF-8</encoding>
+                    <parameters>true</parameters>
                 </configuration>
             </plugin>
             <plugin>
