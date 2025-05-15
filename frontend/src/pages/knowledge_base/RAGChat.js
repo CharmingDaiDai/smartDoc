@@ -915,8 +915,8 @@ const RAGChat = () => {
 
   // 优化的出处显示组件 - 抽取成独立组件
   const SourcesDisplay = ({ sources }) => {
-    // 默认打开出处面板，当sources首次出现时
-    const [activeKey, setActiveKey] = useState(['sources']);
+    // 默认不打开出处面板
+    const [activeKey, setActiveKey] = useState([]);
 
     const onCollapseChange = (keys) => {
       setActiveKey(keys);
