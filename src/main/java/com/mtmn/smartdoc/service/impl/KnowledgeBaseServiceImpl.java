@@ -654,7 +654,8 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
 
             if (null != docs) {
                 message.put("docs", docs);
-                return "data: " + objectMapper.writeValueAsString(message) + "\n\n";
+//                return "data: " + objectMapper.writeValueAsString(message) + "\n\n";
+                return objectMapper.writeValueAsString(message);
             }
 
             delta.put("content", content);
@@ -663,7 +664,8 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
             choices.add(choice);
             message.put("choices", choices);
 
-            return "data: " + objectMapper.writeValueAsString(message) + "\n\n";
+//            return "data: " + objectMapper.writeValueAsString(message) + "\n\n";
+            return objectMapper.writeValueAsString(message);
         } catch (Exception e) {
             log.error("构建SSE消息失败", e);
             return "data: {\"error\":\"构建消息失败\"}\n\n";
