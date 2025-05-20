@@ -15,20 +15,4 @@ public interface FileService {
      * @return 文件内容
      */
     String readFileContent(String filePath, String fileType);
-    
-    /**
-     * 读取PDF文件内容
-     * 
-     * @param inputStream PDF文件流
-     * @return 文件内容
-     */
-    String readPdfContent(java.io.InputStream inputStream);
-    
-    /**
-     * 读取DOCX文件内容
-     * 
-     * @param inputStream DOCX文件流
-     * @return 文件内容
-     */
-    String readDocxContent(java.io.InputStream inputStream);
 }
