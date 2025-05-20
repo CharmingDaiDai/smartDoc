@@ -1,41 +1,41 @@
-import React, { useEffect, useState } from "react";
+import React, {useEffect, useState} from "react";
 import {
-  Avatar,
-  Button,
-  Card,
-  Col,
-  Empty,
-  List,
-  message,
-  Progress,
-  Row,
-  Space,
-  Spin,
-  Statistic,
-  Tag,
-  Typography,
+    Avatar,
+    Button,
+    Card,
+    Col,
+    Empty,
+    List,
+    message,
+    Progress,
+    Row,
+    Space,
+    Spin,
+    Statistic,
+    Tag,
+    Typography,
 } from "antd";
 import {
-  AppstoreOutlined,
-  BarChartOutlined,
-  BookOutlined,
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  CrownOutlined,
-  EditOutlined,
-  EyeOutlined,
-  FileProtectOutlined,
-  FileSearchOutlined,
-  FileTextOutlined,
-  HighlightOutlined,
-  LoadingOutlined,
-  NotificationOutlined,
-  RiseOutlined,
-  SafetyOutlined,
+    AppstoreOutlined,
+    BarChartOutlined,
+    BookOutlined,
+    CheckCircleOutlined,
+    ClockCircleOutlined,
+    CrownOutlined,
+    EditOutlined,
+    EyeOutlined,
+    FileProtectOutlined,
+    FileSearchOutlined,
+    FileTextOutlined,
+    HighlightOutlined,
+    LoadingOutlined,
+    NotificationOutlined,
+    RiseOutlined,
+    SafetyOutlined,
 } from "@ant-design/icons";
-import { useAuth } from "../../context/AuthContext";
-import { useNavigate } from "react-router-dom";
-import { dashboardAPI } from "../../services/api";
+import {useAuth} from "../../context/AuthContext";
+import {useNavigate} from "react-router-dom";
+import {dashboardAPI} from "../../services/api";
 
 const { Title, Paragraph, Text } = Typography;
 

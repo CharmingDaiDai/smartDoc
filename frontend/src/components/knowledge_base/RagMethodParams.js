@@ -1,20 +1,20 @@
-import React, { useEffect, useState } from "react";
+import React, {useEffect, useState} from "react";
 import {
-  Alert,
-  Card,
-  Collapse,
-  Form,
-  Input,
-  InputNumber,
-  Select,
-  Slider,
-  Spin,
-  Switch,
-  Tooltip,
-  Typography,
+    Alert,
+    Card,
+    Collapse,
+    Form,
+    Input,
+    InputNumber,
+    Select,
+    Slider,
+    Spin,
+    Switch,
+    Tooltip,
+    Typography,
 } from "antd";
-import { InfoCircleOutlined, QuestionCircleOutlined } from "@ant-design/icons";
-import { getMethodConfig, paramConstraints } from "../../config/ragConfig";
+import {InfoCircleOutlined, QuestionCircleOutlined} from "@ant-design/icons";
+import {getMethodConfig, paramConstraints} from "../../config/ragConfig";
 
 const { Option } = Select;
 const { Panel } = Collapse;

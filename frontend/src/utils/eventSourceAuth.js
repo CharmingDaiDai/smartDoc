@@ -1,4 +1,4 @@
-import { EventSourcePolyfill } from 'event-source-polyfill';
+import {EventSourcePolyfill} from 'event-source-polyfill';
 
 /**
  * 创建带有认证头的EventSource连接

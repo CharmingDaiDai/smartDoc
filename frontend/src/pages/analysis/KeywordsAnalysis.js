@@ -1,34 +1,34 @@
-import React, { useState } from "react";
+import React, {useState} from "react";
 import {
-  Alert,
-  Avatar,
-  Badge,
-  Button,
-  Card,
-  Col,
-  Divider,
-  Input,
-  message,
-  Modal,
-  Radio,
-  Row,
-  Skeleton,
-  Space,
-  Spin,
-  Tag,
-  Tooltip,
-  Typography,
+    Alert,
+    Avatar,
+    Badge,
+    Button,
+    Card,
+    Col,
+    Divider,
+    Input,
+    message,
+    Modal,
+    Radio,
+    Row,
+    Skeleton,
+    Space,
+    Spin,
+    Tag,
+    Tooltip,
+    Typography,
 } from "antd";
 import {
-  CheckCircleOutlined,
-  CopyOutlined,
-  FileTextOutlined,
-  HighlightOutlined,
-  InfoCircleOutlined,
-  LoadingOutlined,
-  TagsOutlined,
+    CheckCircleOutlined,
+    CopyOutlined,
+    FileTextOutlined,
+    HighlightOutlined,
+    InfoCircleOutlined,
+    LoadingOutlined,
+    TagsOutlined,
 } from "@ant-design/icons";
-import { documentAPI } from "../../services/api";
+import {documentAPI} from "../../services/api";
 import DocumentSelector from "../../components/analysis/DocumentSelector";
 
 const { Title, Paragraph, Text } = Typography;

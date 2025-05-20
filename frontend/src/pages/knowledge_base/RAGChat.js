@@ -1,40 +1,40 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, {useEffect, useRef, useState} from "react";
 import {
-  Avatar,
-  Button,
-  Card,
-  Col,
-  Collapse,
-  Divider,
-  Empty,
-  Form,
-  Input,
-  List,
-  message,
-  Row,
-  Select,
-  Spin,
-  Typography,
+    Avatar,
+    Button,
+    Card,
+    Col,
+    Collapse,
+    Divider,
+    Empty,
+    Form,
+    Input,
+    List,
+    message,
+    Row,
+    Select,
+    Spin,
+    Typography,
 } from "antd";
 import {
-  BookOutlined,
-  LoadingOutlined,
-  QuestionCircleOutlined,
-  RobotOutlined,
-  SendOutlined,
-  UserOutlined,
+    BookOutlined,
+    LoadingOutlined,
+    QuestionCircleOutlined,
+    RobotOutlined,
+    SendOutlined,
+    UserOutlined,
 } from "@ant-design/icons";
-import { useNavigate, useParams } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
-import api, { knowledgeBaseAPI } from "../../services/api";
+import {useNavigate, useParams} from "react-router-dom";
+import {useAuth} from "../../context/AuthContext";
+import api, {knowledgeBaseAPI} from "../../services/api";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
-import { getMethodConfig } from "../../config/ragConfig";
+import {getMethodConfig} from "../../config/ragConfig";
 import "../../styles/components/markdown.css";
 import "../../styles/components/ragChat.css"; // 导入RAG Chat专用样式
 import RagMethodParams from "../../components/knowledge_base/RagMethodParams";
-import { createAuthEventSource } from "../../utils/eventSourceAuth";
+import {createAuthEventSource} from "../../utils/eventSourceAuth";
 
 const { Title, Paragraph, Text } = Typography;
 const { TextArea } = Input;

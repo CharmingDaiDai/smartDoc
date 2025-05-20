@@ -1,34 +1,34 @@
-import React, { useState } from "react";
+import React, {useState} from "react";
 import {
-  Alert,
-  Avatar,
-  Badge,
-  Button,
-  Card,
-  Col,
-  Divider,
-  Input,
-  message,
-  Modal,
-  Radio,
-  Row,
-  Skeleton,
-  Space,
-  Spin,
-  Tooltip,
-  Typography,
+    Alert,
+    Avatar,
+    Badge,
+    Button,
+    Card,
+    Col,
+    Divider,
+    Input,
+    message,
+    Modal,
+    Radio,
+    Row,
+    Skeleton,
+    Space,
+    Spin,
+    Tooltip,
+    Typography,
 } from "antd";
 import {
-  BookOutlined,
-  CheckCircleOutlined,
-  CopyOutlined,
-  FileSearchOutlined,
-  FileTextOutlined,
-  InfoCircleOutlined,
-  LoadingOutlined,
-  ReadOutlined,
+    BookOutlined,
+    CheckCircleOutlined,
+    CopyOutlined,
+    FileSearchOutlined,
+    FileTextOutlined,
+    InfoCircleOutlined,
+    LoadingOutlined,
+    ReadOutlined,
 } from "@ant-design/icons";
-import { documentAPI } from "../../services/api";
+import {documentAPI} from "../../services/api";
 import DocumentSelector from "../../components/analysis/DocumentSelector";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
