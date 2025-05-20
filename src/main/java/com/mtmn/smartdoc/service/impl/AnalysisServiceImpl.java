@@ -342,18 +342,7 @@ public class AnalysisServiceImpl implements AnalysisService {
         // 如果润色结果为空，根据润色类型返回默认内容
         if (polishedContent.isEmpty()) {
             log.warn("Polished content is empty, using default content for type: {}", finalPolishType);
-            polishedContent = switch (finalPolishType) {
-                case "formal" -> "本文档详细阐述了智能文档系统的功能特性与技术实现。该系统采用先进的自然语言处理技术，"
-                        + "为用户提供高效的文档管理与分析服务。系统的核心模块包括文档摘要生成、关键词提取以及文档润色功能，"
-                        + "这些功能有效提升了文档处理的效率与质量。";
-                case "concise" -> "智能文档系统具备多种分析功能，包括摘要生成、关键词提取和文档润色。系统采用NLP技术处理文档，"
-                        + "提高效率，优化文档质量。用户可轻松管理和分析各类文档。";
-                case "creative" -> "想象一下，你的文档如同经过魔法般的转变！我们的智能文档小精灵施展了它的魔法，"
-                        + "让你的文字焕发出全新的生命力。不仅内容清晰明了，还充满了创意的表达，"
-                        + "让读者在阅读的旅程中感受到文字的魅力与活力。";
-                default ->
-                        "文档润色结果：" + (content != null ? content.substring(0, Math.min(content.length(), 100)) + "..." : "");
-            };
+            polishedContent = "润色失败，返回内容为空";
         }
         
         return PolishResult.builder()
