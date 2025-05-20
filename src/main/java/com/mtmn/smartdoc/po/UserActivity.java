@@ -42,11 +42,21 @@ public class UserActivity {
     private LocalDateTime createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", insertable = false, updatable = false)
+    @JoinColumn(
+            name = "user_id",
+            insertable = false,
+            updatable = false,
+            foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT) // 取消外键约束
+    )
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "document_id", insertable = false, updatable = false)
+    @JoinColumn(
+            name = "document_id",
+            insertable = false,
+            updatable = false,
+            foreignKey = @ForeignKey(ConstraintMode.NO_CONSTRAINT) // 取消外键约束
+    )
     private DocumentPO document;
 
     /**
