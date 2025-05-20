@@ -3,7 +3,6 @@ package com.mtmn.smartdoc.service.impl;
 import com.mtmn.smartdoc.po.DocumentPO;
 import com.mtmn.smartdoc.repository.DocumentRepository;
 import com.mtmn.smartdoc.service.AnalysisService;
-import com.mtmn.smartdoc.service.EmbeddingService;
 import com.mtmn.smartdoc.service.FileService;
 import com.mtmn.smartdoc.service.LLMService;
 import com.mtmn.smartdoc.vo.KeywordsResult;
@@ -37,9 +36,6 @@ public class AnalysisServiceImpl implements AnalysisService {
 
     @Resource
     private LLMService llmService;
-
-    @Resource
-    EmbeddingService embeddingService;
 
     @Resource
     private FileService fileService;

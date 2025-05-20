@@ -11,6 +11,9 @@ import dev.langchain4j.store.embedding.milvus.MilvusEmbeddingStore;
 import io.milvus.common.clientenum.ConsistencyLevelEnum;
 import io.milvus.param.IndexType;
 import io.milvus.param.MetricType;
+import org.checkerframework.checker.units.qual.A;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import lombok.Builder;
 import lombok.Data;
 import lombok.extern.log4j.Log4j2;
@@ -40,8 +43,6 @@ public class NaiveRag implements BaseRag {
 
     private Integer chunkOverlap;
 
-    private final EmbeddingService embeddingService;
-
     /**
      * @return
      */
@@ -50,7 +51,7 @@ public class NaiveRag implements BaseRag {
         String embeddingModelName = this.getEmbeddingModel();
 
         // 创建Embedding模型
-        EmbeddingModel embeddingModel = embeddingService.createEmbeddingModel(embeddingModelName);
+        EmbeddingModel embeddingModel = EmbeddingService.createEmbeddingModel(embeddingModelName);
         log.info("使用嵌入模型：{} 创建索引", embeddingModelName);
 
         List<Boolean> success = new ArrayList<>();
@@ -73,7 +74,7 @@ public class NaiveRag implements BaseRag {
                 .port(19530)
                 // Name of the collection 知识库名称 + userId
                 .collectionName(collectionName)
-                .dimension(embeddingModel.dimension())
+                .dimension(embeddingModel.embed("test").content().dimension())
                 .indexType(IndexType.FLAT)
                 .metricType(MetricType.COSINE)
                 .consistencyLevel(ConsistencyLevelEnum.EVENTUALLY)

@@ -23,6 +23,7 @@ import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
+import dev.langchain4j.model.output.Response;
 import dev.langchain4j.rag.content.Content;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
@@ -68,7 +69,6 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
     private final ModelConfig modelConfig;
     private final ObjectMapper objectMapper;
     private final DocumentService documentService;
-    private final EmbeddingService embeddingService;
     //    private final MilvusService milvusService;
     private final MinioService minioService;
 
@@ -367,7 +367,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
 
         try {
             // 使用 RagConfigFactory 创建 RAG 配置对象
-            BaseRagConfig ragConfig = RagConfigFactory.createRagConfig(ragMethodName, embeddingModelName, indexParam);
+            BaseRag ragConfig = RagConfigFactory.createRagConfig(ragMethodName, embeddingModelName, indexParam);
 
             // 查询未被索引的文档
             List<DocumentPO> documentPOList = documentRepository.findByKnowledgeBaseIdOrderByCreatedAtDesc(Long.valueOf(id))
@@ -398,7 +398,8 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
                 }
             }
 
-            List<Boolean> success = buildIndex(kbName, ragConfig, documents);
+            List<Boolean> success = ragConfig.buildIndex(kbName, documents);
+//            List<Boolean> success = buildIndex(kbName, ragConfig, documents);
 
             for (int i = 0; i < success.size(); i++) {
                 // TODO 没成功的现在没有提示
@@ -417,17 +418,17 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
         }
     }
 
-    private List<Boolean> buildIndex(String kbName, BaseRagConfig ragConfig, List<Document> documents) {
+    private List<Boolean> buildIndex(String kbName, BaseRag ragConfig, List<Document> documents) {
         String embeddingModelName = ragConfig.getEmbeddingModel();
 
         // 创建Embedding模型
-        EmbeddingModel embeddingModel = embeddingService.createEmbeddingModel(embeddingModelName);
+        EmbeddingModel embeddingModel = EmbeddingService.createEmbeddingModel(embeddingModelName);
         log.info("使用嵌入模型：{} 创建索引", embeddingModelName);
 
         List<Boolean> success = new ArrayList<>();
 
         try {
-            if (ragConfig instanceof NaiveRagConfig naiveConfig) {
+            if (ragConfig instanceof NaiveRag naiveConfig) {
                 // TODO 改为 NaiveRagService.buildIndex()
 
                 // 获取配置参数
@@ -446,15 +447,11 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
                 MilvusEmbeddingStore embeddingStore = MilvusEmbeddingStore.builder()
                         .host("10.0.30.172")
                         .port(19530)
-//                        .databaseName(userId.toString())
                         // Name of the collection 知识库名称 + userId
                         .collectionName(collectionName)
                         .dimension(embeddingModel.dimension())
                         .indexType(IndexType.FLAT)
                         .metricType(MetricType.COSINE)
-//                        .username("username")
-//                        .password("password")
-                        // Consistency level
                         .consistencyLevel(ConsistencyLevelEnum.EVENTUALLY)
                         .autoFlushOnInsert(false)
                         .idFieldName("id")
@@ -492,7 +489,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
 
                     success.add(false);
                 }
-            } else if (ragConfig instanceof HiSemRagConfig hiSemConfig) {
+            } else if (ragConfig instanceof HiSemRag hiSemConfig) {
                 // TODO 改为 HiSemRagService.buildIndex()
 
                 // 获取配置参数
@@ -528,7 +525,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
      *
      * @return 当前登录用户ID
      */
-    private Long getCurrentUserId() {
+    public static Long getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated()) {
             Object principal = authentication.getPrincipal();
@@ -546,7 +543,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
         return null;
     }
 
-    private String getStoreKnowledgeBaseName(String kbName) {
+    public static String getStoreKnowledgeBaseName(String kbName) {
         return "kb_" + getCurrentUserId() + "_" + kbName;
     }
 
@@ -580,10 +577,10 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
 
         try {
             // 使用 RagConfigFactory 创建 RAG 配置对象
-            BaseRagConfig ragConfig = RagConfigFactory.createRagConfig(ragMethodName, embeddingModelName, "{}");
+            BaseRag ragConfig = RagConfigFactory.createRagConfig(ragMethodName, embeddingModelName, "{}");
 
             // 创建Embedding模型
-            EmbeddingModel embeddingModel = embeddingService.createEmbeddingModel(embeddingModelName);
+            EmbeddingModel embeddingModel = EmbeddingService.createEmbeddingModel(embeddingModelName);
 
             String collectionName = getStoreKnowledgeBaseName(kbName);
 

@@ -14,8 +14,9 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
  */
 @SpringBootTest
 public class EmbeddingServiceTest {
+
     @Resource
-    EmbeddingService embeddingService;
+    private EmbeddingService embeddingService;
 
     /**
      * 测试文本嵌入方法
