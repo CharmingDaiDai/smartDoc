@@ -48,8 +48,8 @@ public class DocumentController {
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "上传文档", description = "上传新文档并关联到当前用户")
     public ApiResponse<DocumentDto> uploadDocument(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam("title") String title,
+            @RequestParam(name = "file") MultipartFile file,
+            @RequestParam(name = "title") String title,
             @AuthenticationPrincipal User user) {
         
         if (file.isEmpty()) {
@@ -79,8 +79,8 @@ public class DocumentController {
     @PostMapping(value = "/upload-batch", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "批量上传文档", description = "同时上传多个文档并关联到当前用户")
     public ApiResponse<List<DocumentDto>> uploadDocuments(
-            @RequestParam("files") MultipartFile[] files,
-            @RequestParam("titles") String[] titles,
+            @RequestParam(name = "files") MultipartFile[] files,
+            @RequestParam(name = "titles") String[] titles,
             @AuthenticationPrincipal User user) {
         
         if (files.length == 0 || files.length != titles.length) {

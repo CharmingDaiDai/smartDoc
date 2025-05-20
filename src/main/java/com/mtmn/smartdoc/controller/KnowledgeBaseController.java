@@ -162,8 +162,8 @@ public class KnowledgeBaseController {
     public ApiResponse<List<Boolean>> addDocs(
             @PathVariable String id,
             @AuthenticationPrincipal User user,
-            @RequestParam("files") MultipartFile[] files,
-            @RequestParam("titles") String[] titles) {
+            @RequestParam(name = "files") MultipartFile[] files,
+            @RequestParam(name = "titles") String[] titles) {
 
         log.info("向知识库添加文档，知识库ID：{}，用户：{}", id, user.getUsername());
 
@@ -196,7 +196,7 @@ public class KnowledgeBaseController {
     @GetMapping(value = "/chat/naive/{id}", produces = TEXT_EVENT_STREAM_VALUE)
     @Operation(summary = "普通 RAG 问答", description = "普通 RAG 问答")
     public Flux<String> ragQa(@PathVariable String id,
-                              @RequestParam String question, // 用户问题
+                              @RequestParam(name = "question") String question, // 用户问题
                               @RequestParam(defaultValue = "5", name = "topk") int topk, // topk参数，默认为5
                               @RequestParam(defaultValue = "false", name = "query_rewriting") boolean qr, // 查询重写参数，默认为false
                               @RequestParam(defaultValue = "false", name = "query_decomposition") boolean qd, // 查询分解参数，默认为false
