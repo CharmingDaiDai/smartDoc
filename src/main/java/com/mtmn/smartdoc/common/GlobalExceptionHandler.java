@@ -172,6 +172,16 @@ public class GlobalExceptionHandler {
     }
     
     /**
+     * 处理自定义异常
+     */
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    @ExceptionHandler(CustomException.class)
+    public ApiResponse<String> handleCustomException(CustomException e) {
+        log.warn("自定义异常: {}", e.getMessage());
+        return ApiResponse.error(e.getCode(), e.getMessage());
+    }
+    
+    /**
      * 处理其他未捕获的异常
      */
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
