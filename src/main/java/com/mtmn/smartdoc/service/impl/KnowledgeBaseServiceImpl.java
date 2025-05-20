@@ -28,9 +28,14 @@ import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.rag.query.Query;
 import dev.langchain4j.store.embedding.milvus.MilvusEmbeddingStore;
+import io.milvus.client.MilvusClient;
+import io.milvus.client.MilvusServiceClient;
 import io.milvus.common.clientenum.ConsistencyLevelEnum;
 import io.milvus.param.IndexType;
 import io.milvus.param.MetricType;
+import io.milvus.v2.client.ConnectConfig;
+import io.milvus.v2.client.MilvusClientV2;
+import io.milvus.v2.service.collection.request.DropCollectionReq;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -150,20 +155,29 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
             }
 
             // 删除知识库中的所有文档
-            // 注意：此处仅更新文档的knowledgeBaseId为null，不删除文档本身
-            // TODO 删除 Minio 中的文档
             documentRepository.findAll().stream()
                     .filter(doc -> Objects.equals(doc.getKnowledgeBaseId(), knowledgeBaseId))
                     .forEach(doc -> {
-                        doc.setKnowledgeBaseId(null);
-                        documentRepository.save(doc);
+                        // 删除 Minio 中的文档
+                        minioService.deleteFile(doc.getFilePath());
+
+                        // 删除文档表中的记录
+                        documentRepository.delete(doc);
+
                         log.info("文档从知识库中移除，文档ID：{}", doc.getId());
                     });
 
-            // 删除知识库
-            knowledgeBaseRepository.delete(knowledgeBase);
+            // TODO 改为 RAGMethodService.deleteIndex()
+            // 删除知识库的索引
+            ConnectConfig connectConfig = ConnectConfig.builder()
+                    .uri("http://10.0.30.172:19530")
+                    .build();
 
-            // TODO 知识库的索引也要删除
+            MilvusClientV2 milvusClient = new MilvusClientV2(connectConfig);
+            milvusClient.dropCollection(DropCollectionReq.builder().collectionName(getStoreKnowledgeBaseName(knowledgeBase.getName())).build());
+
+            // 删除知识库表中的记录
+            knowledgeBaseRepository.delete(knowledgeBase);
 
             log.info("知识库删除成功，ID：{}", knowledgeBaseId);
             return ApiResponse.success("知识库删除成功", true);
@@ -417,6 +431,8 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
 
         try {
             if (ragConfig instanceof NaiveRagConfig naiveConfig) {
+                // TODO 改为 NaiveRagService.buildIndex()
+
                 // 获取配置参数
                 Integer chunkSize = naiveConfig.getChunkSize();
                 Integer chunkOverlap = naiveConfig.getChunkOverlap();
@@ -480,6 +496,8 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
                     success.add(false);
                 }
             } else if (ragConfig instanceof HiSemRagConfig hiSemConfig) {
+                // TODO 改为 HiSemRagService.buildIndex()
+
                 // 获取配置参数
                 Integer chunkSize = hiSemConfig.getChunkSize();
                 Boolean generateAbstract = hiSemConfig.getGenerateAbstract();
