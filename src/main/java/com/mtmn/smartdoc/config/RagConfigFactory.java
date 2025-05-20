@@ -18,7 +18,7 @@ public class RagConfigFactory {
             // 解析 indexParam JSON 并构建 NaiveRagConfig
             // 假设 indexParam 是 JSON 格式的字符串
             Map<String, Object> params = parseJson(indexParam);
-            return NaiveRagConfig.builder()
+            return NaiveRag.builder()
                     .methodName("naive")
                     .embeddingModel(embeddingModel)
                     .chunkSize((Integer) params.getOrDefault("chunk-size", 512))
@@ -29,7 +29,7 @@ public class RagConfigFactory {
         CONFIG_BUILDERS.put("hisem", (embeddingModel, indexParam) -> {
             // 解析 indexParam JSON 并构建 HiSemRagConfig
             Map<String, Object> params = parseJson(indexParam);
-            return HiSemRagConfig.builder()
+            return HiSemRag.builder()
                     .methodName("hisem")
                     .embeddingModel(embeddingModel)
                     .chunkSize((Integer) params.getOrDefault("chunk-size", 2048))
@@ -38,12 +38,12 @@ public class RagConfigFactory {
         });
     }
 
-    public static BaseRagConfig createRagConfig(String methodName, String embeddingModel, String indexParam) {
+    public static BaseRag createRagConfig(String methodName, String embeddingModel, String indexParam) {
         RagConfigBuilder builder = CONFIG_BUILDERS.get(methodName);
         if (builder == null) {
             throw new IllegalArgumentException("Unsupported RAG method: " + methodName);
         }
-        return (BaseRagConfig) builder.build(embeddingModel, indexParam);
+        return (BaseRag) builder.build(embeddingModel, indexParam);
     }
 
     private static Map<String, Object> parseJson(String json) {
