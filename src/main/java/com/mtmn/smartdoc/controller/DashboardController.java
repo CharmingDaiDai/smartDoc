@@ -39,8 +39,8 @@ public class DashboardController {
     @Operation(summary = "获取用户最近活动", description = "返回用户的最近操作记录，可指定返回数量")
     public ApiResponse<List<UserActivityDto>> getRecentActivities(
             Authentication authentication,
-            @RequestParam(defaultValue = "5") int limit) {
-        
+            @RequestParam(name = "limit", defaultValue = "5") int limit) {
+
         List<UserActivityDto> activities = dashboardService.getUserRecentActivities(authentication, limit);
         return ApiResponse.success(activities);
     }
