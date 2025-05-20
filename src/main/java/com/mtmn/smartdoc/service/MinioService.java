@@ -1,5 +1,6 @@
 package com.mtmn.smartdoc.service;
 
+import com.mtmn.smartdoc.common.CustomException;
 import io.minio.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -40,8 +41,8 @@ public class MinioService {
                 log.info("Created bucket: {}", bucketName);
             }
         } catch (Exception e) {
-            log.error("Error initializing bucket: {}", e.getMessage(), e);
-            throw new RuntimeException("Error initializing MinIO bucket", e);
+            log.error("初始化存储桶失败: {}", e.getMessage(), e);
+            throw new CustomException(500, "初始化存储桶失败");
         }
     }
 
@@ -68,11 +69,11 @@ public class MinioService {
                             .build()
             );
             
-            log.info("File uploaded successfully: {}", objectName);
+            log.info("文件上传成功: {}", objectName);
             return objectName;
         } catch (Exception e) {
-            log.error("Error uploading file: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to upload file to MinIO", e);
+            log.error("文件上传失败: {}", e.getMessage(), e);
+            throw new CustomException(500, "文件上传到 MinIO 失败");
         }
     }
 
@@ -101,10 +102,10 @@ public class MinioService {
                             .object(filePath)
                             .build()
             );
-            log.info("File deleted successfully: {}", filePath);
+            log.info("文件删除成功: {}", filePath);
         } catch (Exception e) {
-            log.error("Error deleting file: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to delete file from MinIO", e);
+            log.error("文件删除失败: {}", e.getMessage(), e);
+            throw new CustomException(500, "从 MinIO 删除文件失败");
         }
     }
 
@@ -124,8 +125,8 @@ public class MinioService {
                             .build()
             );
         } catch (Exception e) {
-            log.error("Error getting file URL: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to get file URL from MinIO", e);
+            log.error("获取文件 URL 失败: {}", e.getMessage(), e);
+            throw new CustomException(500, "获取 MinIO 文件 URL 失败");
         }
     }
 
@@ -144,8 +145,8 @@ public class MinioService {
                     .build()
             );
         } catch (Exception e) {
-            log.error("Error getting file content: {}", e.getMessage(), e);
-            throw new RuntimeException("Failed to get file content from MinIO", e);
+            log.error("获取文件内容失败: {}", e.getMessage(), e);
+            throw new CustomException(500, "获取 MinIO 文件内容失败");
         }
     }
 
@@ -158,18 +159,18 @@ public class MinioService {
      */
     public String uploadFileFromUrl(String fileUrl, String fileName) {
         if (fileUrl == null || fileUrl.isEmpty()) {
-            throw new IllegalArgumentException("文件URL不能为空");
+            throw new CustomException(400, "文件 URL 不能为空");
         }
         
         try {
-            log.info("开始从URL下载文件: {}", fileUrl);
+            log.info("开始从 URL 下载文件: {}", fileUrl);
             
-            // 如果没有提供文件名，从URL生成
+            // 如果没有提供文件名，从 URL 生成
             if (fileName == null || fileName.isEmpty()) {
                 fileName = UUID.randomUUID().toString() + "_" + 
                           fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
                 
-                // 移除URL参数
+                // 移除 URL 参数
                 if (fileName.contains("?")) {
                     fileName = fileName.substring(0, fileName.indexOf('?'));
                 }
@@ -198,10 +199,10 @@ public class MinioService {
 
             String objectName = getFilePath(fileName);
             
-            // 确保bucket存在
+            // 确保 bucket 存在
             initBucket();
             
-            // 直接使用MinIO客户端上传文件，不经过MultipartFile
+            // 直接使用 MinIO 客户端上传文件，不经过 MultipartFile
             try (InputStream fileInputStream = Files.newInputStream(tempFile)) {
                 minioClient.putObject(
                     PutObjectArgs.builder()
@@ -212,7 +213,7 @@ public class MinioService {
                         .build()
                 );
                 
-                log.info("从URL下载并上传到MinIO成功: {}", objectName);
+                log.info("从 URL 下载并上传到 MinIO 成功: {}", objectName);
                 
                 // 清理临时文件
                 Files.deleteIfExists(tempFile);
@@ -220,8 +221,8 @@ public class MinioService {
                 return objectName;
             }
         } catch (Exception e) {
-            log.error("从URL下载并上传文件失败: {}", e.getMessage(), e);
-            throw new RuntimeException("从URL下载并上传文件到MinIO失败", e);
+            log.error("从 URL 下载并上传文件失败: {}", e.getMessage(), e);
+            throw new CustomException(500, "从 URL 下载并上传文件到 MinIO 失败");
         }
     }
 }

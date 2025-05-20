@@ -28,8 +28,6 @@ import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.rag.query.Query;
 import dev.langchain4j.store.embedding.milvus.MilvusEmbeddingStore;
-import io.milvus.client.MilvusClient;
-import io.milvus.client.MilvusServiceClient;
 import io.milvus.common.clientenum.ConsistencyLevelEnum;
 import io.milvus.param.IndexType;
 import io.milvus.param.MetricType;
@@ -52,7 +50,6 @@ import reactor.core.publisher.Sinks;
 import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.UUID;
 import java.util.stream.IntStream;
 
 /**

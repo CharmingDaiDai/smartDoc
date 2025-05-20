@@ -1,5 +1,6 @@
 package com.mtmn.smartdoc.service;
 
+import com.mtmn.smartdoc.common.CustomException;
 import com.mtmn.smartdoc.dto.ChangePasswordRequest;
 import com.mtmn.smartdoc.dto.UpdateProfileRequest;
 import com.mtmn.smartdoc.dto.UserProfileDto;
@@ -7,7 +8,6 @@ import com.mtmn.smartdoc.po.User;
 import com.mtmn.smartdoc.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,7 +15,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 用户服务
- * @author charmingdaidai
+ * author charmingdaidai
  */
 @Log4j2
 @Service
@@ -34,7 +34,7 @@ public class UserService {
      */
     public UserProfileDto getUserProfile(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> new CustomException(404, "用户不存在"));
         
         return convertToDTO(user);
     }
@@ -49,12 +49,12 @@ public class UserService {
     @Transactional
     public UserProfileDto updateProfile(String username, UpdateProfileRequest request) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> new CustomException(404, "用户不存在"));
         
         // 如果要更改邮箱，检查邮箱是否已被其他用户使用
         if (!user.getEmail().equals(request.getEmail()) &&
                 userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new RuntimeException("该邮箱已被使用");
+            throw new CustomException(400, "该邮箱已被使用");
         }
         
         user.setEmail(request.getEmail());
@@ -74,11 +74,11 @@ public class UserService {
     @Transactional
     public UserProfileDto uploadAvatar(String username, MultipartFile file) {
         if (file.isEmpty()) {
-            throw new RuntimeException("头像文件不能为空");
+            throw new CustomException(400, "头像文件不能为空");
         }
         
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> new CustomException(404, "用户不存在"));
         
         try {
             // 如果用户已有头像，先删除旧头像
@@ -102,7 +102,7 @@ public class UserService {
             return convertToDTO(updatedUser);
         } catch (Exception e) {
             log.error("上传头像失败: {}", e.getMessage(), e);
-            throw new RuntimeException("上传头像失败: " + e.getMessage());
+            throw new CustomException(500, "上传头像失败");
         }
     }
     
@@ -117,15 +117,15 @@ public class UserService {
     public boolean changePassword(String username, ChangePasswordRequest request) {
         // 验证新密码与确认密码是否一致
         if (!request.getNewPassword().equals(request.getConfirmPassword())) {
-            throw new RuntimeException("新密码与确认密码不一致");
+            throw new CustomException(400, "新密码与确认密码不一致");
         }
         
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("用户不存在"));
+                .orElseThrow(() -> new CustomException(404, "用户不存在"));
         
         // 验证当前密码是否正确
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
-            throw new BadCredentialsException("当前密码不正确");
+            throw new CustomException(401, "当前密码不正确");
         }
         
         // 更新密码
