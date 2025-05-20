@@ -2,6 +2,7 @@ package com.mtmn.smartdoc.controller;
 
 import com.mtmn.smartdoc.common.ApiResponse;
 import com.mtmn.smartdoc.dto.AuthenticationRequest;
+import com.mtmn.smartdoc.dto.TokenRefreshRequest;
 import com.mtmn.smartdoc.service.AuthCodeStorageService;
 import com.mtmn.smartdoc.service.AuthenticationService;
 import com.mtmn.smartdoc.vo.AuthenticationResponse;
@@ -136,19 +137,19 @@ public class AuthController {
         return ApiResponse.success("Token获取成功", authResponse);
     }
 
-//    @PostMapping("/refresh-token")
-//    @Operation(summary = "刷新令牌", description = "使用刷新令牌获取新的访问令牌")
-//    public ApiResponse<AuthenticationResponse> refreshToken(
-//            @RequestBody TokenRefreshRequest request
-//    ) {
-//        log.info("收到令牌刷新请求");
-//        try {
-//            AuthenticationResponse response = authenticationService.refreshToken(request.getRefreshToken());
-//            log.info("令牌刷新成功");
-//            return ApiResponse.success("令牌刷新成功", response);
-//        } catch (Exception e) {
-//            log.error("令牌刷新失败 - 错误信息: {}", e.getMessage());
-//            throw e;
-//        }
-//    }
+   @PostMapping("/refresh-token")
+   @Operation(summary = "刷新令牌", description = "使用刷新令牌获取新的访问令牌")
+   public ApiResponse<AuthenticationResponse> refreshToken(
+           @RequestBody TokenRefreshRequest request
+   ) {
+       log.info("收到令牌刷新请求");
+       try {
+           AuthenticationResponse response = authenticationService.refreshToken(request.getRefreshToken());
+           log.info("令牌刷新成功");
+           return ApiResponse.success("令牌刷新成功", response);
+       } catch (Exception e) {
+           log.error("令牌刷新失败 - 错误信息: {}", e.getMessage());
+           throw e;
+       }
+   }
 }

@@ -1,5 +1,6 @@
 package com.mtmn.smartdoc.service.impl;
 
+import com.mtmn.smartdoc.common.CustomException;
 import com.mtmn.smartdoc.dto.AuthenticationRequest;
 import com.mtmn.smartdoc.po.User;
 import com.mtmn.smartdoc.repository.UserRepository;
@@ -14,7 +15,6 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -94,10 +94,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         // 获取用户
         var user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new UsernameNotFoundException("用户不存在"));
+                .orElseThrow(() -> new CustomException(404, "用户不存在"));
 
         if (!user.isEnabled()) {
-            throw new DisabledException("用户已被禁用");
+            throw new CustomException(403, "用户已被禁用");
         }
 
         // 更新最后登录时间
@@ -242,5 +242,32 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         } catch (Exception e) {
             throw new RuntimeException("GitHub 登录处理失败: " + e.getMessage(), e);
         }
+    }
+
+    @Override
+    public AuthenticationResponse refreshToken(String refreshToken) {
+        // 验证刷新令牌的有效性
+        String username = jwtService.extractUsername(refreshToken);
+        if (username == null) {
+            throw new CustomException(401, "无效的刷新令牌");
+        }
+
+        // 获取用户信息
+        var user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new CustomException(404, "用户不存在"));
+
+        if (!jwtService.isTokenValid(refreshToken, user)) {
+            throw new CustomException(401, "无效的刷新令牌");
+        }
+
+        // 生成新的访问令牌和刷新令牌
+        String newAccessToken = jwtService.generateToken(user);
+        String newRefreshToken = jwtService.generateRefreshToken(user);
+
+        // 返回新的认证响应
+        return AuthenticationResponse.builder()
+                .accessToken(newAccessToken)
+                .refreshToken(newRefreshToken)
+                .build();
     }
 }

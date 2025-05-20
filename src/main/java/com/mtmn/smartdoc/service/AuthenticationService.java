@@ -24,5 +24,5 @@ public interface AuthenticationService {
      * @param refreshToken 刷新令牌
      * @return 新的认证响应，包含新的访问令牌和刷新令牌
      */
-//    public AuthenticationResponse refreshToken(String refreshToken);
+    public AuthenticationResponse refreshToken(String refreshToken);
 }
