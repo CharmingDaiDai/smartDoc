@@ -23,7 +23,6 @@ import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
 import dev.langchain4j.model.embedding.EmbeddingModel;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
-import dev.langchain4j.model.output.Response;
 import dev.langchain4j.rag.content.Content;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
@@ -92,7 +91,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
         log.info("创建知识库，用户：{}，知识库名称：{}", user.getUsername(), createKBRequest.getName());
 
         // 参数校验
-        if (createKBRequest == null || !StringUtils.hasText(createKBRequest.getName())) {
+        if (!StringUtils.hasText(createKBRequest.getName())) {
             return ApiResponse.error("知识库名称不能为空");
         }
 
