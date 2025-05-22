@@ -6,6 +6,7 @@ import com.mtmn.smartdoc.config.ModelConfig;
 import com.mtmn.smartdoc.vo.SecurityResult;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
+import dev.langchain4j.model.openai.OpenAiChatRequestParameters;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -65,6 +66,7 @@ public class LLMService {
                     .apiKey(config.getApiKey())
                     .baseUrl(config.getBaseUrl())
                     .modelName(config.getModelName())
+//                    .maxTokens(20000)
                     .build();
         });
     }
@@ -87,12 +89,14 @@ public class LLMService {
         }
         
         log.info("创建流式聊天语言模型: {}", config.getModelName());
-        
+
         // 构建并返回流式模型
         return OpenAiStreamingChatModel.builder()
                 .apiKey(config.getApiKey())
                 .baseUrl(config.getBaseUrl())
                 .modelName(config.getModelName())
+//                .maxTokens(20000)
+                .maxCompletionTokens(32000)
                 .build();
     }
 
