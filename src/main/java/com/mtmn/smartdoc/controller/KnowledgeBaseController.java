@@ -146,7 +146,7 @@ public class KnowledgeBaseController {
      */
     @GetMapping("/listDocs/{id}")
     @Operation(summary = "获取知识库文档列表", description = "获取指定知识库中的所有文档")
-    public ApiResponse<List<DocumentVO>> listDocs(@PathVariable Long id, @AuthenticationPrincipal User user) {
+    public ApiResponse<List<DocumentVO>> listDocs(@PathVariable(name = "id") Long id, @AuthenticationPrincipal User user) {
         // TODO 改为分页查询
         log.info("获取知识库文档列表，知识库ID：{}，用户：{}", id, user.getUsername());
         return knowledgeBaseService.listKnowledgeBaseDocs(id, user);
@@ -160,7 +160,7 @@ public class KnowledgeBaseController {
     @PostMapping(value = "/addDocs/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "知识库添加文档", description = "向知识库添加文档")
     public ApiResponse<List<Boolean>> addDocs(
-            @PathVariable String id,
+            @PathVariable(name = "id") String id,
             @AuthenticationPrincipal User user,
             @RequestParam(name = "files") MultipartFile[] files,
             @RequestParam(name = "titles") String[] titles) {
@@ -177,7 +177,7 @@ public class KnowledgeBaseController {
      */
     @PostMapping("/deleteDocs/{id}")
     @Operation(summary = "知识库删除文档", description = "删除知识库的文档")
-    public ApiResponse<List<Boolean>> deleteDocs(@RequestBody String ids, @PathVariable String id, @AuthenticationPrincipal User user) {
+    public ApiResponse<List<Boolean>> deleteDocs(@RequestBody String ids, @PathVariable(name = "id") String id, @AuthenticationPrincipal User user) {
         // TODO: 实现删除知识库文档的功能（先放一放）
         // 文档从 Minio 中删除
         // 文档从向量库（索引）中删除
@@ -187,7 +187,7 @@ public class KnowledgeBaseController {
 
     @PostMapping("index/{id}")
     @Operation(summary = "构建知识库索引", description = "构建知识库索引")
-    public ApiResponse<String> buildIndex(@PathVariable String id, @AuthenticationPrincipal User user) {
+    public ApiResponse<String> buildIndex(@PathVariable(name = "id") String id, @AuthenticationPrincipal User user) {
         log.info("构建知识库索引，知识库ID：{}，用户：{}", id, user.getUsername());
         // TODO
         return knowledgeBaseService.buildIndex(id);
@@ -195,7 +195,7 @@ public class KnowledgeBaseController {
 
     @GetMapping(value = "/chat/naive/{id}", produces = TEXT_EVENT_STREAM_VALUE)
     @Operation(summary = "普通 RAG 问答", description = "普通 RAG 问答")
-    public Flux<String> ragQa(@PathVariable String id,
+    public Flux<String> ragQa(@PathVariable(name = "id") String id,
                               @RequestParam(name = "question") String question, // 用户问题
                               @RequestParam(defaultValue = "5", name = "topk") int topk, // topk参数，默认为5
                               @RequestParam(defaultValue = "false", name = "query_rewriting") boolean qr, // 查询重写参数，默认为false
