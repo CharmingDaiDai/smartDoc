@@ -29,6 +29,7 @@ public class RagConfigFactory {
         CONFIG_BUILDERS.put("hisem", (embeddingModel, indexParam) -> {
             // 解析 indexParam JSON 并构建 HiSemRagConfig
             Map<String, Object> params = parseJson(indexParam);
+
             return HiSemRag.builder()
                     .methodName("hisem")
                     .embeddingModel(embeddingModel)

@@ -2,9 +2,10 @@ package com.mtmn.smartdoc.service.impl;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mtmn.smartdoc.common.ApacheTikaDocumentParser;
 import com.mtmn.smartdoc.common.ApiResponse;
-import com.mtmn.smartdoc.config.*;
+import com.mtmn.smartdoc.config.BaseRag;
+import com.mtmn.smartdoc.config.ModelConfig;
+import com.mtmn.smartdoc.config.RagConfigFactory;
 import com.mtmn.smartdoc.dto.CreateKBRequest;
 import com.mtmn.smartdoc.dto.KnowledgeBaseDTO;
 import com.mtmn.smartdoc.po.DocumentPO;
@@ -14,11 +15,6 @@ import com.mtmn.smartdoc.repository.DocumentRepository;
 import com.mtmn.smartdoc.repository.KnowledgeBaseRepository;
 import com.mtmn.smartdoc.service.*;
 import com.mtmn.smartdoc.vo.DocumentVO;
-import dev.langchain4j.data.document.Document;
-import dev.langchain4j.data.document.DocumentSplitter;
-import dev.langchain4j.data.document.splitter.DocumentSplitters;
-import dev.langchain4j.data.embedding.Embedding;
-import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
 import dev.langchain4j.model.embedding.EmbeddingModel;
@@ -29,14 +25,12 @@ import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.rag.query.Query;
 import dev.langchain4j.store.embedding.milvus.MilvusEmbeddingStore;
 import io.milvus.common.clientenum.ConsistencyLevelEnum;
-import io.milvus.param.IndexType;
 import io.milvus.param.MetricType;
 import io.milvus.v2.client.ConnectConfig;
 import io.milvus.v2.client.MilvusClientV2;
 import io.milvus.v2.service.collection.request.DropCollectionReq;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -47,7 +41,6 @@ import org.springframework.web.multipart.MultipartFile;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Sinks;
 
-import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -378,26 +371,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
                 return ApiResponse.success("没有未被索引的文档");
             }
 
-            List<Document> documents = new ArrayList<>();
-
-            ApacheTikaDocumentParser documentParser = new ApacheTikaDocumentParser();
-
-            for (DocumentPO documentPO : documentPOList) {
-                String filePath = documentPO.getFilePath();
-                String fileUrl = minioService.getFileUrl(filePath);
-
-                try (InputStream inputStream = minioService.getFileContent(filePath)) {
-                    // 使用Apache Tika解析器解析文档
-                    Document document = documentParser.parse(inputStream);
-                    documents.add(document);
-
-                    log.debug("成功从URL加载文档, 文档路径: {}", filePath);
-                } catch (Exception e) {
-                    log.error("解析文档失败: {}, 错误: {}", filePath, e.getMessage(), e);
-                }
-            }
-
-            List<Boolean> success = ragConfig.buildIndex(kbName, documents);
+            List<Boolean> success = ragConfig.buildIndex(kbName, documentPOList, minioService);
 //            List<Boolean> success = buildIndex(kbName, ragConfig, documents);
 
             for (int i = 0; i < success.size(); i++) {
@@ -417,107 +391,107 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
         }
     }
 
-    private List<Boolean> buildIndex(String kbName, BaseRag ragConfig, List<Document> documents) {
-        String embeddingModelName = ragConfig.getEmbeddingModel();
-
-        // 创建Embedding模型
-        EmbeddingModel embeddingModel = EmbeddingService.createEmbeddingModel(embeddingModelName);
-        log.info("使用嵌入模型：{} 创建索引", embeddingModelName);
-
-        List<Boolean> success = new ArrayList<>();
-
-        try {
-            if (ragConfig instanceof NaiveRag naiveConfig) {
-                // TODO 改为 NaiveRagService.buildIndex()
-
-                // 获取配置参数
-                Integer chunkSize = naiveConfig.getChunkSize();
-                Integer chunkOverlap = naiveConfig.getChunkOverlap();
-
-                log.info("使用朴素RAG配置，块大小：{}，重叠大小：{}", chunkSize, chunkOverlap);
-
-                Long userId = getCurrentUserId();
-                if (null == userId) {
-                    throw new BadCredentialsException("请登录");
-                }
-
-                String collectionName = getStoreKnowledgeBaseName(kbName);
-
-                MilvusEmbeddingStore embeddingStore = MilvusEmbeddingStore.builder()
-                        .host("10.0.30.172")
-                        .port(19530)
-                        // Name of the collection 知识库名称 + userId
-                        .collectionName(collectionName)
-                        .dimension(embeddingModel.dimension())
-                        .indexType(IndexType.FLAT)
-                        .metricType(MetricType.COSINE)
-                        .consistencyLevel(ConsistencyLevelEnum.EVENTUALLY)
-                        .autoFlushOnInsert(false)
-                        .idFieldName("id")
-                        .textFieldName("text")
-                        .metadataFieldName("metadata")
-                        .vectorFieldName("vector")
-                        .build();
-
-                for (Document document : documents) {
-                    log.debug("处理文档，元数据：{}", document.metadata());
-
-                    if (document.text() != null && !document.text().isEmpty()) {
-                        log.debug("文档内容预览：{}", document.text().substring(0, Math.min(200, document.text().length())) + "...");
-
-                        // 使用配置的chunkSize和chunkOverlap进行文档切分
-                        DocumentSplitter splitter = DocumentSplitters.recursive(chunkSize, chunkOverlap);
-                        List<TextSegment> segments = splitter.split(document);
-
-                        log.info("文档已切分为{}个片段", segments.size());
-
-                        // 将文档片段转换为向量并存入向量库
-                        if (segments.isEmpty()) {
-                            log.warn("文档内容为空，跳过处理");
-                            continue;
-                        }
-
-                        List<Embedding> embeddings = embeddingModel.embedAll(segments).content();
-
-                        embeddingStore.addAll(embeddings, segments);
-
-                        success.add(true);
-
-                        continue;
-                    }
-
-                    success.add(false);
-                }
-            } else if (ragConfig instanceof HiSemRag hiSemConfig) {
-                // TODO 改为 HiSemRagService.buildIndex()
-
-                // 获取配置参数
-                Integer chunkSize = hiSemConfig.getChunkSize();
-                Boolean generateAbstract = hiSemConfig.getGenerateAbstract();
-
-                log.info("使用层次语义RAG配置，块大小：{}，生成摘要：{}", chunkSize, generateAbstract);
-
-                // 层次语义RAG处理示例
-                for (Document document : documents) {
-                    if (generateAbstract) {
-                        // 调用Embedding模型生成文档摘要
-                        String docText = document.text().substring(0, Math.min(1000, document.text().length()));
-                        float[] docEmbedding = embeddingModel.embed(docText).content().vector();
-                        log.debug("文档摘要向量维度: {}", docEmbedding.length);
-
-                        // TODO: 实现层次语义RAG的索引构建逻辑
-                    }
-                }
-            }
-
-            // 返回索引构建成功
-            return success;
-
-        } catch (Exception e) {
-            log.error("构建索引过程中发生错误: {}", e.getMessage(), e);
-            return success;
-        }
-    }
+//    private List<Boolean> buildIndex(String kbName, BaseRag ragConfig, List<Document> documents) {
+//        String embeddingModelName = ragConfig.getEmbeddingModel();
+//
+//        // 创建Embedding模型
+//        EmbeddingModel embeddingModel = EmbeddingService.createEmbeddingModel(embeddingModelName);
+//        log.info("使用嵌入模型：{} 创建索引", embeddingModelName);
+//
+//        List<Boolean> success = new ArrayList<>();
+//
+//        try {
+//            if (ragConfig instanceof NaiveRag naiveConfig) {
+//                // TODO 改为 NaiveRagService.buildIndex()
+//
+//                // 获取配置参数
+//                Integer chunkSize = naiveConfig.getChunkSize();
+//                Integer chunkOverlap = naiveConfig.getChunkOverlap();
+//
+//                log.info("使用朴素RAG配置，块大小：{}，重叠大小：{}", chunkSize, chunkOverlap);
+//
+//                Long userId = getCurrentUserId();
+//                if (null == userId) {
+//                    throw new BadCredentialsException("请登录");
+//                }
+//
+//                String collectionName = getStoreKnowledgeBaseName(kbName);
+//
+//                MilvusEmbeddingStore embeddingStore = MilvusEmbeddingStore.builder()
+//                        .host("10.0.30.172")
+//                        .port(19530)
+//                        // Name of the collection 知识库名称 + userId
+//                        .collectionName(collectionName)
+//                        .dimension(embeddingModel.dimension())
+//                        .indexType(IndexType.FLAT)
+//                        .metricType(MetricType.COSINE)
+//                        .consistencyLevel(ConsistencyLevelEnum.EVENTUALLY)
+//                        .autoFlushOnInsert(false)
+//                        .idFieldName("id")
+//                        .textFieldName("text")
+//                        .metadataFieldName("metadata")
+//                        .vectorFieldName("vector")
+//                        .build();
+//
+//                for (Document document : documents) {
+//                    log.debug("处理文档，元数据：{}", document.metadata());
+//
+//                    if (document.text() != null && !document.text().isEmpty()) {
+//                        log.debug("文档内容预览：{}", document.text().substring(0, Math.min(200, document.text().length())) + "...");
+//
+//                        // 使用配置的chunkSize和chunkOverlap进行文档切分
+//                        DocumentSplitter splitter = DocumentSplitters.recursive(chunkSize, chunkOverlap);
+//                        List<TextSegment> segments = splitter.split(document);
+//
+//                        log.info("文档已切分为{}个片段", segments.size());
+//
+//                        // 将文档片段转换为向量并存入向量库
+//                        if (segments.isEmpty()) {
+//                            log.warn("文档内容为空，跳过处理");
+//                            continue;
+//                        }
+//
+//                        List<Embedding> embeddings = embeddingModel.embedAll(segments).content();
+//
+//                        embeddingStore.addAll(embeddings, segments);
+//
+//                        success.add(true);
+//
+//                        continue;
+//                    }
+//
+//                    success.add(false);
+//                }
+//            } else if (ragConfig instanceof HiSemRag hiSemConfig) {
+//                // TODO 改为 HiSemRagService.buildIndex()
+//
+//                // 获取配置参数
+//                Integer chunkSize = hiSemConfig.getChunkSize();
+//                Boolean generateAbstract = hiSemConfig.getGenerateAbstract();
+//
+//                log.info("使用层次语义RAG配置，块大小：{}，生成摘要：{}", chunkSize, generateAbstract);
+//
+//                // 层次语义RAG处理示例
+//                for (Document document : documents) {
+//                    if (generateAbstract) {
+//                        // 调用Embedding模型生成文档摘要
+//                        String docText = document.text().substring(0, Math.min(1000, document.text().length()));
+//                        float[] docEmbedding = embeddingModel.embed(docText).content().vector();
+//                        log.debug("文档摘要向量维度: {}", docEmbedding.length);
+//
+//                        // TODO: 实现层次语义RAG的索引构建逻辑
+//                    }
+//                }
+//            }
+//
+//            // 返回索引构建成功
+//            return success;
+//
+//        } catch (Exception e) {
+//            log.error("构建索引过程中发生错误: {}", e.getMessage(), e);
+//            return success;
+//        }
+//    }
 
     /**
      * 获取当前登录用户的ID
@@ -575,8 +549,8 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
         String embeddingModelName = knowledgeBase.getEmbeddingModel();
 
         try {
-            // 使用 RagConfigFactory 创建 RAG 配置对象
-            BaseRag ragConfig = RagConfigFactory.createRagConfig(ragMethodName, embeddingModelName, "{}");
+//            // 使用 RagConfigFactory 创建 RAG 配置对象
+//            BaseRag ragConfig = RagConfigFactory.createRagConfig(ragMethodName, embeddingModelName, "{}");
 
             // 创建Embedding模型
             EmbeddingModel embeddingModel = EmbeddingService.createEmbeddingModel(embeddingModelName);
@@ -646,6 +620,101 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
             return handleStreamingChatResponse(prompt, docContents);
         } catch (Exception e) {
             log.error("RAG问答处理失败", e);
+            // 生成错误对象的新格式响应
+            String errorMessage = "抱歉，处理您的问题时遇到了错误：" + e.getMessage();
+            String escapedError = errorMessage.replace("\"", "\\\"").replace("\n", "\\n");
+            return sendFluxMessage("escapedError");
+        }
+    }
+
+    @Override
+    public Flux<String> hisemQa(String id, String question, int maxRes, boolean qr, boolean qd){
+        Optional<KnowledgeBase> knowledgeBaseOpt = knowledgeBaseRepository.findById(Long.valueOf(id));
+
+        if (knowledgeBaseOpt.isEmpty()) {
+            log.error("知识库: {}, 不存在，请确认知识库ID是否正确。", id);
+            // 发送错误信息
+            return sendFluxMessage("知识库不存在，请确认知识库ID是否正确。");
+        }
+
+        KnowledgeBase knowledgeBase = knowledgeBaseOpt.get();
+
+        String kbName = knowledgeBase.getName();
+
+        String ragMethodName = knowledgeBase.getRag();
+
+        String embeddingModelName = knowledgeBase.getEmbeddingModel();
+
+        try {
+            // 创建Embedding模型
+            EmbeddingModel embeddingModel = EmbeddingService.createEmbeddingModel(embeddingModelName);
+
+            String collectionName = getStoreKnowledgeBaseName(kbName);
+
+            MilvusEmbeddingStore embeddingStore = MilvusEmbeddingStore.builder()
+                    .host("10.0.30.172")
+                    .port(19530)
+                    .collectionName(collectionName)
+                    .dimension(embeddingModel.dimension())
+
+                    .metricType(MetricType.COSINE)
+                    .consistencyLevel(ConsistencyLevelEnum.EVENTUALLY)
+                    .autoFlushOnInsert(false)
+                    .idFieldName("id")
+                    .textFieldName("text")
+                    .metadataFieldName("metadata")
+                    .vectorFieldName("vector")
+                    .build();
+
+            ContentRetriever contentRetriever = EmbeddingStoreContentRetriever.builder()
+                    .embeddingStore(embeddingStore)
+                    .embeddingModel(embeddingModel)
+                    .maxResults(maxRes)
+                    .build();
+
+            List<Content> contents = new ArrayList<>(contentRetriever.retrieve(new Query(question)));
+
+            if (contents.isEmpty()) {
+                log.warn("知识库中没有找到与您问题相关的信息。");
+                return sendFluxMessage("知识库中没有找到与您问题相关的信息。");
+            }
+
+            String promptTemplate = """
+                    作为一个精确的RAG系统助手，请严格按照以下指南回答用户问题：
+                    1. 仔细分析问题，识别关键词和核心概念。
+                    2. 从提供的上下文中精确定位相关信息，优先使用完全匹配的内容。
+                    3. 构建回答时，确保包含所有必要的关键词，提高关键词评分(scoreikw)。
+                    4. 保持回答与原文的语义相似度，以提高向量相似度评分(scoreies)。
+                    5. 对于表格查询或需要多段落/多文档综合的问题，给予特别关注并提供更全面的回答。
+                    6. 如果上下文信息不足，可以进行合理推理，但要明确指出推理部分。
+                    7. 回答应准确、完整，直接解答问题，避免不必要的解释。
+                    8. 不要输出“检索到的文本块”、“根据”，“信息”等前缀修饰句，直接输出答案即可
+                    9. 不要使用"根据提供的信息"、"支撑信息显示"等前缀，直接给出答案。
+                    问题: %s
+                    参考上下文：
+                    ···
+                    %s
+                    ···
+                    请提供准确且相关的回答：""";
+
+            // 准备检索到的文档列表和提示词片段
+            List<String> docContents = new ArrayList<>();
+            StringBuilder contextBuilder = new StringBuilder();
+
+            // TODO 用自适应阈值过滤
+
+            // 使用IntStream处理文档片段
+            IntStream.range(0, contents.size()).forEach(i -> {
+                String segmentText = contents.get(i).textSegment().text();
+                contextBuilder.append(String.format("【片段%d】\n%s\n\n", i + 1, segmentText));
+                docContents.add(segmentText);
+            });
+
+            String prompt = String.format(promptTemplate, contextBuilder.toString(), question);
+
+            return handleStreamingChatResponse(prompt, docContents);
+        } catch (Exception e) {
+            log.error("HisemRAG 问答处理失败", e);
             // 生成错误对象的新格式响应
             String errorMessage = "抱歉，处理您的问题时遇到了错误：" + e.getMessage();
             String escapedError = errorMessage.replace("\"", "\\\"").replace("\n", "\\n");

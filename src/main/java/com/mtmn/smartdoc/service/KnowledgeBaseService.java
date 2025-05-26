@@ -74,4 +74,6 @@ public interface KnowledgeBaseService {
     ApiResponse<String> buildIndex(String id);
 
     Flux<String> naiveQa(String id, String question, int topk, boolean qr, boolean qd);
+
+    Flux<String> hisemQa(String id, String question, int maxRes, boolean qr, boolean qd);
 }

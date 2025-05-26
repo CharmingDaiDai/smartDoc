@@ -8,17 +8,19 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
+ * Markdown解析器，根据标题级别构建文档树状结构
+ *
  * @author charmingdaidai
  */
 public class MarkdownParser {
 
     /**
-     * 解析Markdown文本，构建层级结构（两阶段解析）
+     * 解析Markdown文本，构建层级结构
      *
-     * @param markdownText  Markdown格式的文本内容
+     * @param markdownText Markdown格式的文本内容
      * @param documentTitle 文档标题，作为根节点
-     * @param maxLevel      最大解析的标题层级，超过此层级的内容作为上级标题内容处理，设置为null则不限制
-     * @return 返回根节点和所有节点的字典映射 (root_node, {节点ID: 节点对象})
+     * @param maxLevel 最大解析的标题层级，超过此层级的内容作为上级标题内容处理，设置为null则不限制
+     * @return 返回根节点和所有节点的字典映射 (rootNode, {节点ID: 节点对象})
      */
     public static Map.Entry<MyNode, Map<String, MyNode>> parseMarkdownStructure(
             String markdownText, String documentTitle, Integer maxLevel) {
@@ -36,6 +38,13 @@ public class MarkdownParser {
         // 正则表达式匹配标题
         Pattern headerPattern = Pattern.compile("^(#+)\\s+(.*)$");
 
+        // 正则表达式匹配代码块
+        Pattern codeBlockPattern = Pattern.compile("^```|^~~~");
+
+        // 标记是否在代码块内
+        boolean inCodeBlock = false;
+        String codeBlockMarker = ""; // 记录代码块的起始标记（```或~~~）
+
         // 阶段1: 收集所有标题和内容，但不建立层级关系
         List<HeaderInfo> allHeaders = new ArrayList<>();
         List<String> currentContent = new ArrayList<>();
@@ -45,12 +54,58 @@ public class MarkdownParser {
         List<String> rootContent = new ArrayList<>();
 
         for (String line : lines) {
+            // 检查代码块开始/结束
+            Matcher codeBlockMatcher = codeBlockPattern.matcher(line.trim());
+
+            // 如果找到代码块标记
+            if (codeBlockMatcher.find()) {
+                String marker = codeBlockMatcher.group();
+
+                if (!inCodeBlock) {
+                    // 开始代码块
+                    inCodeBlock = true;
+                    codeBlockMarker = marker;
+                } else if (line.trim().startsWith(codeBlockMarker)) {
+                    // 结束代码块
+                    inCodeBlock = false;
+                }
+
+                // 将代码块标记行添加到当前内容中
+                if (currentHeader != null) {
+                    currentContent.add(line);
+                } else {
+                    rootContent.add(line);
+                }
+
+                continue;
+            }
+
+            // 如果在代码块内，直接添加到内容，不做其他处理
+            if (inCodeBlock) {
+                if (currentHeader != null) {
+                    currentContent.add(line);
+                } else {
+                    rootContent.add(line);
+                }
+                continue;
+            }
+
+            // 检查是否是4个空格或Tab开头的缩进代码块
+            if (line.startsWith("    ") || line.startsWith("\t")) {
+                if (currentHeader != null) {
+                    currentContent.add(line);
+                } else {
+                    rootContent.add(line);
+                }
+                continue;
+            }
+
+            // 处理普通行
             Matcher headerMatcher = headerPattern.matcher(line);
 
             if (headerMatcher.find()) {
                 // 获取标题级别和文本
-                // '#'的数量表示级别
-                int level = headerMatcher.group(1).length();
+                int level = headerMatcher.group(1).length();  // '#'的数量表示级别
                 String titleText = headerMatcher.group(2).trim();
 
                 // 检查是否超过最大层级
@@ -74,19 +129,19 @@ public class MarkdownParser {
                     currentContent = new ArrayList<>();
                 }
 
-                // 提取标题编号 - 改进的编号提取逻辑
-                Pattern titleNumberPattern = Pattern.compile("^(\\d+(?:\\.\\d+)*)\\s*(.*)$");
-                Matcher titleNumberMatcher = titleNumberPattern.matcher(titleText);
-                String blockNumber = "";
+//                // 提取标题编号
+//                Pattern titleNumberPattern = Pattern.compile("^(\\d+(?:\\.\\d+)*)\\s*(.*)$");
+//                Matcher titleNumberMatcher = titleNumberPattern.matcher(titleText);
+//                String blockNumber = "";
+//
+//                if (titleNumberMatcher.find()) {
+//                    blockNumber = titleNumberMatcher.group(1);
+//                    // 标题可能仅包含数字，如 "3"
+//                    String restOfTitle = titleNumberMatcher.group(2);
+//                    titleText = !restOfTitle.isEmpty() ? restOfTitle : blockNumber;
+//                }
 
-                if (titleNumberMatcher.find()) {
-                    blockNumber = titleNumberMatcher.group(1);
-                    // 标题可能仅包含数字，如 "3"
-                    String restOfTitle = titleNumberMatcher.group(2);
-                    titleText = !restOfTitle.isEmpty() ? restOfTitle : blockNumber;
-                }
-
-                currentHeader = new HeaderInfo(level, titleText, blockNumber);
+                currentHeader = new HeaderInfo(level, titleText, "");
             } else {
                 // 如果尚未遇到任何标题，则内容属于根节点
                 if (currentHeader == null) {
@@ -109,52 +164,22 @@ public class MarkdownParser {
         rootNode.setPageContent(String.join("\n", rootContent).trim());
 
         // 阶段2: 创建所有节点对象
-        // 首先按标题编号排序，确保父节点在子节点之前处理
-        allHeaders.sort(Comparator.comparing(h -> h.getBlockNumber() != null ? h.getBlockNumber() : ""));
-
-        // 编号到节点ID的映射，用于快速查找父节点
-        Map<String, String> numberToNodeId = new HashMap<>();
-
-        // 创建所有节点对象
         for (HeaderInfo header : allHeaders) {
             int level = header.getLevel();
             String title = header.getTitle();
-            String number = header.getBlockNumber();
+            String blockNumber = header.getBlockNumber();
             String content = header.getContent();
             int originalLevel = header.getOriginalLevel();
 
             // 创建新节点
-            MyNode newNode = new MyNode(
-                    content,
-                    level,
-                    title,
-                    number
-            );
+            MyNode newNode = new MyNode(content, level, title, blockNumber);
 
-            // 将原始级别保存到元数据中，以便后续需要时使用
+            // 将原始级别保存到元数据中
             newNode.getMetadata().put("original_level", originalLevel);
 
             nodesDict.put(newNode.getId(), newNode);
 
-            // 记录编号到节点ID的映射
-            if (number != null && !number.isEmpty()) {
-                numberToNodeId.put(number, newNode.getId());
-            }
-
-            // 根据编号确定父节点
-            if (number != null && !number.isEmpty() && number.contains(".")) {
-                // 提取父编号，如 "3.1" -> "3"
-                String parentNumber = number.substring(0, number.lastIndexOf('.'));
-                if (numberToNodeId.containsKey(parentNumber)) {
-                    // 找到父节点
-                    String parentId = numberToNodeId.get(parentNumber);
-                    newNode.setParentId(parentId);
-                    nodesDict.get(parentId).addChild(newNode.getId());
-                    continue;
-                }
-            }
-
-            // 如果没有通过编号找到父节点，则根据级别关系确定
+            // 根据级别确定父子关系
             if (level == 1) {
                 // 一级标题直接挂到根节点
                 newNode.setParentId(rootNode.getId());
@@ -165,19 +190,25 @@ public class MarkdownParser {
                 for (int i = allHeaders.size() - 1; i >= 0; i--) {
                     HeaderInfo prevHeader = allHeaders.get(i);
                     int prevLevel = prevHeader.getLevel();
-                    String prevNumber = prevHeader.getBlockNumber();
 
                     // 跳过当前标题及其后面的标题
                     if (i >= allHeaders.indexOf(header)) {
                         continue;
                     }
 
+                    // 找到比当前标题级别刚好小1的标题作为父节点
                     if (prevLevel == level - 1) {
-                        if (prevNumber != null && !prevNumber.isEmpty() && numberToNodeId.containsKey(prevNumber)) {
-                            String parentId = numberToNodeId.get(prevNumber);
-                            newNode.setParentId(parentId);
-                            nodesDict.get(parentId).addChild(newNode.getId());
-                            parentFound = true;
+                        // 在已创建的节点中找到对应的节点作为父节点
+                        for (MyNode node : nodesDict.values()) {
+                            if (node.getLevel() == prevLevel &&
+                                    node.getTitle().equals(prevHeader.getTitle())) {
+                                newNode.setParentId(node.getId());
+                                node.addChild(newNode.getId());
+                                parentFound = true;
+                                break;
+                            }
+                        }
+                        if (parentFound) {
                             break;
                         }
                     }
@@ -210,8 +241,8 @@ public class MarkdownParser {
         } catch (Exception e) {
             System.err.println("解析文档结构时出错: " + e.getMessage());
             // 创建一个基本的根节点作为后备
+            // 将全部内容放入根节点
             MyNode rootNode = new MyNode(
-                    // 将全部内容放入根节点
                     markdownText,
                     0,
                     documentTitle
@@ -233,15 +264,17 @@ public class MarkdownParser {
         // 根据节点级别确定实际缩进
         int actualIndent = baseIndent + rootNode.getLevel();
         StringBuilder prefix = new StringBuilder();
-        prefix.append("  ".repeat(Math.max(0, actualIndent)));
+        for (int i = 0; i < actualIndent; i++) {
+            prefix.append("  ");
+        }
 
         // 获取标题原始级别（如果有）
         int originalLevel = rootNode.getMetadata().containsKey("original_level") ?
                 (int) rootNode.getMetadata().get("original_level") : rootNode.getLevel();
 
         // 显示块编号（如果有）
-        String blockInfo = rootNode.getMetadata().containsKey("block_number") ?
-                " [块 " + rootNode.getMetadata().get("block_number") + "]" : "";
+        String blockInfo = rootNode.getBlockNumber() != null && !rootNode.getBlockNumber().isEmpty() ?
+                " [块 " + rootNode.getBlockNumber() + "]" : "";
 
         System.out.println(prefix + "- " + rootNode.getTitle() + blockInfo +
                 " (级别: " + rootNode.getLevel() + ", 原始级别: " + originalLevel + ")");
@@ -267,14 +300,6 @@ public class MarkdownParser {
                 return levelCompare;
             }
 
-            String blockNumber1 = (String) node1.getMetadata().getOrDefault("block_number", "");
-            String blockNumber2 = (String) node2.getMetadata().getOrDefault("block_number", "");
-
-            // 如果两者都有块编号，则按块编号排序
-            if (!blockNumber1.isEmpty() && !blockNumber2.isEmpty()) {
-                return compareBlockNumbers(blockNumber1, blockNumber2);
-            }
-
             // 尝试从标题中提取数字前缀
             String title1 = node1.getTitle();
             String title2 = node2.getTitle();
@@ -289,10 +314,38 @@ public class MarkdownParser {
     }
 
     /**
-     * 比较两个块编号的大小
+     * 自然排序比较两个字符串
      */
-    private static int compareBlockNumbers(String num1, String num2) {
-        // 将块编号拆分为数字部分
+    private static int naturalCompare(String s1, String s2) {
+        Pattern numberPattern = Pattern.compile("^(\\d+(?:\\.\\d+)*)");
+        Matcher m1 = numberPattern.matcher(s1);
+        Matcher m2 = numberPattern.matcher(s2);
+
+        boolean hasNumber1 = m1.find();
+        boolean hasNumber2 = m2.find();
+
+        // 如果两者都有数字前缀
+        if (hasNumber1 && hasNumber2) {
+            return compareNumbers(m1.group(1), m2.group(1));
+        }
+
+        // 如果只有一个有数字前缀，有数字的优先
+        if (hasNumber1) {
+            return -1;
+        }
+        if (hasNumber2) {
+            return 1;
+        }
+
+        // 都没有数字前缀，按字母顺序
+        return s1.compareTo(s2);
+    }
+
+    /**
+     * 比较两个数字字符串
+     */
+    private static int compareNumbers(String num1, String num2) {
+        // 将数字字符串拆分为数字部分
         String[] parts1 = num1.split("\\.");
         String[] parts2 = num2.split("\\.");
 
@@ -316,34 +369,6 @@ public class MarkdownParser {
 
         // 如果公共部分相同，则比较长度
         return Integer.compare(parts1.length, parts2.length);
-    }
-
-    /**
-     * 自然排序比较两个字符串
-     */
-    private static int naturalCompare(String s1, String s2) {
-        Pattern numberPattern = Pattern.compile("^(\\d+(?:\\.\\d+)*)");
-        Matcher m1 = numberPattern.matcher(s1);
-        Matcher m2 = numberPattern.matcher(s2);
-
-        boolean hasNumber1 = m1.find();
-        boolean hasNumber2 = m2.find();
-
-        // 如果两者都有数字前缀
-        if (hasNumber1 && hasNumber2) {
-            return compareBlockNumbers(m1.group(1), m2.group(1));
-        }
-
-        // 如果只有一个有数字前缀，有数字的优先
-        if (hasNumber1) {
-            return -1;
-        }
-        if (hasNumber2) {
-            return 1;
-        }
-
-        // 都没有数字前缀，按字母顺序
-        return s1.compareTo(s2);
     }
 
     /**

@@ -1,13 +1,8 @@
 package com.mtmn.smartdoc.common;
 
 import lombok.Data;
-import lombok.Getter;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * @author charmingdaidai
@@ -20,6 +15,7 @@ public class MyNode {
     private String title;
     private String parentId;
     private List<String> children;
+    private String blockNumber;
     private Map<String, Object> metadata;
 
     public MyNode(String pageContent, int level, String title) {
@@ -33,10 +29,7 @@ public class MyNode {
         this.title = title;
         this.children = new ArrayList<>();
         this.metadata = new HashMap<>();
-
-        if (blockNumber != null && !blockNumber.isEmpty()) {
-            this.metadata.put("block_number", blockNumber);
-        }
+        this.blockNumber = blockNumber;
     }
 
     public void addChild(String childId) {

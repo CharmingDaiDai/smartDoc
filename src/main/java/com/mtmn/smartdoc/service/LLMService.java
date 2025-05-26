@@ -6,7 +6,6 @@ import com.mtmn.smartdoc.config.ModelConfig;
 import com.mtmn.smartdoc.vo.SecurityResult;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
-import dev.langchain4j.model.openai.OpenAiChatRequestParameters;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;

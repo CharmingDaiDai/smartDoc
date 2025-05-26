@@ -1,6 +1,7 @@
 package com.mtmn.smartdoc.config;
 
-import dev.langchain4j.data.document.Document;
+import com.mtmn.smartdoc.po.DocumentPO;
+import com.mtmn.smartdoc.service.MinioService;
 
 import java.util.List;
 
@@ -15,7 +16,9 @@ public interface BaseRag {
     String getMethodName();
     String getEmbeddingModel();
 
-    List<Boolean> buildIndex(String kbName, List<Document> documents);
+    List<Boolean> buildIndex(String kbName, List<DocumentPO> documentPOList, MinioService minioService);
 
     Boolean deleteIndex();
+
+    Boolean deleteIndex(List<String> docIds);
 }

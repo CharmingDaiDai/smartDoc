@@ -1,6 +1,9 @@
 package com.mtmn.smartdoc.config;
 
+import com.mtmn.smartdoc.common.ApacheTikaDocumentParser;
+import com.mtmn.smartdoc.po.DocumentPO;
 import com.mtmn.smartdoc.service.EmbeddingService;
+import com.mtmn.smartdoc.service.MinioService;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.DocumentSplitter;
 import dev.langchain4j.data.document.splitter.DocumentSplitters;
@@ -16,6 +19,7 @@ import lombok.Data;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.security.authentication.BadCredentialsException;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -44,7 +48,7 @@ public class NaiveRag implements BaseRag {
      * @return
      */
     @Override
-    public List<Boolean> buildIndex(String kbName, List<Document> documents) {
+    public List<Boolean> buildIndex(String kbName, List<DocumentPO> documentPOList, MinioService minioService) {
         String embeddingModelName = this.getEmbeddingModel();
 
         // 创建Embedding模型
@@ -81,6 +85,24 @@ public class NaiveRag implements BaseRag {
                 .metadataFieldName("metadata")
                 .vectorFieldName("vector")
                 .build();
+
+        List<Document> documents = new ArrayList<>();
+
+        ApacheTikaDocumentParser documentParser = new ApacheTikaDocumentParser();
+
+        for (DocumentPO documentPO : documentPOList) {
+            String filePath = documentPO.getFilePath();
+
+            try (InputStream inputStream = minioService.getFileContent(filePath)) {
+                // 使用Apache Tika解析器解析文档
+                Document document = documentParser.parse(inputStream);
+                documents.add(document);
+
+                log.debug("成功从URL加载文档, 文档路径: {}", filePath);
+            } catch (Exception e) {
+                log.error("解析文档失败: {}, 错误: {}", filePath, e.getMessage(), e);
+            }
+        }
 
         for (Document document : documents) {
             log.debug("处理文档，元数据：{}", document.metadata());
@@ -119,6 +141,15 @@ public class NaiveRag implements BaseRag {
      */
     @Override
     public Boolean deleteIndex() {
+        return null;
+    }
+
+    /**
+     * @param docIds
+     * @return
+     */
+    @Override
+    public Boolean deleteIndex(List<String> docIds) {
         return null;
     }
 }
