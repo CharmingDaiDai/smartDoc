@@ -1,41 +1,41 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, {useEffect, useRef, useState} from "react";
 import {
-  Avatar,
-  Button,
-  Card,
-  Col,
-  Collapse,
-  Divider,
-  Empty,
-  Form,
-  Input,
-  List,
-  message,
-  Row,
-  Select,
-  Spin,
-  Tag,
-  Typography,
+    Avatar,
+    Button,
+    Card,
+    Col,
+    Collapse,
+    Divider,
+    Empty,
+    Form,
+    Input,
+    List,
+    message,
+    Row,
+    Select,
+    Spin,
+    Tag,
+    Typography,
 } from "antd";
 import {
-  BookOutlined,
-  LoadingOutlined,
-  QuestionCircleOutlined,
-  RobotOutlined,
-  SendOutlined,
-  UserOutlined,
+    BookOutlined,
+    LoadingOutlined,
+    QuestionCircleOutlined,
+    RobotOutlined,
+    SendOutlined,
+    UserOutlined,
 } from "@ant-design/icons";
-import { useNavigate, useParams } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
-import api, { knowledgeBaseAPI } from "../../services/api";
+import {useNavigate, useParams} from "react-router-dom";
+import {useAuth} from "../../context/AuthContext";
+import api, {knowledgeBaseAPI} from "../../services/api";
 import ReactMarkdown from "react-markdown";
 import rehypeRaw from "rehype-raw";
 import remarkGfm from "remark-gfm";
-import { getMethodConfig } from "../../config/ragConfig";
+import {getMethodConfig} from "../../config/ragConfig";
 import "../../styles/components/markdown.css";
 import "../../styles/components/ragChat.css"; // 导入RAG Chat专用样式
 import RagMethodParams from "../../components/knowledge_base/RagMethodParams";
-import { createAuthEventSource } from "../../utils/eventSourceAuth";
+import {createAuthEventSource} from "../../utils/eventSourceAuth";
 
 const { Title, Paragraph, Text } = Typography;
 const { TextArea } = Input;
@@ -768,21 +768,76 @@ const RAGChat = () => {
         try {
           if (DEBUG_MODE) console.log("尝试紧急提取docs数据");
           
-          // 使用一个宽松的正则表达式尝试提取整个docs数组
-          const docsMatch = rawData.match(/"docs"\s*:\s*(\[.*?\])/s);
+          // 使用更宽松的正则表达式尝试提取整个docs数组
+          // 首先尝试匹配完整的JSON数组
+          const docsMatch = rawData.match(/"docs"\s*:\s*(\[[\s\S]*?\](?=\s*[,}]))/);
           if (docsMatch && docsMatch[1]) {
             try {
-              // 尝试直接将整个字符串作为单个出处
-              result.docs = [
-                "出处 [1] 由于JSON解析错误，这是从原始响应中提取的文档出处。原始内容可能包含格式问题，建议查看原文档。"
-              ];
+              // 尝试解析docs数组
+              const docsArray = JSON.parse(docsMatch[1]);
+              if (Array.isArray(docsArray) && docsArray.length > 0) {
+                if (DEBUG_MODE) console.log("成功解析docs数组，包含", docsArray.length, "个出处");
+                result.docs = docsArray;
+                result.success = true;
+              } else {
+                // 如果不是有效数组，尝试作为字符串处理
+                result.docs = [docsMatch[1]];
+                result.success = true;
+              }
+            } catch (innerParseError) {
+              if (DEBUG_MODE) console.log("JSON解析docs数组失败，尝试字符串处理");
+              
+              // 如果JSON解析失败，尝试从原始字符串中提取有意义的内容
+              const docsContent = docsMatch[1];
+              
+              // 尝试提取引号中的文本内容
+              const textMatches = docsContent.match(/"([^"\\]*(\\.[^"\\]*)*)"/g);
+              if (textMatches && textMatches.length > 0) {
+                // 清理和处理匹配到的文本
+                const cleanedDocs = textMatches
+                  .map(match => {
+                    // 移除外层引号并处理转义字符
+                    let text = match.slice(1, -1);
+                    text = text.replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+                    return text;
+                  })
+                  .filter(text => text.length > 10) // 过滤太短的内容
+                  .slice(0, 10); // 限制最多10个出处
+                
+                if (cleanedDocs.length > 0) {
+                  if (DEBUG_MODE) console.log("从字符串中提取到", cleanedDocs.length, "个出处");
+                  result.docs = cleanedDocs;
+                  result.success = true;
+                } else {
+                  // 如果没有提取到有效内容，使用友好的错误信息
+                  result.docs = [
+                    "抱歉，由于格式问题无法完整解析文档出处，但响应中包含相关参考信息。"
+                  ];
+                  result.success = true;
+                }
+              } else {
+                // 最后的备选方案
+                result.docs = [
+                  "文档出处信息解析遇到格式问题，请查看AI回答中可能包含的相关信息。"
+                ];
+                result.success = true;
+              }
+            }
+          } else {
+            // 如果没有匹配到docs数组，尝试更宽松的匹配
+            const simpleDocsMatch = rawData.match(/"docs"[^:]*:\s*"([^"]+)"/);
+            if (simpleDocsMatch && simpleDocsMatch[1]) {
+              result.docs = [simpleDocsMatch[1]];
               result.success = true;
-            } catch (innerError) {
-              if (DEBUG_MODE) console.error("紧急提取docs失败:", innerError);
             }
           }
         } catch (docsExtractError) {
           if (DEBUG_MODE) console.error("尝试提取docs数据失败:", docsExtractError);
+          // 即使出错也提供一个基本的错误信息
+          result.docs = [
+            "文档出处提取过程中发生错误，但AI回答可能仍包含有用信息。"
+          ];
+          result.success = true;
         }
       }
     }
@@ -841,12 +896,13 @@ const RAGChat = () => {
     try {
       // 检测是否包含可能导致解析错误的格式
       if (jsonStr.includes('\\r\\n') || jsonStr.includes('\\n\\r') || 
-          jsonStr.includes('\\u') || jsonStr.includes('af://')) {
+          jsonStr.includes('\\u') || jsonStr.includes('af://') ||
+          jsonStr.includes('\\n') || jsonStr.includes('\\"')) {
         
         if (DEBUG_MODE) console.log("检测到docs数组中的特殊格式，进行处理");
         
-        // 尝试找出docs数组部分
-        const docsMatch = jsonStr.match(/"docs"\s*:\s*(\[.*?\])/s);
+        // 尝试找出docs数组部分 - 使用更精确的匹配模式
+        const docsMatch = jsonStr.match(/"docs"\s*:\s*(\[[\s\S]*?\])(?=\s*[,}]|$)/);
         if (docsMatch && docsMatch[1]) {
           const originalDocsStr = docsMatch[1];
           let cleanedDocsStr = originalDocsStr;
@@ -854,37 +910,102 @@ const RAGChat = () => {
           // 对数组内容进行特殊处理
           try {
             // 提取数组中的每个元素并进行处理
-            const arrayContentMatch = originalDocsStr.match(/^\[(.*)\]$/s);
+            const arrayContentMatch = originalDocsStr.match(/^\[([\s\S]*)\]$/);
             if (arrayContentMatch && arrayContentMatch[1]) {
               let arrayContent = arrayContentMatch[1];
               
-              // 检查是否是一个包含多个字符串的数组
-              if (arrayContent.includes('"') && arrayContent.includes(',')) {
-                // 假设是字符串数组，尝试分割每个元素
-                const stringElements = arrayContent.split(/",\s*"/);
+              // 处理复杂的字符串数组，使用更精确的分割方法
+              const elements = [];
+              let currentElement = '';
+              let inString = false;
+              let escapeNext = false;
+              let depth = 0;
+              
+              for (let i = 0; i < arrayContent.length; i++) {
+                const char = arrayContent[i];
                 
-                // 清理每个元素
-                const cleanedElements = stringElements.map(element => {
-                  // 移除开头和结尾的引号
-                  let cleaned = element.replace(/^"|"$/g, '');
-                  
-                  // 处理每个元素内部的特殊序列
+                if (escapeNext) {
+                  currentElement += char;
+                  escapeNext = false;
+                } else if (char === '\\') {
+                  currentElement += char;
+                  escapeNext = true;
+                } else if (char === '"' && depth === 0) {
+                  currentElement += char;
+                  inString = !inString;
+                } else if (char === '[' && !inString) {
+                  depth++;
+                  currentElement += char;
+                } else if (char === ']' && !inString) {
+                  depth--;
+                  currentElement += char;
+                } else if (char === ',' && !inString && depth === 0) {
+                  if (currentElement.trim()) {
+                    elements.push(currentElement.trim());
+                  }
+                  currentElement = '';
+                } else {
+                  currentElement += char;
+                }
+              }
+              
+              // 添加最后一个元素
+              if (currentElement.trim()) {
+                elements.push(currentElement.trim());
+              }
+              
+              // 清理每个元素
+              const cleanedElements = elements.map(element => {
+                // 移除外层引号
+                let cleaned = element.replace(/^"|"$/g, '');
+                
+                // 处理内部的转义和特殊格式
+                cleaned = cleaned
+                  .replace(/\\n/g, '\n') // 恢复换行符
+                  .replace(/\\r/g, '\r') // 恢复回车符
+                  .replace(/\\"/g, '"')  // 恢复引号
+                  .replace(/\\\\/g, '\\') // 恢复反斜杠
+                  .replace(/\\t/g, '\t')  // 恢复制表符
+                  .replace(/af:\/\/n\d+/g, '') // 移除特殊的"af://"格式
+                  .replace(/\n+/g, '\n')  // 合并多个换行符
+                  .replace(/\r+/g, '\r')  // 合并多个回车符
+                  .trim(); // 移除首尾空白
+                
+                // 如果内容看起来是有效的，重新加上引号
+                if (cleaned.length > 0) {
+                  // 重新转义引号和其他特殊字符
                   cleaned = cleaned
-                    .replace(/\\r\\n|\\n\\r|\\r/g, ' ') // 将换行符替换为空格
-                    .replace(/\\u([0-9a-fA-F]{4})/g, ' ') // 将Unicode转义替换为空格
-                    .replace(/af:\/\/n\d+/g, '') // 移除特殊的"af://"格式
-                    .replace(/\\([^"\/\\bfnrtu])/g, '$1'); // 删除无效的转义符
-                    
+                    .replace(/\\/g, '\\\\')  // 转义反斜杠
+                    .replace(/"/g, '\\"')    // 转义引号
+                    .replace(/\n/g, '\\n')   // 转义换行符
+                    .replace(/\r/g, '\\r')   // 转义回车符
+                    .replace(/\t/g, '\\t');  // 转义制表符
+                  
                   return `"${cleaned}"`;
-                });
-                
-                // 重建数组字符串
+                } else {
+                  return '""'; // 空字符串
+                }
+              }).filter(element => element !== '""'); // 过滤空字符串
+              
+              // 重建数组字符串
+              if (cleanedElements.length > 0) {
                 cleanedDocsStr = `[${cleanedElements.join(',')}]`;
-                if (DEBUG_MODE) console.log("重构后的docs数组:", cleanedDocsStr.substring(0, 50) + "...");
+                if (DEBUG_MODE) {
+                  console.log(`重构后的docs数组包含 ${cleanedElements.length} 个元素`);
+                  console.log("前100个字符:", cleanedDocsStr.substring(0, 100) + "...");
+                }
+              } else {
+                cleanedDocsStr = '[]'; // 空数组
               }
             }
           } catch (arrayError) {
             console.warn("处理数组内容时出错:", arrayError);
+            // 如果处理失败，尝试一个更简单的方法
+            cleanedDocsStr = originalDocsStr
+              .replace(/\\n/g, ' ')
+              .replace(/\\r/g, ' ')
+              .replace(/\\t/g, ' ')
+              .replace(/\s+/g, ' ');
           }
           
           // 替换原始的docs字符串
@@ -908,6 +1029,21 @@ const RAGChat = () => {
 
     if (DEBUG_MODE) console.debug("处理原始出处数据:", docs);
 
+    // 检测文档格式类型
+    const firstDoc = docs[0];
+    const isComplexFormat = typeof firstDoc === 'string' && 
+      (firstDoc.includes(' -> ') || firstDoc.length > 200);
+
+    if (DEBUG_MODE) {
+      console.log("检测到的文档格式:", isComplexFormat ? "复杂格式" : "简单格式");
+    }
+
+    // 根据格式选择处理方式
+    if (isComplexFormat) {
+      return processComplexDocuments(docs);
+    }
+
+    // 原有的简单格式处理逻辑
     return docs
       .map((doc, index) => {
         // 处理为空的情况
@@ -974,6 +1110,70 @@ const RAGChat = () => {
           source.content !== "无法解析出处内容" &&
           source.content !== "未提供内容"
       ); // 过滤真正的空内容
+  };
+
+  // 专门处理复杂文档出处的函数
+  const processComplexDocuments = (docs) => {
+    if (!docs || !Array.isArray(docs)) {
+      return [];
+    }
+
+    return docs.map((doc, index) => {
+      if (typeof doc !== 'string') {
+        return {
+          id: `source-${index}`,
+          number: index + 1,
+          title: `出处 [${index + 1}]`,
+          content: JSON.stringify(doc),
+          relevance: "未知"
+        };
+      }
+
+      // 解析复杂的文档格式
+      // 格式类似: "国家电网有限公司输变电工程标准工艺（变电工程电气分册）2022版 -> 主变压器系统设备安装 -> ..."
+      const parts = doc.split(' -> ');
+      let docTitle = '';
+      let docPath = '';
+      let content = '';
+
+      if (parts.length >= 2) {
+        docTitle = parts[0].trim();
+        docPath = parts.slice(1, -1).join(' -> ');
+        
+        // 查找内容部分（通常在最后一个部分之后）
+        const lastPart = parts[parts.length - 1];
+        const contentMatch = lastPart.match(/^[^\\n]*\\n(.+)$/s);
+        if (contentMatch) {
+          content = contentMatch[1]
+            .replace(/\\n/g, '\n')
+            .replace(/\\r/g, '\r')
+            .replace(/\\t/g, '\t')
+            .replace(/\\\\/g, '\\')
+            .replace(/\\"/g, '"')
+            .trim();
+        } else {
+          content = lastPart.trim();
+        }
+      } else {
+        // 如果格式不符合预期，尝试其他方式解析
+        content = doc.replace(/\\n/g, '\n').replace(/\\r/g, '\r').trim();
+        docTitle = `文档 ${index + 1}`;
+      }
+
+      // 限制内容长度，防止显示过长
+      if (content.length > 500) {
+        content = content.substring(0, 500) + '...';
+      }
+
+      return {
+        id: `source-${index}`,
+        number: index + 1,
+        title: docTitle || `出处 [${index + 1}]`,
+        path: docPath || '',
+        content: content || '无内容',
+        relevance: "高"
+      };
+    }).filter(source => source.content && source.content !== '无内容');
   };
 
   // 完成流式响应
