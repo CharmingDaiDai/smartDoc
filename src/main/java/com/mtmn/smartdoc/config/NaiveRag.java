@@ -2,14 +2,20 @@ package com.mtmn.smartdoc.config;
 
 import com.mtmn.smartdoc.common.ApacheTikaDocumentParser;
 import com.mtmn.smartdoc.po.DocumentPO;
+import com.mtmn.smartdoc.po.KnowledgeBase;
 import com.mtmn.smartdoc.service.EmbeddingService;
 import com.mtmn.smartdoc.service.MinioService;
+import com.mtmn.smartdoc.utils.SseUtil;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.DocumentSplitter;
 import dev.langchain4j.data.document.splitter.DocumentSplitters;
 import dev.langchain4j.data.embedding.Embedding;
 import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.model.embedding.EmbeddingModel;
+import dev.langchain4j.rag.content.Content;
+import dev.langchain4j.rag.content.retriever.ContentRetriever;
+import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
+import dev.langchain4j.rag.query.Query;
 import dev.langchain4j.store.embedding.milvus.MilvusEmbeddingStore;
 import io.milvus.common.clientenum.ConsistencyLevelEnum;
 import io.milvus.param.IndexType;
@@ -18,10 +24,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.security.authentication.BadCredentialsException;
+import reactor.core.publisher.Flux;
 
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static com.mtmn.smartdoc.service.impl.KnowledgeBaseServiceImpl.getCurrentUserId;
 import static com.mtmn.smartdoc.service.impl.KnowledgeBaseServiceImpl.getStoreKnowledgeBaseName;
@@ -151,5 +159,87 @@ public class NaiveRag implements BaseRag {
     @Override
     public Boolean deleteIndex(List<String> docIds) {
         return null;
+    }
+
+    public static Flux<String> chat(SseUtil sseUtil, KnowledgeBase knowledgeBase, String id, String question, int topk, boolean qr, boolean qd) {
+
+        String kbName = knowledgeBase.getName();
+
+        String embeddingModelName = knowledgeBase.getEmbeddingModel();
+
+        try {
+            // 创建Embedding模型
+            EmbeddingModel embeddingModel = EmbeddingService.createEmbeddingModel(embeddingModelName);
+
+            String collectionName = getStoreKnowledgeBaseName(kbName);
+
+            MilvusEmbeddingStore embeddingStore = MilvusEmbeddingStore.builder()
+                    .host("10.0.30.172")
+                    .port(19530)
+                    .collectionName(collectionName)
+                    .dimension(embeddingModel.dimension())
+
+                    .metricType(MetricType.COSINE)
+                    .consistencyLevel(ConsistencyLevelEnum.EVENTUALLY)
+                    .autoFlushOnInsert(false)
+                    .idFieldName("id")
+                    .textFieldName("text")
+                    .metadataFieldName("metadata")
+                    .vectorFieldName("vector")
+                    .build();
+
+            ContentRetriever contentRetriever = EmbeddingStoreContentRetriever.builder()
+                    .embeddingStore(embeddingStore)
+                    .embeddingModel(embeddingModel)
+                    .maxResults(topk)
+                    .build();
+
+            List<Content> contents = new ArrayList<>(contentRetriever.retrieve(new Query(question)));
+
+            if (contents.isEmpty()) {
+                log.warn("知识库中没有找到与您问题相关的信息。");
+                return sseUtil.sendFluxMessage("知识库中没有找到与您问题相关的信息。");
+            }
+
+            String promptTemplate = """
+                    作为一个精确的RAG系统助手，请严格按照以下指南回答用户问题：
+                    1. 仔细分析问题，识别关键词和核心概念。
+                    2. 从提供的上下文中精确定位相关信息，优先使用完全匹配的内容。
+                    3. 构建回答时，确保包含所有必要的关键词，提高关键词评分(scoreikw)。
+                    4. 保持回答与原文的语义相似度，以提高向量相似度评分(scoreies)。
+                    5. 对于表格查询或需要多段落/多文档综合的问题，给予特别关注并提供更全面的回答。
+                    6. 如果上下文信息不足，可以进行合理推理，但要明确指出推理部分。
+                    7. 回答应准确、完整，直接解答问题，避免不必要的解释。
+                    8. 不要输出“检索到的文本块”、“根据”，“信息”等前缀修饰句，直接输出答案即可
+                    9. 不要使用"根据提供的信息"、"支撑信息显示"等前缀，直接给出答案。
+                    问题: %s
+                    参考上下文：
+                    ···
+                    %s
+                    ···
+                    请提供准确且相关的回答：""";
+
+            // 准备检索到的文档列表和提示词片段
+            List<String> docContents = new ArrayList<>();
+            StringBuilder contextBuilder = new StringBuilder();
+
+            // 使用IntStream处理文档片段
+            IntStream.range(0, contents.size()).forEach(i -> {
+                String segmentText = contents.get(i).textSegment().text();
+                contextBuilder.append(String.format("【片段%d】\n%s\n\n", i + 1, segmentText));
+//                docContents.add(String.format("出处 [%d] %s\n\n", i + 1, segmentText));
+                docContents.add(segmentText);
+            });
+
+            String prompt = String.format(promptTemplate, contextBuilder.toString(), question);
+
+            return sseUtil.handleStreamingChatResponse(prompt, docContents);
+        } catch (Exception e) {
+            log.error("RAG问答处理失败", e);
+            // 生成错误对象的新格式响应
+            String errorMessage = "抱歉，处理您的问题时遇到了错误：" + e.getMessage();
+            String escapedError = errorMessage.replace("\"", "\\\"").replace("\n", "\\n");
+            return sseUtil.sendFluxMessage("escapedError");
+        }
     }
 }
