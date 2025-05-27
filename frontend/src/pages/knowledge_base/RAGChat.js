@@ -34,6 +34,7 @@ import "../../styles/components/ragChat.css"; // 导入RAG Chat专用样式
 import RagMethodParams from "../../components/knowledge_base/RagMethodParams";
 import {createAuthEventSource} from "../../utils/eventSourceAuth";
 import StreamingMarkdownRenderer from "../../components/markdown/StreamingMarkdownRenderer";
+import AdvancedMarkdownRenderer from "../../components/markdown/AdvancedMarkdownRenderer";
 
 const { Title, Paragraph, Text } = Typography;
 const { TextArea } = Input;
@@ -1493,10 +1494,14 @@ const RAGChat = () => {
         >
           {needsExpand && !expanded ? (
             <>
-              <div>{`${source.content.substring(
-                0,
-                initialDisplayLength
-              )}...`}</div>
+              <div>
+                <AdvancedMarkdownRenderer 
+                  content={`${source.content.substring(0, initialDisplayLength)}...`}
+                  enableMath={true}
+                  enableCodeHighlight={true}
+                  enableTables={true}
+                />
+              </div>
               <Button
                 type="link"
                 size="small"
@@ -1515,7 +1520,12 @@ const RAGChat = () => {
                   overflowY: isVeryLongContent ? "auto" : "visible",
                 }}
               >
-                {source.content}
+                <AdvancedMarkdownRenderer 
+                  content={source.content}
+                  enableMath={true}
+                  enableCodeHighlight={true}
+                  enableTables={true}
+                />
               </div>
               <Button
                 type="link"
@@ -1528,7 +1538,14 @@ const RAGChat = () => {
               </Button>
             </>
           ) : (
-            <div>{source.content}</div>
+            <div>
+              <AdvancedMarkdownRenderer 
+                content={source.content}
+                enableMath={true}
+                enableCodeHighlight={true}
+                enableTables={true}
+              />
+            </div>
           )}
         </div>
       </div>
