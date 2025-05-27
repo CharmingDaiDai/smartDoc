@@ -28,14 +28,12 @@ import {
 import {useNavigate, useParams} from "react-router-dom";
 import {useAuth} from "../../context/AuthContext";
 import api, {knowledgeBaseAPI} from "../../services/api";
-import ReactMarkdown from "react-markdown";
-import rehypeRaw from "rehype-raw";
-import remarkGfm from "remark-gfm";
 import {getMethodConfig} from "../../config/ragConfig";
 import "../../styles/components/markdown.css";
 import "../../styles/components/ragChat.css"; // 导入RAG Chat专用样式
 import RagMethodParams from "../../components/knowledge_base/RagMethodParams";
 import {createAuthEventSource} from "../../utils/eventSourceAuth";
+import StreamingMarkdownRenderer from "../../components/markdown/StreamingMarkdownRenderer";
 
 const { Title, Paragraph, Text } = Typography;
 const { TextArea } = Input;
@@ -849,7 +847,7 @@ const RAGChat = () => {
   const cleanJsonData = (jsonStr) => {
     try {
       if (DEBUG_MODE) {
-        console.log("清理前的JSON数据:", jsonStr.substring(0, 100) + (jsonStr.length > 100 ? "..." : ""));
+        console.log("清理前的JSON数据:", jsonStr);
       }
       
       // 1. 修复尾随逗号
@@ -881,7 +879,7 @@ const RAGChat = () => {
       }
       
       if (DEBUG_MODE) {
-        console.log("清理后的JSON数据:", jsonStr.substring(0, 100) + (jsonStr.length > 100 ? "..." : ""));
+        console.log("清理后的JSON数据:", jsonStr);
       }
       
       return jsonStr;
@@ -1291,23 +1289,6 @@ const RAGChat = () => {
     }
   };
 
-  // Component to render Markdown content
-  const MarkdownRenderer = ({ content }) => (
-    <div
-      className="markdown-content"
-      style={{
-        padding: "16px",
-        background: "#fbfbfb",
-        borderRadius: "8px",
-        border: "1px solid #f0f0f0",
-      }}
-    >
-      <ReactMarkdown rehypePlugins={[rehypeRaw]} remarkPlugins={[remarkGfm]}>
-        {content}
-      </ReactMarkdown>
-    </div>
-  );
-
   // 改进后的渲染消息组件
   const renderMessage = (msg, index) => {
     const isUser = msg.role === "user";
@@ -1354,7 +1335,19 @@ const RAGChat = () => {
               <Text>{msg.content}</Text>
             ) : (
               <div>
-                <MarkdownRenderer content={msg.content} />
+                <StreamingMarkdownRenderer 
+                  content={msg.content}
+                  isStreaming={msg.isStreaming}
+                  style={{
+                    padding: "0",
+                    background: "transparent",
+                    border: "none",
+                    borderRadius: "0",
+                  }}
+                  enableMath={true}
+                  enableCodeHighlight={true}
+                  enableTables={true}
+                />
 
                 {/* 显示流式传输指示器 */}
                 {msg.isStreaming && (
