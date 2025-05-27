@@ -12,7 +12,7 @@ spring:
     show-sql: false
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
+#        dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
   security:
     oauth2:
@@ -78,11 +78,11 @@ models:
       api-key: notnull
       base-url: http://10.0.30.172:9997/v1/
       model-name: bge-m3
-    openai:
-      description: OpenAI 的嵌入模型
-      api-key: ${OPENAI_API_KEY:your-openai-api-key}
-      base-url: https://api.openai.com/v1
-      model-name: text-embedding-ada-002
+#    openai:
+#      description: OpenAI 的嵌入模型
+#      api-key: ${OPENAI_API_KEY:your-openai-api-key}
+#      base-url: https://api.openai.com/v1
+#      model-name: text-embedding-ada-002
 
 # RAG 方法
 rag:
@@ -105,9 +105,14 @@ rag:
     description: 层级语义驱动的 RAG 方法（不构建树）
     index:
       chunkSize: 2048
+      titleEnhance: true
       anAbstract: false
     search:
       maxRes: 10
+    threshold:
+      beta: 0.9
+      gamma: 0.8
+      k_min: 1
 
   # 使用树结构的高级语义检索方法
   hisemTree:

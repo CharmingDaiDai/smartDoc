@@ -1087,10 +1087,10 @@ const RAGChat = () => {
           .trim(); // 移除首尾空白
 
         // 如果是长文档，可能需要截断显示
-        if (isLongDocument && cleanedContent.length > 1000) {
+        if (isLongDocument && cleanedContent.length > 3000) {
           if (DEBUG_MODE) console.log(`出处 ${index + 1} 内容过长，进行截断`);
           cleanedContent =
-            cleanedContent.substring(0, 1000) + "... (内容已截断)";
+            cleanedContent.substring(0, 3000) + "... (内容已截断)";
         }
 
         // 创建出处对象
@@ -1160,8 +1160,8 @@ const RAGChat = () => {
       }
 
       // 限制内容长度，防止显示过长
-      if (content.length > 500) {
-        content = content.substring(0, 500) + '...';
+      if (content.length > 3000) {
+        content = content.substring(0, 3000) + '...';
       }
 
       return {
