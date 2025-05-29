@@ -50,7 +50,13 @@ const { Option } = Select;
 const { Panel } = Collapse;
 
 // 初始化 markdown-it 渲染器，支持 HTML 标签、换行符和 KaTeX 数学公式
-const md = markdownit({ html: true, breaks: true }).use(mk);
+const md = markdownit({
+  html: true,        // 允许 HTML 标签
+  xhtmlOut: false,   // 使用 '/' 闭合单标签 (比如 <br />)
+  breaks: true,      // '\n' 转换成 <br>
+  linkify: true,     // 自动将链接文本转换成 <a>
+  typographer: true, // 替换引号和破折号等排版符号
+}).use(mk);
 
 // 消息内容渲染组件 - 将文本转换为带格式的 Markdown 显示
 const CustomBubbleMessageRender = ({ content, sources = [] }) => {
@@ -74,7 +80,7 @@ const CustomBubbleMessageRender = ({ content, sources = [] }) => {
 
   try {
     // 核心功能：使用 markdown-it 将文本转换为 HTML
-    const htmlContent = md.render(textContent);
+    const htmlContent = md.render(textContent.trim().replace(/\\n/g, '\n'));
     return (
       <>
         <Typography>
