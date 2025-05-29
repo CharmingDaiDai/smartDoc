@@ -38,9 +38,9 @@ import api, { knowledgeBaseAPI } from "../../services/api";
 import { getMethodConfig } from "../../config/ragConfig";
 import markdownit from "markdown-it";
 import mk from "markdown-it-katex";
-import hljs from 'highlight.js';
+import hljs from "highlight.js";
 import "katex/dist/katex.min.css";
-import 'highlight.js/styles/vs.css'; // 代码高亮样式
+import "highlight.js/styles/vs.css"; // 代码高亮样式
 import "../../styles/components/markdown.css";
 import "../../styles/components/ragChat.css";
 
@@ -50,19 +50,21 @@ const DEBUG_MODE = false; // 调试模式开关
 
 // 初始化 markdown-it 渲染器，支持 HTML 标签、换行符和 KaTeX 数学公式
 const md = markdownit({
-  html: true,        // 允许 HTML 标签
-  xhtmlOut: false,   // 使用 '/' 闭合单标签 (比如 <br />)
-  breaks: true,      // '\n' 转换成 <br>
-  linkify: true,     // 自动将链接文本转换成 <a>
+  html: true, // 允许 HTML 标签
+  xhtmlOut: false, // 使用 '/' 闭合单标签 (比如 <br />)
+  breaks: true, // '\n' 转换成 <br>
+  linkify: true, // 自动将链接文本转换成 <a>
   typographer: true, // 替换引号和破折号等排版符号
   highlight: function (str, lang) {
     if (lang && hljs.getLanguage(lang)) {
       try {
-        return `<pre class="hljs"><code>${hljs.highlight(str, { language: lang }).value}</code></pre>`;
+        return `<pre class="hljs"><code>${
+          hljs.highlight(str, { language: lang }).value
+        }</code></pre>`;
       } catch (_) {}
     }
     return `<pre class="hljs"><code>${md.utils.escapeHtml(str)}</code></pre>`;
-  }
+  },
 }).use(mk);
 
 // 消息内容渲染组件 - 将文本转换为带格式的 Markdown 显示
@@ -87,7 +89,7 @@ const CustomBubbleMessageRender = ({ content, sources = [] }) => {
 
   try {
     // 核心功能：使用 markdown-it 将文本转换为 HTML
-    const htmlContent = md.render(textContent.trim().replace(/\\n/g, '\n'));
+    const htmlContent = md.render(textContent.trim().replace(/\\n/g, "\n"));
     return (
       <>
         <Typography>
@@ -394,7 +396,7 @@ const RAGChatX = () => {
   const [ragMethodDetails, setRagMethodDetails] = useState(null);
   const [ragParams, setRagParams] = useState({});
   const [ragMethodType, setRagMethodType] = useState(null);
-  
+
   // 使用 useRef 保存最新状态的引用，避免闭包问题
   const stateRef = useRef();
   stateRef.current = {
@@ -710,7 +712,7 @@ const RAGChatX = () => {
         onError(new Error(errorMessage));
       }
     },
-    [],
+    []
   );
 
   // 创建 Ant Design X Agent 配置
@@ -828,23 +830,6 @@ const RAGChatX = () => {
 
   const { parsedMessages } = chat;
 
-  // 聊天消息清理函数
-  const clearChatMessages = () => {
-    try {
-      if (chat.onReset) {
-        chat.onReset();
-      } else if (chat.resetMessages) {
-        chat.resetMessages();
-      } else if (chat.clearMessages) {
-        chat.clearMessages();
-      } else {
-        console.warn("No clear method found on chat object");
-      }
-    } catch (error) {
-      console.warn("Failed to clear chat messages:", error);
-    }
-  };
-
   // 消息发送处理函数
   const handleSendMessage = () => {
     if (!input.trim()) return;
@@ -869,83 +854,180 @@ const RAGChatX = () => {
     setInput("");
   };
 
-  // 获取知识库详情
-  const fetchKnowledgeBaseDetails = async (id) => {
-    if (!id) {
-      setKnowledgeBase(null);
-      clearChatMessages();
-      setRagParams({});
-      setRagMethodDetails(null);
-      setRagMethodType(null);
-      return;
-    }
-    setDetailsLoading(true);
-    try {
-      const response = await knowledgeBaseAPI.getKnowledgeBase(id);
-      if (DEBUG_MODE) {
-        console.log("KB details response:", response.data);
-      }
 
-      // 处理直接返回的知识库对象格式
-      if (
-        response.data &&
-        typeof response.data === "object" &&
-        !response.data.hasOwnProperty("code") &&
-        !response.data.hasOwnProperty("success")
-      ) {
-        const kbData = response.data;
-        setKnowledgeBase(kbData);
 
-        if (DEBUG_MODE) {
-          console.log("设置知识库 (直接格式):", {
-            id: kbData.id,
-            name: kbData.name,
-            ragMethod: kbData.ragMethod,
-          });
-        }
-
-        // 获取关联的RAG方法配置
-        if (kbData.ragMethod) {
-          fetchRagMethodDetails(kbData.ragMethod);
-        } else {
-          setRagMethodDetails(null);
-          setRagParams({});
-        }
-      }
-      // 处理标准API响应格式
-      else if (
-        (response.data && response.data.success) ||
-        (response.data && response.data.code === 200)
-      ) {
-        const kbData = response.data.data;
-        setKnowledgeBase(kbData);
-
-        if (DEBUG_MODE) {
-          console.log("设置知识库 (标准格式):", {
-            id: kbData.id,
-            name: kbData.name,
-            ragMethod: kbData.ragMethod,
-          });
-        }
-
-        if (kbData.ragMethod) {
-          fetchRagMethodDetails(kbData.ragMethod);
-        } else {
-          setRagMethodDetails(null);
-          setRagParams({});
-        }
-      } else {
-        messageApi.error(response.data?.message || "获取知识库详情失败");
-        setKnowledgeBase(null);
-      }
-    } catch (error) {
-      console.error("获取知识库详情失败:", error);
-      messageApi.error("获取知识库详情失败，请稍后再试");
-      setKnowledgeBase(null);
-    } finally {
-      setDetailsLoading(false);
-    }
+  // RAG参数变更处理
+  const handleRagParamsChange = (newParams) => {
+    setRagParams((prevParams) => ({ ...prevParams, ...newParams }));
   };
+
+  // 获取知识库详情
+  const fetchKnowledgeBaseDetails = useCallback(
+    async (id) => {
+      if (!id) {
+        setKnowledgeBase(null);
+        // 直接调用清理函数而不是通过 useCallback
+        try {
+          if (chat.onReset) {
+            chat.onReset();
+          } else if (chat.resetMessages) {
+            chat.resetMessages();
+          } else if (chat.clearMessages) {
+            chat.clearMessages();
+          }
+        } catch (error) {
+          console.warn("Failed to clear chat messages:", error);
+        }
+        setRagParams({});
+        setRagMethodDetails(null);
+        setRagMethodType(null);
+        return;
+      }
+      setDetailsLoading(true);
+      try {
+        const response = await knowledgeBaseAPI.getKnowledgeBase(id);
+        if (DEBUG_MODE) {
+          console.log("KB details response:", response.data);
+        }
+
+        // 处理直接返回的知识库对象格式
+        if (
+          response.data &&
+          typeof response.data === "object" &&
+          !response.data.hasOwnProperty("code") &&
+          !response.data.hasOwnProperty("success")
+        ) {
+          const kbData = response.data;
+          setKnowledgeBase(kbData);
+
+          if (DEBUG_MODE) {
+            console.log("设置知识库 (直接格式):", {
+              id: kbData.id,
+              name: kbData.name,
+              ragMethod: kbData.ragMethod,
+            });
+          }
+
+          // 获取关联的RAG方法配置
+          if (kbData.ragMethod) {
+            // 直接调用而不是通过 useCallback 引用
+            if (!kbData.ragMethod) {
+              setRagMethodDetails(null);
+              setRagParams({});
+              return;
+            }
+
+            setLoadingMethodDetails(true);
+            try {
+              const methodConfig = getMethodConfig(kbData.ragMethod);
+
+              if (methodConfig) {
+                setRagMethodDetails(methodConfig);
+                setRagMethodType(kbData.ragMethod);
+
+                const initialSearchParams = {};
+                if (methodConfig.searchParams) {
+                  Object.keys(methodConfig.searchParams).forEach((paramKey) => {
+                    const paramConfig = methodConfig.searchParams[paramKey];
+                    initialSearchParams[paramKey] =
+                      paramConfig.default !== undefined
+                        ? paramConfig.default
+                        : paramConfig;
+                  });
+                }
+                setRagParams(initialSearchParams);
+              } else {
+                messageApi.warning("未找到RAG方法配置信息，将使用默认参数");
+                setRagMethodDetails(null);
+                setRagParams({});
+              }
+            } catch (error) {
+              console.error("获取RAG方法详情失败:", error);
+              messageApi.error("获取RAG方法参数失败，将使用默认参数");
+              setRagMethodDetails(null);
+              setRagParams({});
+            } finally {
+              setLoadingMethodDetails(false);
+            }
+          } else {
+            setRagMethodDetails(null);
+            setRagParams({});
+          }
+        }
+        // 处理标准API响应格式
+        else if (
+          (response.data && response.data.success) ||
+          (response.data && response.data.code === 200)
+        ) {
+          const kbData = response.data.data;
+          setKnowledgeBase(kbData);
+
+          if (DEBUG_MODE) {
+            console.log("设置知识库 (标准格式):", {
+              id: kbData.id,
+              name: kbData.name,
+              ragMethod: kbData.ragMethod,
+            });
+          }
+
+          if (kbData.ragMethod) {
+            // 直接调用而不是通过 useCallback 引用
+            if (!kbData.ragMethod) {
+              setRagMethodDetails(null);
+              setRagParams({});
+              return;
+            }
+
+            setLoadingMethodDetails(true);
+            try {
+              const methodConfig = getMethodConfig(kbData.ragMethod);
+
+              if (methodConfig) {
+                setRagMethodDetails(methodConfig);
+                setRagMethodType(kbData.ragMethod);
+
+                const initialSearchParams = {};
+                if (methodConfig.searchParams) {
+                  Object.keys(methodConfig.searchParams).forEach((paramKey) => {
+                    const paramConfig = methodConfig.searchParams[paramKey];
+                    initialSearchParams[paramKey] =
+                      paramConfig.default !== undefined
+                        ? paramConfig.default
+                        : paramConfig;
+                  });
+                }
+                setRagParams(initialSearchParams);
+              } else {
+                messageApi.warning("未找到RAG方法配置信息，将使用默认参数");
+                setRagMethodDetails(null);
+                setRagParams({});
+              }
+            } catch (error) {
+              console.error("获取RAG方法详情失败:", error);
+              messageApi.error("获取RAG方法参数失败，将使用默认参数");
+              setRagMethodDetails(null);
+              setRagParams({});
+            } finally {
+              setLoadingMethodDetails(false);
+            }
+          } else {
+            setRagMethodDetails(null);
+            setRagParams({});
+          }
+        } else {
+          messageApi.error(response.data?.message || "获取知识库详情失败");
+          setKnowledgeBase(null);
+        }
+      } catch (error) {
+        console.error("获取知识库详情失败:", error);
+        messageApi.error("获取知识库详情失败，请稍后再试");
+        setKnowledgeBase(null);
+      } finally {
+        setDetailsLoading(false);
+      }
+    },
+    [] // 移除所有依赖，直接使用实例
+  );
 
   // 知识库选择变更处理
   const handleKnowledgeBaseChange = (id) => {
@@ -983,7 +1065,7 @@ const RAGChatX = () => {
   };
 
   // 获取知识库列表
-  const fetchKnowledgeBases = async () => {
+  const fetchKnowledgeBases = useCallback(async () => {
     setListLoading(true);
     setKbSelectLoading(true);
     try {
@@ -1015,61 +1097,12 @@ const RAGChatX = () => {
       setListLoading(false);
       setKbSelectLoading(false);
     }
-  };
-
-  // 获取RAG方法配置详情（从本地配置获取）
-  const fetchRagMethodDetails = (methodId) => {
-    if (!methodId) {
-      setRagMethodDetails(null);
-      setRagParams({});
-      return;
-    }
-
-    setLoadingMethodDetails(true);
-    try {
-      // 从本地配置文件获取RAG方法配置
-      const methodConfig = getMethodConfig(methodId);
-
-      if (methodConfig) {
-        setRagMethodDetails(methodConfig);
-        setRagMethodType(methodId);
-        
-        // 初始化参数默认值
-        const initialSearchParams = {};
-        if (methodConfig.searchParams) {
-          Object.keys(methodConfig.searchParams).forEach((paramKey) => {
-            const paramConfig = methodConfig.searchParams[paramKey];
-            initialSearchParams[paramKey] =
-              paramConfig.default !== undefined
-                ? paramConfig.default
-                : paramConfig;
-          });
-        }
-        setRagParams(initialSearchParams);
-      } else {
-        messageApi.warning("未找到RAG方法配置信息，将使用默认参数");
-        setRagMethodDetails(null);
-        setRagParams({});
-      }
-    } catch (error) {
-      console.error("获取RAG方法详情失败:", error);
-      messageApi.error("获取RAG方法参数失败，将使用默认参数");
-      setRagMethodDetails(null);
-      setRagParams({});
-    } finally {
-      setLoadingMethodDetails(false);
-    }
-  };
-
-  // RAG参数变更处理
-  const handleRagParamsChange = (newParams) => {
-    setRagParams((prevParams) => ({ ...prevParams, ...newParams }));
-  };
+  }, []); // 移除 messageApi 依赖，直接使用实例
 
   // 组件初始化：获取知识库列表
   useEffect(() => {
     fetchKnowledgeBases();
-  }, []);
+  }, []); // 只在组件挂载时执行一次
 
   // URL参数变化时获取对应知识库详情
   useEffect(() => {
@@ -1080,7 +1113,7 @@ const RAGChatX = () => {
     //   });
     // }
     fetchKnowledgeBaseDetails(knowledgeBaseId);
-  }, [knowledgeBaseId]);
+  }, [knowledgeBaseId]); // 只依赖 knowledgeBaseId
 
   // 加载状态显示
   if (listLoading) {
@@ -1221,7 +1254,7 @@ const RAGChatX = () => {
               <Input.TextArea
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyPress={(e) => {
+                onKeyUp={(e) => {
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
                     handleSendMessage();
