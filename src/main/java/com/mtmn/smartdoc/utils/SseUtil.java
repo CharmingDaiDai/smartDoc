@@ -105,7 +105,7 @@ public class SseUtil {
 
             @Override
             public void onCompleteResponse(ChatResponse completeResponse) {
-                sink.tryEmitNext("data: [DONE]\n\n");
+//                sink.tryEmitNext("data: [DONE]\n\n");
                 sink.tryEmitComplete();
             }
 
