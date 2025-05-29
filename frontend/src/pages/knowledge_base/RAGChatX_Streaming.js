@@ -1,4 +1,5 @@
-// RAGChatX with Streaming Markdown Support - 修复版本
+// 基于 Ant Design X 的流式 RAG 问答组件
+// 支持实时 Markdown 渲染和数学公式显示
 import React, {
   useEffect,
   useState,
@@ -48,12 +49,12 @@ const { Title, Paragraph, Text } = Typography;
 const { Option } = Select;
 const { Panel } = Collapse;
 
-// 初始化 markdown-it 渲染器
-const md = markdownit({ html: true, breaks: true }).use(mk); // <-- Use KaTeX plugin
+// 初始化 markdown-it 渲染器，支持 HTML 标签、换行符和 KaTeX 数学公式
+const md = markdownit({ html: true, breaks: true }).use(mk);
 
-// 自定义消息内容渲染组件
+// 消息内容渲染组件 - 将文本转换为带格式的 Markdown 显示
 const CustomBubbleMessageRender = ({ content, sources = [] }) => {
-  // 确保content是字符串类型
+  // 内容类型转换：统一转换为字符串格式，支持多种输入类型
   let textContent = "";
   if (typeof content === "string") {
     textContent = content;
@@ -72,7 +73,7 @@ const CustomBubbleMessageRender = ({ content, sources = [] }) => {
   }
 
   try {
-    // 渲染 markdown 内容
+    // 核心功能：使用 markdown-it 将文本转换为 HTML
     const htmlContent = md.render(textContent);
     return (
       <>
@@ -83,7 +84,7 @@ const CustomBubbleMessageRender = ({ content, sources = [] }) => {
           />
         </Typography>
 
-        {/* 文档来源 */}
+        {/* 文档来源展示区域 */}
         {sources && sources.length > 0 && (
           <div
             style={{
@@ -128,7 +129,7 @@ const CustomBubbleMessageRender = ({ content, sources = [] }) => {
   }
 };
 
-// 自定义流式消息气泡组件 - 使用Ant Design X原生组件
+// 流式消息气泡组件 - 支持用户和AI消息的差异化显示
 const StreamingBubble = ({
   content,
   isTyping,
@@ -136,24 +137,24 @@ const StreamingBubble = ({
   sources = [],
   error = false,
   messageId,
-  style, // <<< ADDED style to props
+  style,
 }) => {
   const isUser = placement === "end";
 
   if (isUser) {
+    // 用户消息：右侧显示，蓝色头像
     return (
-      // Apply the passed 'style' prop here
       <div
         data-message-id={messageId}
         style={{ marginBottom: "16px", ...style }}
       >
         <Bubble
-          placement="end" // Key for right alignment and avatar on the right
-          content={content} // User's text message
+          placement="end"
+          content={content}
           avatar={{
             icon: <UserOutlined />,
             style: {
-              backgroundColor: "#1890ff", // User avatar style
+              backgroundColor: "#1890ff",
               color: "white",
             },
           }}
@@ -164,9 +165,8 @@ const StreamingBubble = ({
     );
   }
 
-  // 对于AI消息，使用Ant Design X的Bubble组件
+  // AI消息：左侧显示，绿色头像，支持流式打字效果
   return (
-    // Apply the passed 'style' prop here as well (it will be an empty object for AI messages)
     <div data-message-id={messageId} style={{ marginBottom: "16px", ...style }}>
       <Bubble
         avatar={{
@@ -199,7 +199,7 @@ const StreamingBubble = ({
   );
 };
 
-// RAG参数配置组件
+// RAG参数配置组件 - 动态渲染不同类型的参数控件
 const RagParamsConfig = ({ ragMethodDetails, ragParams, onParamsChange }) => {
   if (!ragMethodDetails) {
     return (
@@ -216,6 +216,7 @@ const RagParamsConfig = ({ ragMethodDetails, ragParams, onParamsChange }) => {
     onParamsChange({ [paramKey]: value });
   };
 
+  // 根据参数类型渲染不同的控件（滑块、开关、选择器等）
   const renderParamControl = (paramKey, paramConfig) => {
     const currentValue = ragParams[paramKey] ?? paramConfig.default;
 
@@ -361,16 +362,15 @@ const RagParamsConfig = ({ ragMethodDetails, ragParams, onParamsChange }) => {
   );
 };
 
-// 主组件
+// 主组件 - 基于 Ant Design X 的流式 RAG 问答界面
 const RAGChatXStreamingFixed = () => {
-  // 调试模式开关
-  const DEBUG_MODE = false;
+  const DEBUG_MODE = false; // 调试模式开关
 
   const { id: knowledgeBaseId } = useParams();
   const navigate = useNavigate();
   const [messageApi, contextHolder] = message.useMessage();
 
-  // 状态管理
+  // 核心状态管理
   const [knowledgeBase, setKnowledgeBase] = useState(null);
   const [knowledgeBases, setKnowledgeBases] = useState([]);
   const [listLoading, setListLoading] = useState(true);
@@ -378,11 +378,13 @@ const RAGChatXStreamingFixed = () => {
   const [kbSelectLoading, setKbSelectLoading] = useState(false);
   const [input, setInput] = useState("");
 
-  // RAG Method related states
+  // RAG 方法配置相关状态
   const [loadingMethodDetails, setLoadingMethodDetails] = useState(false);
   const [ragMethodDetails, setRagMethodDetails] = useState(null);
   const [ragParams, setRagParams] = useState({});
-  const [ragMethodType, setRagMethodType] = useState(null); // 使用 useRef 保存最新状态的引用
+  const [ragMethodType, setRagMethodType] = useState(null);
+  
+  // 使用 useRef 保存最新状态的引用，避免闭包问题
   const stateRef = useRef();
   stateRef.current = {
     knowledgeBase,
@@ -391,10 +393,10 @@ const RAGChatXStreamingFixed = () => {
     messageApi,
   };
 
-  // 使用useCallback创建请求函数，确保总是获取最新状态
+  // 核心请求处理函数 - 处理流式SSE响应
   const handleAgentRequest = useCallback(
     async ({ message }, { onUpdate, onSuccess, onError }) => {
-      // 从 ref 中获取最新状态
+      // 从 ref 中获取最新状态，确保数据一致性
       const {
         knowledgeBase: currentKB,
         ragMethodType: currentRagMethodType,
@@ -422,10 +424,10 @@ const RAGChatXStreamingFixed = () => {
       }
 
       try {
-        // 根据RAG方法类型选择不同的API调用方式
+        // 根据不同RAG方法构建相应的API调用参数
         const ragMethodId = currentRagMethodType || currentKB.ragMethod;
 
-        // 获取参数值
+        // 提取配置参数
         const topk = currentRagParams["top-k"] || 5;
         const maxRes = currentRagParams["max-res"] || 10;
         const queryRewriting = currentRagParams["query-rewriting"] || false;
@@ -441,7 +443,7 @@ const RAGChatXStreamingFixed = () => {
           );
         }
 
-        // 构建API URL
+        // API路径构建：根据RAG方法类型选择不同的端点
         let apiUrl;
         switch (ragMethodId) {
           case "naive":
@@ -478,7 +480,7 @@ const RAGChatXStreamingFixed = () => {
             }?${hisemTreeParams.toString()}`;
             break;
           default:
-            // 默认使用naive方法
+            // 默认使用 naive 方法
             const defaultParams = new URLSearchParams({
               question: message,
               topk: topk,
@@ -490,11 +492,11 @@ const RAGChatXStreamingFixed = () => {
             }?${defaultParams.toString()}`;
         }
 
-        // 使用fetch API处理SSE流式响应
+        // 初始化 SSE 流式请求
         const baseURL = api.defaults.baseURL || "";
         const fullUrl = `${baseURL}${apiUrl}`;
 
-        // 获取认证token
+        // 设置请求头，包含认证信息
         const token = localStorage.getItem("token");
         const headers = {
           Accept: "text/event-stream",
@@ -540,6 +542,7 @@ const RAGChatXStreamingFixed = () => {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
 
+        // 流式数据累积变量
         let accumulatedContent = "";
         let sourcesData = [];
         let hasReceivedDocs = false;
@@ -554,23 +557,22 @@ const RAGChatXStreamingFixed = () => {
                 console.info("Final accumulated content:", accumulatedContent);
                 console.info("Final sources data:", sourcesData);
               }
-              // Pass the final accumulated content and sources
+              // 流式响应结束，返回最终结果
               onSuccess({
-                content: accumulatedContent, // <-- MODIFIED KEY
+                content: accumulatedContent,
                 sources: sourcesData,
-                role: "assistant", // <-- ADDED ROLE
+                role: "assistant",
               });
               break;
             }
 
             const chunk = decoder.decode(value, { stream: true });
-
             const lines = chunk.split("\n");
 
             for (const line of lines) {
               if (line.trim() === "") continue;
 
-              // 处理各种可能的SSE格式
+              // SSE数据格式解析
               let dataLine = line;
               let eventType = null;
 
@@ -586,7 +588,7 @@ const RAGChatXStreamingFixed = () => {
                 dataLine = line.slice(5).trim();
               }
 
-              // 处理错误事件
+              // 错误处理
               if (eventType === "error") {
                 const errorMsg = dataLine || "服务器返回错误";
                 if (DEBUG_MODE) {
@@ -595,11 +597,11 @@ const RAGChatXStreamingFixed = () => {
                 throw new Error(errorMsg);
               }
 
+              // 流式响应结束标记
               if (dataLine === "[DONE]") {
                 if (DEBUG_MODE) {
                   console.info("接收到结束标记，最终内容:", accumulatedContent);
                 }
-                // 流式响应结束，调用onSuccess
                 onSuccess({
                   message: accumulatedContent,
                   sources: sourcesData,
@@ -607,7 +609,7 @@ const RAGChatXStreamingFixed = () => {
                 return;
               }
 
-              // 尝试解析JSON数据
+              // JSON数据解析和处理
               if (dataLine && dataLine !== "") {
                 try {
                   const jsonData = JSON.parse(dataLine);
@@ -616,7 +618,7 @@ const RAGChatXStreamingFixed = () => {
                     console.info("解析SSE数据:", jsonData);
                   }
 
-                  // 处理第一条包含docs的数据
+                  // 处理文档来源信息（仅首次接收）
                   if (jsonData.docs && !hasReceivedDocs) {
                     hasReceivedDocs = true;
                     sourcesData = jsonData.docs.map((doc, index) => ({
@@ -630,11 +632,10 @@ const RAGChatXStreamingFixed = () => {
                       console.info("接收到文档来源:", sourcesData);
                     }
 
-                    // 如果只收到docs，先显示"..." - 使用字符串格式
                     onUpdate("...");
                   }
 
-                  // 处理包含content的数据
+                  // 处理流式内容更新
                   if (
                     jsonData.choices &&
                     jsonData.choices[0] &&
@@ -644,11 +645,7 @@ const RAGChatXStreamingFixed = () => {
                     const contentDelta = jsonData.choices[0].delta.content;
                     accumulatedContent += contentDelta;
 
-                    // if (DEBUG_MODE) {
-                    //   console.info("新增内容:", contentDelta, "累积长度:", accumulatedContent.length); // Removed this log
-                    // }
-
-                    // 实时更新内容 - 直接传递字符串用于流式渲染
+                    // 实时更新显示内容
                     onUpdate(accumulatedContent);
                   }
                 } catch (parseError) {
@@ -660,7 +657,7 @@ const RAGChatXStreamingFixed = () => {
                       dataLine
                     );
                   }
-                  // 如果解析失败，可能是纯文本内容，直接当作回答内容
+                  // 解析失败时当作纯文本处理
                   if (dataLine && dataLine.length > 0) {
                     accumulatedContent += dataLine;
                     if (DEBUG_MODE) {
@@ -678,13 +675,12 @@ const RAGChatXStreamingFixed = () => {
       } catch (error) {
         console.error("SSE请求失败:", error);
 
+        // 错误消息分类处理
         let errorMessage = "很抱歉，处理您的请求时发生了错误，请稍后再试。";
 
         if (error.message.includes("登录状态已过期")) {
           errorMessage = "登录状态已过期，请重新登录";
-          // 可以在这里触发重新登录的逻辑
           setTimeout(() => {
-            // 清除token并跳转到登录页
             localStorage.removeItem("token");
             window.location.href = "/login";
           }, 2000);
@@ -703,10 +699,10 @@ const RAGChatXStreamingFixed = () => {
         onError(new Error(errorMessage));
       }
     },
-    []
+    [],
   );
 
-  // 创建 agentConfig 对象
+  // 创建 Ant Design X Agent 配置
   const agentConfig = useMemo(
     () => ({
       request: handleAgentRequest,
@@ -716,24 +712,13 @@ const RAGChatXStreamingFixed = () => {
 
   const [agent] = useXAgent(agentConfig);
 
-  // 监控agent的状态
-  useEffect(() => {
-    if (DEBUG_MODE) {
-      console.log("Agent instance changed or updated:", {
-        hasAgent: !!agent,
-        agentType: typeof agent,
-        timestamp: new Date().toISOString(),
-      });
-    }
-  }, [agent, agentConfig]);
-
-  // 使用useXChat管理聊天消息
+  // 使用 useXChat 管理聊天消息状态
   const chat = useXChat({
     agent: agent,
+    // 消息转换函数：统一处理不同格式的消息数据
     transformMessage: (message) => {
       if (DEBUG_MODE) {
         try {
-          // 重点观察这个: 打印原始输入对象
           console.info(
             "Transform message - RAW INPUT:",
             JSON.parse(JSON.stringify(message))
@@ -744,41 +729,27 @@ const RAGChatXStreamingFixed = () => {
             message
           );
         }
-        // Log more details, ensure it's serializable for full view if needed
-        try {
-          console.info(
-            "Transform message - Input:",
-            JSON.parse(JSON.stringify(message))
-          );
-        } catch (e) {
-          console.info(
-            "Transform message - Input (could not stringify):",
-            message
-          );
-        }
         console.info("Transform message - Input type:", typeof message);
       }
 
+      // 消息数据提取和格式化
       let content = "";
       let sources = [];
-      let role = "assistant"; // Default role
+      let role = "assistant";
 
       if (typeof message === "string") {
         content = message;
       } else if (message && typeof message === "object") {
         if (message.role === "user") {
-          content = message.content || ""; // User messages are simpler
+          content = message.content || "";
           role = "user";
-          // User messages typically don't have 'sources' from the agent
-        }
-        // AI messages
-        else {
-          role = message.role || "assistant"; // Use provided role or default to assistant
+        } else {
+          // AI消息处理
+          role = message.role || "assistant";
 
           if (message.chunk) {
-            // Streaming content
+            // 流式内容
             content = message.chunk;
-            // Attempt to get sources, might be in originMessage or top-level
             if (message.originMessage && message.originMessage.sources) {
               sources = Array.isArray(message.originMessage.sources)
                 ? message.originMessage.sources
@@ -786,10 +757,7 @@ const RAGChatXStreamingFixed = () => {
             } else if (message.sources) {
               sources = Array.isArray(message.sources) ? message.sources : [];
             }
-          }
-          // Not streaming (e.g., final message or non-streamed message)
-          // Prioritize top-level content fields first
-          else if (typeof message.content === "string") {
+          } else if (typeof message.content === "string") {
             content = message.content;
             sources = Array.isArray(message.sources)
               ? message.sources
@@ -805,9 +773,7 @@ const RAGChatXStreamingFixed = () => {
                 Array.isArray(message.originMessage.sources)
               ? message.originMessage.sources
               : [];
-          }
-          // Then check within originMessage as a fallback
-          else if (message.originMessage) {
+          } else if (message.originMessage) {
             content =
               message.originMessage.message ||
               message.originMessage.content ||
@@ -815,11 +781,9 @@ const RAGChatXStreamingFixed = () => {
             sources = Array.isArray(message.originMessage.sources)
               ? message.originMessage.sources
               : [];
-            role = message.originMessage.role || role; // originMessage might also have a role
-          }
-          // Fallback if no content found
-          else {
-            content = ""; // Or some default like "Error: Could not parse message"
+            role = message.originMessage.role || role;
+          } else {
+            content = "";
             if (DEBUG_MODE) {
               console.warn(
                 "Transform message - AI message: Unhandled structure or empty content. Message:",
@@ -832,7 +796,7 @@ const RAGChatXStreamingFixed = () => {
 
       const result = {
         content: content,
-        role: role, // Ensure role is correctly passed
+        role: role,
         sources: sources,
       };
 
@@ -853,25 +817,7 @@ const RAGChatXStreamingFixed = () => {
 
   const { parsedMessages } = chat;
 
-  // 添加调试信息
-  useEffect(() => {
-    if (DEBUG_MODE) {
-      console.log(
-        "parsedMessages changed:",
-        parsedMessages.map((msg) => ({
-          id: msg.id,
-          content: msg.content,
-          message: msg.message,
-          status: msg.status,
-          role: msg.role,
-          sources: msg.sources,
-          rawMsg: msg,
-        }))
-      );
-    }
-  }, [parsedMessages]);
-
-  // 清除聊天消息的辅助函数
+  // 聊天消息清理函数
   const clearChatMessages = () => {
     try {
       if (chat.onReset) {
@@ -888,7 +834,7 @@ const RAGChatXStreamingFixed = () => {
     }
   };
 
-  // 处理消息发送
+  // 消息发送处理函数
   const handleSendMessage = () => {
     if (!input.trim()) return;
 
@@ -908,20 +854,18 @@ const RAGChatXStreamingFixed = () => {
       return;
     }
 
-    // 发送消息
     chat.onRequest(input.trim());
     setInput("");
   };
 
-  // Fetch details for a specific knowledge base
+  // 获取知识库详情
   const fetchKnowledgeBaseDetails = async (id) => {
     if (!id) {
-      setKnowledgeBase(null); // Clear current KB if no ID
-      // Clear chat messages
+      setKnowledgeBase(null);
       clearChatMessages();
-      setRagParams({}); // Clear RAG parameters
+      setRagParams({});
       setRagMethodDetails(null);
-      setRagMethodType(null); // 清除方法类型
+      setRagMethodType(null);
       return;
     }
     setDetailsLoading(true);
@@ -931,7 +875,7 @@ const RAGChatXStreamingFixed = () => {
         console.log("KB details response:", response.data);
       }
 
-      // 直接返回知识库对象（没有code或success字段的情况）
+      // 处理直接返回的知识库对象格式
       if (
         response.data &&
         typeof response.data === "object" &&
@@ -949,15 +893,15 @@ const RAGChatXStreamingFixed = () => {
           });
         }
 
-        // 如果知识库有关联的RAG方法，获取其详情和默认参数
+        // 获取关联的RAG方法配置
         if (kbData.ragMethod) {
           fetchRagMethodDetails(kbData.ragMethod);
         } else {
-          setRagMethodDetails(null); // No RAG method associated
-          setRagParams({}); // Clear RAG params
+          setRagMethodDetails(null);
+          setRagParams({});
         }
       }
-      // 标准的成功响应格式
+      // 处理标准API响应格式
       else if (
         (response.data && response.data.success) ||
         (response.data && response.data.code === 200)
@@ -973,27 +917,26 @@ const RAGChatXStreamingFixed = () => {
           });
         }
 
-        // 如果知识库有关联的RAG方法，获取其详情和默认参数
         if (kbData.ragMethod) {
           fetchRagMethodDetails(kbData.ragMethod);
         } else {
-          setRagMethodDetails(null); // No RAG method associated
-          setRagParams({}); // Clear RAG params
+          setRagMethodDetails(null);
+          setRagParams({});
         }
       } else {
         messageApi.error(response.data?.message || "获取知识库详情失败");
-        setKnowledgeBase(null); // Clear on failure
+        setKnowledgeBase(null);
       }
     } catch (error) {
       console.error("获取知识库详情失败:", error);
       messageApi.error("获取知识库详情失败，请稍后再试");
-      setKnowledgeBase(null); // Clear on error
+      setKnowledgeBase(null);
     } finally {
       setDetailsLoading(false);
     }
   };
 
-  // Handle change when a new knowledge base is selected from the dropdown
+  // 知识库选择变更处理
   const handleKnowledgeBaseChange = (id) => {
     if (DEBUG_MODE) {
       console.log("知识库选择变化:", {
@@ -1002,7 +945,7 @@ const RAGChatXStreamingFixed = () => {
       });
     }
 
-    // Clear existing messages - trying different methods since clear() doesn't exist
+    // 清空现有消息
     try {
       if (chat.onReset) {
         chat.onReset();
@@ -1018,11 +961,10 @@ const RAGChatXStreamingFixed = () => {
     }
 
     if (id) {
-      navigate(`/knowledge_base/rag-streaming/${id}`); // Navigate to the URL for the selected KB
+      navigate(`/knowledge_base/rag-streaming/${id}`);
     } else {
-      // If placeholder or no KB is selected
-      navigate("/knowledge_base/rag-streaming"); // Navigate to the base RAG page
-      setKnowledgeBase(null); // Explicitly clear the current KB state
+      navigate("/knowledge_base/rag-streaming");
+      setKnowledgeBase(null);
       setRagParams({});
       setRagMethodDetails(null);
       setRagMethodType(null);
@@ -1039,57 +981,53 @@ const RAGChatXStreamingFixed = () => {
         console.log("Knowledge bases response:", response.data);
       }
 
-      // 检查响应数据是否为数组（直接返回的知识库列表）
+      // 处理直接返回数组的响应格式
       if (response.data && Array.isArray(response.data)) {
         const kbs = response.data;
-        // Sort knowledge bases by creation date (descending, newest first)
         kbs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         setKnowledgeBases(kbs);
       }
-      // 检查是否为包含code字段的标准响应格式
+      // 处理标准API响应格式
       else if (response.data && response.data.code === 200) {
         const kbs = response.data.data || [];
         kbs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         setKnowledgeBases(kbs);
-      }
-      // 处理错误响应
-      else {
+      } else {
         messageApi.error(response.data?.message || "获取知识库列表失败");
-        setKnowledgeBases([]); // Set to empty array on failure
+        setKnowledgeBases([]);
       }
     } catch (error) {
       console.error("获取知识库列表失败:", error);
       messageApi.error("获取知识库列表失败，请稍后再试");
-      setKnowledgeBases([]); // Set to empty array on error
+      setKnowledgeBases([]);
     } finally {
       setListLoading(false);
       setKbSelectLoading(false);
     }
   };
 
-  // 获取特定RAG方法的配置详情（从本地配置文件获取）
+  // 获取RAG方法配置详情（从本地配置获取）
   const fetchRagMethodDetails = (methodId) => {
     if (!methodId) {
       setRagMethodDetails(null);
-      setRagParams({}); // 如果没有methodId，清空参数
+      setRagParams({});
       return;
     }
 
     setLoadingMethodDetails(true);
     try {
-      // 从本地配置文件中获取RAG方法配置
+      // 从本地配置文件获取RAG方法配置
       const methodConfig = getMethodConfig(methodId);
 
       if (methodConfig) {
         setRagMethodDetails(methodConfig);
-        // 保存方法类型
         setRagMethodType(methodId);
-        // 使用方法配置中的搜索参数初始化RAG参数
+        
+        // 初始化参数默认值
         const initialSearchParams = {};
         if (methodConfig.searchParams) {
           Object.keys(methodConfig.searchParams).forEach((paramKey) => {
             const paramConfig = methodConfig.searchParams[paramKey];
-            // 使用参数的默认值
             initialSearchParams[paramKey] =
               paramConfig.default !== undefined
                 ? paramConfig.default
@@ -1100,7 +1038,7 @@ const RAGChatXStreamingFixed = () => {
       } else {
         messageApi.warning("未找到RAG方法配置信息，将使用默认参数");
         setRagMethodDetails(null);
-        setRagParams({}); // 如果方法详情未找到，回退到空值
+        setRagParams({});
       }
     } catch (error) {
       console.error("获取RAG方法详情失败:", error);
@@ -1112,19 +1050,18 @@ const RAGChatXStreamingFixed = () => {
     }
   };
 
-  // Handle changes to RAG parameters
+  // RAG参数变更处理
   const handleRagParamsChange = (newParams) => {
     setRagParams((prevParams) => ({ ...prevParams, ...newParams }));
   };
 
-  // 组件挂载时获取知识库列表
+  // 组件初始化：获取知识库列表
   useEffect(() => {
-    // 获取知识库列表
     fetchKnowledgeBases();
   }, []);
 
+  // URL参数变化时获取对应知识库详情
   useEffect(() => {
-    // When knowledgeBaseId (from URL) changes, fetch the details for that knowledge base
     if (DEBUG_MODE) {
       console.log("useEffect knowledgeBaseId changed:", {
         knowledgeBaseId,
@@ -1134,19 +1071,7 @@ const RAGChatXStreamingFixed = () => {
     fetchKnowledgeBaseDetails(knowledgeBaseId);
   }, [knowledgeBaseId]);
 
-  // 监控 knowledgeBase 状态变化
-  useEffect(() => {
-    if (DEBUG_MODE) {
-      console.log("knowledgeBase state changed:", {
-        knowledgeBase: knowledgeBase?.name || null,
-        knowledgeBaseId: knowledgeBase?.id || null,
-        ragMethod: knowledgeBase?.ragMethod || null,
-        timestamp: new Date().toISOString(),
-      });
-    }
-  }, [knowledgeBase]);
-
-  // 显示加载状态
+  // 加载状态显示
   if (listLoading) {
     return (
       <div style={{ textAlign: "center", padding: "100px 0" }}>
@@ -1165,7 +1090,7 @@ const RAGChatXStreamingFixed = () => {
     >
       {contextHolder}
 
-      {/* 标题区域 */}
+      {/* 页面标题和描述 */}
       <div
         style={{
           background: "#52c41a",
@@ -1219,7 +1144,7 @@ const RAGChatXStreamingFixed = () => {
               display: "flex",
               flexDirection: "column",
               padding: "16px",
-            }} // Modified padding
+            }} // 调整内边距
           >
             {/* 消息显示区域 */}
             <div
@@ -1229,8 +1154,8 @@ const RAGChatXStreamingFixed = () => {
                 overflowX: "hidden",
                 padding: "16px 0",
                 marginBottom: "16px",
-                display: "flex", // Add this
-                flexDirection: "column", // Add this
+                display: "flex", // 设置弹性布局
+                flexDirection: "column", // 设置垂直方向
               }}
             >
               {parsedMessages.length === 0 ? (
@@ -1265,7 +1190,7 @@ const RAGChatXStreamingFixed = () => {
                       placement={isUserMessage ? "end" : "start"}
                       sources={msg.sources || []}
                       error={msg.status === "error"}
-                      style={isUserMessage ? { alignSelf: "flex-end" } : {}} // Simplified style
+                      style={isUserMessage ? { alignSelf: "flex-end" } : {}} // 用户消息右对齐
                     />
                   );
                 })
