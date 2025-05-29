@@ -16,7 +16,10 @@ import UserProfile from '../pages/profile/UserProfile';
 import VipMembership from '../pages/vip/VipMembership';
 import KnowledgeBaseManagement from '../pages/knowledge_base/KnowledgeBaseManagement';
 import RAGChat from '../pages/knowledge_base/RAGChat';
+import RAGChatX from '../pages/knowledge_base/RAGChatX';
+import RAGChatXStreaming from '../pages/knowledge_base/RAGChatX_Streaming';
 import KnowledgeBaseDocuments from '../pages/knowledge_base/docs/KnowledgeBaseDocuments';
+import StreamingMarkdownTest from '../test/StreamingMarkdownTest';
 import ProtectedRoute from '../components/ProtectedRoute';
 
 const AppRoutes = () => {
@@ -28,6 +31,8 @@ const AppRoutes = () => {
         <Route path="login" element={<Login />} />
         <Route path="register" element={<Register />} />
         <Route path="auth/callback/github" element={<GitHubCallback />} />
+        {/* 测试路由 - 无需认证 */}
+        <Route path="test/streaming-markdown" element={<StreamingMarkdownTest />} />
       </Route>
       
       {/* 保护的路由 - 需要认证 */}
@@ -44,12 +49,16 @@ const AppRoutes = () => {
         {/* 知识库相关路由 */}
         <Route path="knowledge_base">
           <Route index element={<KnowledgeBaseManagement />} />
-          <Route path="rag" element={<RAGChat />} /> {/* 添加默认的知识库问答路由 */}
+          <Route path="rag" element={<RAGChat />} /> {/* 原始版本的知识库问答路由 */}
           <Route path="rag/:id" element={<RAGChat />} />
+          <Route path="rag-x" element={<RAGChatX />} /> {/* Ant Design X 版本的知识库问答路由 */}
+          <Route path="rag-x/:id" element={<RAGChatX />} />
+          <Route path="rag-streaming" element={<RAGChatXStreaming />} /> {/* 流式版本测试路由 */}
+          <Route path="rag-streaming/:id" element={<RAGChatXStreaming />} />
           {/* 添加知识库文档管理路由 */}
           <Route path="docs/:id" element={<KnowledgeBaseDocuments />} />
         </Route>
-        
+
         {/* 文档分析相关路由 */}
         <Route path="analysis">
           <Route path="summary" element={<SummaryAnalysis />} />
@@ -76,7 +85,7 @@ const AppRoutes = () => {
         
         {/* 个人资料路由 */}
         <Route path="profile" element={<UserProfile />} />
-        
+
         {/* 其他路由可在此处添加 */}
       </Route>
       

@@ -190,6 +190,14 @@ const AppLayout = () => {
         {
           key: '/knowledge_base/rag',
           label: '知识库问答',
+        },
+        {
+          key: '/knowledge_base/rag-x',
+          label: '智能问答 (Ant Design X)',
+        },
+        {
+          key: '/knowledge_base/rag-streaming',
+          label: '知识库问答 (流式)', // 新增的菜单项
         }
       ],
     },
