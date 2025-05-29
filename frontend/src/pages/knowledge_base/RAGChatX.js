@@ -12,9 +12,6 @@ import {
   Button,
   Card,
   Col,
-  Collapse,
-  Divider,
-  Empty,
   Input,
   InputNumber,
   message,
@@ -41,15 +38,15 @@ import api, { knowledgeBaseAPI } from "../../services/api";
 import { getMethodConfig } from "../../config/ragConfig";
 import markdownit from "markdown-it";
 import mk from "markdown-it-katex";
+import hljs from 'highlight.js';
+import "katex/dist/katex.min.css";
+import 'highlight.js/styles/vs.css'; // 代码高亮样式
 import "../../styles/components/markdown.css";
 import "../../styles/components/ragChat.css";
-import "katex/dist/katex.min.css";
-import hljs from 'highlight.js';
-import 'highlight.js/styles/vs.css'; // 可选样式，可换成你喜欢的样式
 
-const { Title, Paragraph, Text } = Typography;
+const { Title, Paragraph } = Typography;
 const { Option } = Select;
-const { Panel } = Collapse;
+const DEBUG_MODE = false; // 调试模式开关
 
 // 初始化 markdown-it 渲染器，支持 HTML 标签、换行符和 KaTeX 数学公式
 const md = markdownit({
@@ -380,8 +377,6 @@ const RagParamsConfig = ({ ragMethodDetails, ragParams, onParamsChange }) => {
 
 // 主组件 - 基于 Ant Design X 的流式 RAG 问答界面
 const RAGChatX = () => {
-  const DEBUG_MODE = false; // 调试模式开关
-
   const { id: knowledgeBaseId } = useParams();
   const navigate = useNavigate();
   const [messageApi, contextHolder] = message.useMessage();
@@ -1078,12 +1073,12 @@ const RAGChatX = () => {
 
   // URL参数变化时获取对应知识库详情
   useEffect(() => {
-    if (DEBUG_MODE) {
-      console.log("useEffect knowledgeBaseId changed:", {
-        knowledgeBaseId,
-        currentKnowledgeBase: knowledgeBase?.name || null,
-      });
-    }
+    // if (DEBUG_MODE) {
+    //   console.log("useEffect knowledgeBaseId changed:", {
+    //     knowledgeBaseId,
+    //     currentKnowledgeBase: knowledgeBase?.name || null,
+    //   });
+    // }
     fetchKnowledgeBaseDetails(knowledgeBaseId);
   }, [knowledgeBaseId]);
 
