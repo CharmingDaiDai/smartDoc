@@ -44,6 +44,8 @@ import mk from "markdown-it-katex";
 import "../../styles/components/markdown.css";
 import "../../styles/components/ragChat.css";
 import "katex/dist/katex.min.css";
+import hljs from 'highlight.js';
+import 'highlight.js/styles/vs.css'; // 可选样式，可换成你喜欢的样式
 
 const { Title, Paragraph, Text } = Typography;
 const { Option } = Select;
@@ -56,6 +58,14 @@ const md = markdownit({
   breaks: true,      // '\n' 转换成 <br>
   linkify: true,     // 自动将链接文本转换成 <a>
   typographer: true, // 替换引号和破折号等排版符号
+  highlight: function (str, lang) {
+    if (lang && hljs.getLanguage(lang)) {
+      try {
+        return `<pre class="hljs"><code>${hljs.highlight(str, { language: lang }).value}</code></pre>`;
+      } catch (_) {}
+    }
+    return `<pre class="hljs"><code>${md.utils.escapeHtml(str)}</code></pre>`;
+  }
 }).use(mk);
 
 // 消息内容渲染组件 - 将文本转换为带格式的 Markdown 显示
@@ -73,7 +83,7 @@ const CustomBubbleMessageRender = ({ content, sources = [] }) => {
   if (!textContent || textContent.trim() === "") {
     return (
       <Typography>
-        <div style={{ color: "#999", fontStyle: "italic" }}>等待内容...</div>
+        <div style={{ color: "#999", fontStyle: "italic" }}>...</div>
       </Typography>
     );
   }
