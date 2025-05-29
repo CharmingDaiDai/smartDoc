@@ -3,8 +3,16 @@ import { Bubble } from '@ant-design/x';
 import { Typography, Button, Space, Card } from 'antd';
 import markdownit from 'markdown-it';
 import React from 'react';
+import mk from "markdown-it-katex";
+import 'katex/dist/katex.min.css';
 
-const md = markdownit({ html: true, breaks: true });
+const md = markdownit({
+  html: true,        // 允许 HTML 标签
+  xhtmlOut: false,   // 使用 '/' 闭合单标签 (比如 <br />)
+  breaks: true,      // '\n' 转换成 <br>
+  linkify: true,     // 自动将链接文本转换成 <a>
+  typographer: true, // 替换引号和破折号等排版符号
+}).use(mk);
 
 // 测试用的markdown内容
 const testMarkdowns = [
@@ -107,6 +115,39 @@ const Counter = () => {
 - [ ] 用户界面体验优化
 - [x] 流式输出功能实现
 `.trim()
+  },
+  {
+    title:"test",
+    content:`1. 获取堆内存快照\`dump\`文件
+
+通过 jmap 打印指定内存快照 dump (Dump 文件是进程的内存镜像。可以把程序的执行状态通过调试器保存到 dump 文件中)\n\n
+
+- 使用 jmap 命令获取运行中程序的 dump 文件
+
+  - \`jmap -dump:format=b,file=heap.hprof pid\`
+  - \`format=b\` 表示以 hprof 二进制格式转储 Java 堆的内存
+  - \`file=<filename>\` 用于指定快照 dump 文件的文件名
+
+- 使用 vm 参数获取 dump 文件
+
+  - 有的情况是内存溢出之后程序则会直接中断，而 jmap 只能打印在运行中的程序，所以建议通过参数的方式的生成 dump 文件
+  - \`-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/home/app/dumps/\`
+
+
+2. 使用\`VisualVM\`分析\`dump\`文件
+
+3. 通过审视堆内存信息，定位内存溢出问题`
+  },
+    {
+    title:"111",
+    content:`1. 获取堆内存\\n快照\`dump\`文件\n
+基于词级别的语义相似度：$$P=\frac{1}{|C|}\sum_{c\in C}\max_{r\in R}S(c,r)$$ $$R=\frac{1}{|R|}\sum_{r\in R}\max_{c\in C}S(c,r)$$ $$F1=2\times\frac{P\times R}{P+R}$$
+
+基于词级别的语义相似度：
+$$P=\\frac{1}{|C|}\\sum_{c\\in C}\\max_{r\\in R}S(c,r)$$
+$$R=\\frac{1}{|R|}\\sum_{r\\in R}\\max_{c\\in C}S(c,r)$$
+$$F1=2\\times\\frac{P\\times R}{P+R}$$
+    `
   }
 ];
 
@@ -119,7 +160,9 @@ const CustomMessageRender = ({ content }) => {
   }
   
   try {
-    const htmlContent = md.render(content);
+    const htmlContent = md.render(content.replace(/\\n/g, '\n'));
+    console.log("md.render读取后")
+    console.log(htmlContent)
     return (
       <Typography>
         <div dangerouslySetInnerHTML={{ __html: htmlContent }} />

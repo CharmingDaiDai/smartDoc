@@ -17,7 +17,6 @@ import VipMembership from '../pages/vip/VipMembership';
 import KnowledgeBaseManagement from '../pages/knowledge_base/KnowledgeBaseManagement';
 import RAGChat from '../pages/knowledge_base/RAGChat';
 import RAGChatX from '../pages/knowledge_base/RAGChatX';
-import RAGChatXStreaming from '../pages/knowledge_base/RAGChatX_Streaming';
 import KnowledgeBaseDocuments from '../pages/knowledge_base/docs/KnowledgeBaseDocuments';
 import StreamingMarkdownTest from '../test/StreamingMarkdownTest';
 import ProtectedRoute from '../components/ProtectedRoute';
@@ -53,8 +52,6 @@ const AppRoutes = () => {
           <Route path="rag/:id" element={<RAGChat />} />
           <Route path="rag-x" element={<RAGChatX />} /> {/* Ant Design X 版本的知识库问答路由 */}
           <Route path="rag-x/:id" element={<RAGChatX />} />
-          <Route path="rag-streaming" element={<RAGChatXStreaming />} /> {/* 流式版本测试路由 */}
-          <Route path="rag-streaming/:id" element={<RAGChatXStreaming />} />
           {/* 添加知识库文档管理路由 */}
           <Route path="docs/:id" element={<KnowledgeBaseDocuments />} />
         </Route>
