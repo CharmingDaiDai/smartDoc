@@ -12,9 +12,25 @@ export const ragMethods = [
       "chunk-overlap": 100,
     },
     searchParams: {
-      "top-k": 5,
-      "query-rewriting": false,
-      "query-decomposition": false,
+      "top-k": {
+        default: 5,
+        type: "integer",
+        min: 1,
+        max: 15,
+        label: "检索数量"
+      },
+      "query-rewriting": {
+        default: false,
+        type: "boolean",
+        label: "查询重写",
+        description: "智能重写用户查询以提高检索效果"
+      },
+      "query-decomposition": {
+        default: false,
+        type: "boolean", 
+        label: "查询分解",
+        description: "将复杂查询分解为多个简单查询"
+      },
     },
   },
   {
@@ -27,9 +43,25 @@ export const ragMethods = [
       abstract: false,
     },
     searchParams: {
-      "max-res": 10,
-      "query-rewriting": false,
-      "query-decomposition": false,
+      "max-res": {
+        default: 10,
+        type: "integer",
+        min: 1,
+        max: 15,
+        label: "最大结果数"
+      },
+      "query-rewriting": {
+        default: false,
+        type: "boolean",
+        label: "查询重写",
+        description: "智能重写用户查询以提高检索效果"
+      },
+      "query-decomposition": {
+        default: false,
+        type: "boolean",
+        label: "查询分解",
+        description: "将复杂查询分解为多个简单查询"
+      },
     },
   },
   {
@@ -42,9 +74,25 @@ export const ragMethods = [
       abstract: true,
     },
     searchParams: {
-      "max-res": 10,
-      "query-rewriting": false,
-      "query-decomposition": false,
+      "max-res": {
+        default: 10,
+        type: "integer",
+        min: 1,
+        max: 15,
+        label: "最大结果数"
+      },
+      "query-rewriting": {
+        default: false,
+        type: "boolean",
+        label: "查询重写",
+        description: "智能重写用户查询以提高检索效果"
+      },
+      "query-decomposition": {
+        default: false,
+        type: "boolean",
+        label: "查询分解",
+        description: "将复杂查询分解为多个简单查询"
+      },
     },
   },
 ];
