@@ -236,6 +236,8 @@ const CustomBubbleMessageRender = ({ content, sources = [] }) => {
   }
 };
 
+var latestUserContent = {};
+
 // 流式消息气泡组件 - 支持用户和AI消息的差异化显示
 const StreamingBubble = ({
   content,
@@ -263,11 +265,20 @@ const StreamingBubble = ({
 
   const { token } = theme.useToken();
   const onCopy = (textToCopy) => {
-    if (!textToCopy) return message.success("Text is empty");
-    message.success(`Text copied successfully：${textToCopy}`);
+    message.success(`复制成功`);
   };
-
+  const onReload = () => {
+    // TODO 实现重载功能
+    message.warning(`TODO: 实现重载功能 - 最新用户消息: ${latestUserContent}`);
+  };
+  const onLike = () => {
+    message.success(`🎉点赞🎉`);
+  };
+  const onDislike = () => {
+    message.info(`☹️`);
+  };
   if (isUser) {
+    latestUserContent = content;
     // 用户消息：右侧显示，蓝色头像
     return (
       <div
@@ -332,6 +343,7 @@ const StreamingBubble = ({
               color="default"
               variant="text"
               size="small"
+              onClick={() => onReload()}
               icon={<ReloadOutlined />}
             />
             <Button
@@ -341,8 +353,22 @@ const StreamingBubble = ({
               onClick={() => onCopy(messageContext)}
               icon={<CopyOutlined />}
             />
-            <Button type="text" size="small" icon={<LikeOutlined />} />
-            <Button type="text" size="small" icon={<DislikeOutlined />} />
+            <Button
+              type="text"
+              size="small"
+              onClick={() => {
+                onLike();
+              }}
+              icon={<LikeOutlined />}
+            />
+            <Button
+              type="text"
+              size="small"
+              onClick={() => {
+                onDislike();
+              }}
+              icon={<DislikeOutlined />}
+            />
           </Space>
         )}
         className="bubble-content-wrapper"
@@ -533,6 +559,9 @@ const RAGChatX = () => {
   const [ragMethodDetails, setRagMethodDetails] = useState(null);
   const [ragParams, setRagParams] = useState({});
   const [ragMethodType, setRagMethodType] = useState(null);
+
+  // 自动滚动 ref
+  const messagesEndRef = useRef(null);
 
   // 使用 useRef 保存最新状态的引用，避免闭包问题
   const stateRef = useRef();
@@ -956,6 +985,13 @@ const RAGChatX = () => {
     setRagParams((prevParams) => ({ ...prevParams, ...newParams }));
   };
 
+  // 自动滚动到最新消息
+  useEffect(() => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [parsedMessages]);
+
   // 获取知识库详情
   const fetchKnowledgeBaseDetails = useCallback(
     async (id) => {
@@ -1352,6 +1388,8 @@ const RAGChatX = () => {
                   );
                 })
               )}
+              {/* 滚动锚点 */}
+              <div ref={messagesEndRef} />
             </div>
 
             {/* 输入区域 */}
