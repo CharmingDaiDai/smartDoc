@@ -76,6 +76,32 @@ const md = markdownit({
   },
 }).use(mk);
 
+// 自定义图片渲染规则 - 自动处理相对路径
+md.renderer.rules.image = function (tokens, idx, options, env) {
+  const token = tokens[idx];
+  const srcIndex = token.attrIndex('src');
+  
+  if (srcIndex >= 0) {
+    let src = token.attrs[srcIndex][1];
+    
+    // 处理相对路径，将 assets/ 开头的路径转换为 /assets/
+    if (src && typeof src === 'string') {
+      if (src.startsWith('assets/')) {
+        src = `/${src}`;
+      } else if (src.startsWith('./assets/')) {
+        src = src.replace('./assets/', '/assets/');
+      }
+      token.attrs[srcIndex][1] = src;
+    }
+  }
+  
+  // 添加样式属性
+  token.attrSet('style', 'max-width: 100%; height: auto; border-radius: 6px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24); margin: 8px 0;');
+  
+  // 使用默认渲染器
+  return md.renderer.renderToken(tokens, idx, options);
+};
+
 // 消息内容渲染组件 - 将文本转换为带格式的 Markdown 显示
 const CustomBubbleMessageRender = ({ content, sources = [] }) => {
   const [openModal, setOpenModal] = useState(false);
