@@ -22,6 +22,8 @@ import {
   Switch,
   Tag,
   Typography,
+  Space,
+  theme,
 } from "antd";
 import {
   BookOutlined,
@@ -31,6 +33,11 @@ import {
   SendOutlined,
   SettingOutlined,
   UserOutlined,
+  CopyOutlined,
+  SyncOutlined,
+  ReloadOutlined,
+  LikeOutlined,
+  DislikeOutlined,
 } from "@ant-design/icons";
 import { Bubble, useXAgent, useXChat } from "@ant-design/x";
 import { useNavigate, useParams } from "react-router-dom";
@@ -69,6 +76,14 @@ const md = markdownit({
 
 // 消息内容渲染组件 - 将文本转换为带格式的 Markdown 显示
 const CustomBubbleMessageRender = ({ content, sources = [] }) => {
+  // 调试信息：检查sources数据
+  if (DEBUG_MODE && sources) {
+    console.log("CustomBubbleMessageRender - sources数据:", {
+      sourcesCount: sources.length,
+      sourcesData: sources.slice(0, 2), // 显示前2个sources的详细信息
+      hasValidSources: sources.length > 0,
+    });
+  }
   // 内容类型转换：统一转换为字符串格式，支持多种输入类型
   let textContent = "";
   if (typeof content === "string") {
@@ -105,28 +120,62 @@ const CustomBubbleMessageRender = ({ content, sources = [] }) => {
             style={{
               marginTop: "12px",
               paddingTop: "12px",
-              borderTop: "1px solid #f0f0f0",
+              borderTop: "1px solid #e8f4f8",
+              backgroundColor: "#f8fcff",
+              padding: "12px",
+              borderRadius: "6px",
+              border: "1px solid #e1f0ff",
             }}
           >
             <div
-              style={{ fontSize: "12px", color: "#666", marginBottom: "8px" }}
+              style={{
+                fontSize: "13px",
+                color: "#1890ff",
+                marginBottom: "8px",
+                fontWeight: "500",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
             >
-              📚 参考文档:
+              <BookOutlined style={{ fontSize: "12px" }} />
+              参考文档 ({sources.length}个):
             </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
-              {sources.slice(0, 3).map((source, index) => (
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+              {sources.slice(0, 4).map((source, index) => (
                 <Tag
                   key={index}
-                  size="small"
                   color="blue"
-                  style={{ fontSize: "11px", margin: 0 }}
+                  style={{
+                    fontSize: "12px",
+                    margin: 0,
+                    borderRadius: "4px",
+                    cursor: "pointer",
+                  }}
+                  title={
+                    source.content
+                      ? source.content.substring(0, 200) + "..."
+                      : ""
+                  }
                 >
-                  {source.fileName || `文档${index + 1}`}
+                  {source.title ||
+                    source.fileName ||
+                    source.name ||
+                    `文档${index + 1}`}
                 </Tag>
               ))}
-              {sources.length > 3 && (
-                <Tag size="small" style={{ fontSize: "11px", margin: 0 }}>
-                  +{sources.length - 3}
+              {sources.length > 4 && (
+                <Tag
+                  style={{
+                    fontSize: "12px",
+                    margin: 0,
+                    backgroundColor: "#f0f0f0",
+                    color: "#666",
+                    border: "1px solid #d9d9d9",
+                  }}
+                  title={`还有${sources.length - 4}个参考文档`}
+                >
+                  +{sources.length - 4}个
                 </Tag>
               )}
             </div>
@@ -156,12 +205,32 @@ const StreamingBubble = ({
 }) => {
   const isUser = placement === "end";
 
+  // 调试信息：检查StreamingBubble收到的sources
+  if (DEBUG_MODE && !isUser) {
+    console.log("StreamingBubble - AI消息sources数据:", {
+      messageId,
+      sourcesCount: sources.length,
+      sourcesPreview: sources.map((s) => ({
+        title: s.title,
+        fileName: s.fileName,
+        name: s.name,
+      })),
+    });
+  }
+
+  const { token } = theme.useToken();
+  const onCopy = (textToCopy) => {
+    if (!textToCopy) return message.success("Text is empty");
+    message.success(`Text copied successfully：${textToCopy}`);
+  };
+
   if (isUser) {
     // 用户消息：右侧显示，蓝色头像
     return (
       <div
         data-message-id={messageId}
-        style={{ marginBottom: "16px", ...style }}
+        className="user-message-container"
+        style={style}
       >
         <Bubble
           placement="end"
@@ -175,6 +244,7 @@ const StreamingBubble = ({
           }}
           shape="round"
           variant="outlined"
+          className="bubble-content-wrapper"
         />
       </div>
     );
@@ -182,7 +252,11 @@ const StreamingBubble = ({
 
   // AI消息：左侧显示，绿色头像，支持流式打字效果
   return (
-    <div data-message-id={messageId} style={{ marginBottom: "16px", ...style }}>
+    <div
+      data-message-id={messageId}
+      className="ai-message-container"
+      style={style}
+    >
       <Bubble
         avatar={{
           icon: <RobotOutlined />,
@@ -209,6 +283,26 @@ const StreamingBubble = ({
         )}
         shape="round"
         variant="outlined"
+        footer={(messageContext) => (
+          <Space size={token.paddingXXS}>
+            <Button
+              color="default"
+              variant="text"
+              size="small"
+              icon={<ReloadOutlined />}
+            />
+            <Button
+              color="default"
+              variant="text"
+              size="small"
+              onClick={() => onCopy(messageContext)}
+              icon={<CopyOutlined />}
+            />
+            <Button type="text" size="small" icon={<LikeOutlined />} />
+            <Button type="text" size="small" icon={<DislikeOutlined />} />
+          </Space>
+        )}
+        className="bubble-content-wrapper"
       />
     </div>
   );
@@ -728,7 +822,7 @@ const RAGChatX = () => {
   // 使用 useXChat 管理聊天消息状态
   const chat = useXChat({
     agent: agent,
-    // 消息转换函数：统一处理不同格式的消息数据
+
     transformMessage: (message) => {
       if (DEBUG_MODE) {
         try {
@@ -745,72 +839,32 @@ const RAGChatX = () => {
         console.info("Transform message - Input type:", typeof message);
       }
 
-      // 消息数据提取和格式化
+      // 默认值
       let content = "";
       let sources = [];
       let role = "assistant";
 
+      // 如果是字符串，直接使用
       if (typeof message === "string") {
         content = message;
       } else if (message && typeof message === "object") {
-        if (message.role === "user") {
-          content = message.content || "";
-          role = "user";
-        } else {
-          // AI消息处理
-          role = message.role || "assistant";
+        // 优先从 chunks 中取（这是最终返回结果）
+        const payload = message.chunks ?? message.originMessage ?? message;
 
-          if (message.chunk) {
-            // 流式内容
-            content = message.chunk;
-            if (message.originMessage && message.originMessage.sources) {
-              sources = Array.isArray(message.originMessage.sources)
-                ? message.originMessage.sources
-                : [];
-            } else if (message.sources) {
-              sources = Array.isArray(message.sources) ? message.sources : [];
-            }
-          } else if (typeof message.content === "string") {
-            content = message.content;
-            sources = Array.isArray(message.sources)
-              ? message.sources
-              : message.originMessage &&
-                Array.isArray(message.originMessage.sources)
-              ? message.originMessage.sources
-              : [];
-          } else if (typeof message.message === "string") {
-            content = message.message;
-            sources = Array.isArray(message.sources)
-              ? message.sources
-              : message.originMessage &&
-                Array.isArray(message.originMessage.sources)
-              ? message.originMessage.sources
-              : [];
-          } else if (message.originMessage) {
-            content =
-              message.originMessage.message ||
-              message.originMessage.content ||
-              "";
-            sources = Array.isArray(message.originMessage.sources)
-              ? message.originMessage.sources
-              : [];
-            role = message.originMessage.role || role;
-          } else {
-            content = "";
-            if (DEBUG_MODE) {
-              console.warn(
-                "Transform message - AI message: Unhandled structure or empty content. Message:",
-                message
-              );
-            }
-          }
+        role = payload.role ?? "assistant";
+        content = payload.content ?? payload.message ?? "";
+        sources = Array.isArray(payload.sources) ? payload.sources : [];
+
+        // 如果是流式 chunk 更新（onUpdate），可以处理 message.chunk
+        if (!content && typeof message.chunk === "string") {
+          content = message.chunk;
         }
       }
 
       const result = {
-        content: content,
-        role: role,
-        sources: sources,
+        content,
+        role,
+        sources,
       };
 
       if (DEBUG_MODE) {
@@ -819,11 +873,12 @@ const RAGChatX = () => {
             result.content.substring(0, 70) +
             (result.content.length > 70 ? "..." : ""),
           contentLength: result.content.length,
-          sourcesCount: sources.length,
+          sourcesCount: result.sources.length,
           role: result.role,
         };
         console.info("Transform message - Output:", outputDebug);
       }
+
       return result;
     },
   });
@@ -853,8 +908,6 @@ const RAGChatX = () => {
     chat.onRequest(input.trim());
     setInput("");
   };
-
-
 
   // RAG参数变更处理
   const handleRagParamsChange = (newParams) => {
@@ -1181,13 +1234,16 @@ const RAGChatX = () => {
               flex: 1,
               display: "flex",
               flexDirection: "column",
+              overflow: "auto",
             }}
-            bodyStyle={{
-              flex: 1,
-              overflow: "hidden",
-              display: "flex",
-              flexDirection: "column",
-              padding: "16px",
+            styles={{
+              body: {
+                flex: 1,
+                overflow: "hidden",
+                display: "flex",
+                flexDirection: "column",
+                padding: "16px",
+              },
             }} // 调整内边距
           >
             {/* 消息显示区域 */}
@@ -1213,28 +1269,43 @@ const RAGChatX = () => {
                   <RobotOutlined
                     style={{ fontSize: "48px", marginBottom: "16px" }}
                   />
-                  <div>开始与AI助手对话吧！</div>
+                  <div>开始与 AI 助手对话吧！</div>
                 </div>
               ) : (
                 parsedMessages.map((msg, index) => {
-                  // 简化的流式状态判断
-                  const isTyping =
-                    msg.status === "loading" && msg.role === "assistant";
-                  // 修正用户消息判断逻辑，以确保正确识别用户消息并将其放置在右侧
-                  const isUserMessage =
-                    msg.role === "user" ||
-                    (msg.role === undefined && msg.status === "local");
+                  const { id, message, status } = msg;
+
+                  // 判断 message 是字符串（用户消息）还是对象（AI 回复）
+                  const isStringMessage = typeof message === "string";
+
+                  const content = isStringMessage
+                    ? message
+                    : message?.content ?? "";
+                  const role =
+                    status === "local" ? "user" : message?.role ?? "assistant";
+
+                  const sources =
+                    !isStringMessage && Array.isArray(message?.sources)
+                      ? message.sources
+                      : [];
+
+                  // 正确判断：status === 'local' 就是用户发的消息
+                  const isUserMessage = status === "local";
+
+                  const isTyping = status === "loading" && role === "assistant";
+
+                  const isError = status === "error";
 
                   return (
                     <StreamingBubble
-                      key={msg.id || index}
-                      messageId={msg.id}
-                      content={msg.content || msg.message || ""}
+                      key={id || index}
+                      messageId={id}
+                      content={content}
                       isTyping={isTyping}
                       placement={isUserMessage ? "end" : "start"}
-                      sources={msg.sources || []}
-                      error={msg.status === "error"}
-                      style={isUserMessage ? { alignSelf: "flex-end" } : {}} // 用户消息右对齐
+                      sources={sources}
+                      error={isError}
+                      style={isUserMessage ? { alignSelf: "flex-end" } : {}}
                     />
                   );
                 })
