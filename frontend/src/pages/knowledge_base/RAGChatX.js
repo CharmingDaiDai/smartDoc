@@ -25,6 +25,7 @@ import {
   Space,
   theme,
   Modal,
+  Tabs,
 } from "antd";
 import {
   BookOutlined,
@@ -78,24 +79,16 @@ const md = markdownit({
 // 消息内容渲染组件 - 将文本转换为带格式的 Markdown 显示
 const CustomBubbleMessageRender = ({ content, sources = [] }) => {
   const [openModal, setOpenModal] = useState(false);
-  const [activeSource, setActiveSource] = useState(null);
+  const [activeTabKey, setActiveTabKey] = useState("0");
 
-  const handleClickSource = (source) => {
-    setActiveSource(source);
-    setOpenModal(true);
+  const handleClickSource = (index) => {
+    setActiveTabKey(String(index)); // 设置当前 tab key
+    setOpenModal(true); // 打开弹窗
   };
 
   const closeModal = () => {
     setOpenModal(false);
-    setActiveSource(null);
   };
-
-  if (DEBUG_MODE) {
-    console.log("💬 CustomBubbleMessageRender - props:", {
-      content,
-      sourcesPreview: sources?.slice?.(0, 2),
-    });
-  }
 
   let textContent = "";
   if (typeof content === "string") {
@@ -116,10 +109,11 @@ const CustomBubbleMessageRender = ({ content, sources = [] }) => {
 
   try {
     const htmlContent = md.render(textContent.trim().replace(/\\n/g, "\n"));
+    const sourcesToShow = 3; // 显示的参考文档数量上限
 
     return (
       <>
-        {/* 主消息内容渲染 */}
+        {/* 主消息内容 */}
         <Typography>
           <div
             className="markdown-content"
@@ -127,7 +121,7 @@ const CustomBubbleMessageRender = ({ content, sources = [] }) => {
           />
         </Typography>
 
-        {/* 参考文档展示 */}
+        {/* 参考文档列表 */}
         {sources && sources.length > 0 && (
           <div
             style={{
@@ -156,7 +150,7 @@ const CustomBubbleMessageRender = ({ content, sources = [] }) => {
             </div>
 
             <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-              {sources.slice(0, 4).map((source, index) => (
+              {sources.slice(0, sourcesToShow).map((source, index) => (
                 <Tag
                   key={index}
                   color="blue"
@@ -167,7 +161,7 @@ const CustomBubbleMessageRender = ({ content, sources = [] }) => {
                     cursor: "pointer",
                   }}
                   title="点击查看详情"
-                  onClick={() => handleClickSource(source)}
+                  onClick={() => handleClickSource(index)}
                 >
                   {source.title ||
                     source.fileName ||
@@ -176,7 +170,7 @@ const CustomBubbleMessageRender = ({ content, sources = [] }) => {
                 </Tag>
               ))}
 
-              {sources.length > 4 && (
+              {sources.length > sourcesToShow && (
                 <Tag
                   style={{
                     fontSize: "12px",
@@ -185,23 +179,18 @@ const CustomBubbleMessageRender = ({ content, sources = [] }) => {
                     color: "#666",
                     border: "1px solid #d9d9d9",
                   }}
-                  title={`还有${sources.length - 4}个参考文档`}
+                  title={`还有${sources.length - sourcesToShow}个参考文档`}
                 >
-                  +{sources.length - 4}个
+                  +{sources.length - sourcesToShow}个
                 </Tag>
               )}
             </div>
           </div>
         )}
 
-        {/* 弹出 Modal 渲染文档内容 */}
+        {/* 弹窗 + Tabs 切换文档内容 */}
         <Modal
-          title={
-            activeSource?.title ||
-            activeSource?.fileName ||
-            activeSource?.name ||
-            "参考内容"
-          }
+          title="参考内容"
           open={openModal}
           onCancel={closeModal}
           footer={null}
@@ -210,18 +199,27 @@ const CustomBubbleMessageRender = ({ content, sources = [] }) => {
             body: {
               maxHeight: "60vh",
               overflowY: "auto",
-              // whiteSpace: "pre-wrap",
             },
           }}
         >
-          <div
-            className="markdown-content"
-            // style={{ whiteSpace: "pre-wrap" }} // ✨ 自动换行
-            dangerouslySetInnerHTML={{
-              __html: md.render(
-                (activeSource?.content || "").trim().replace(/\\n/g, "\n")
+          <Tabs
+            activeKey={activeTabKey}
+            onChange={(key) => setActiveTabKey(key)}
+            items={sources.map((src, index) => ({
+              label:
+                src.title || src.fileName || src.name || `文档${index + 1}`,
+              key: String(index), // 保证 key 是字符串类型
+              children: (
+                <div
+                  className="markdown-content"
+                  dangerouslySetInnerHTML={{
+                    __html: md.render(
+                      (src?.content || "").trim().replace(/\\n/g, "\n")
+                    ),
+                  }}
+                />
               ),
-            }}
+            }))}
           />
         </Modal>
       </>
@@ -805,7 +803,7 @@ const RAGChatX = () => {
                       content: doc,
                       confidence: 0.9 - index * 0.1,
                     }));
-
+                    
                     if (DEBUG_MODE) {
                       console.info("接收到文档来源:", sourcesData);
                     }
