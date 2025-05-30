@@ -187,13 +187,13 @@ const AppLayout = () => {
           key: '/knowledge_base',
           label: '知识库管理',
         },
-        {
-          key: '/knowledge_base/rag',
-          label: '知识库问答 (基础版)',
-        },
+        // {
+        //   key: '/knowledge_base/rag',
+        //   label: '知识库问答 (基础版)',
+        // },
         {
           key: '/knowledge_base/rag-x',
-          label: '智能问答 (流式渲染)',
+          label: '知识库问答',
         },
       ],
     },

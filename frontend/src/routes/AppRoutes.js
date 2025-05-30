@@ -20,6 +20,7 @@ import RAGChatX from '../pages/knowledge_base/RAGChatX';
 import KnowledgeBaseDocuments from '../pages/knowledge_base/docs/KnowledgeBaseDocuments';
 import StreamingMarkdownTest from '../test/StreamingMarkdownTest';
 import ProtectedRoute from '../components/ProtectedRoute';
+import Independent from '../test/chatx'
 
 const AppRoutes = () => {
   return (
@@ -32,6 +33,7 @@ const AppRoutes = () => {
         <Route path="auth/callback/github" element={<GitHubCallback />} />
         {/* 测试路由 - 无需认证 */}
         <Route path="test/streaming-markdown" element={<StreamingMarkdownTest />} />
+        <Route path="test/chat" element={<Independent />} />
       </Route>
       
       {/* 保护的路由 - 需要认证 */}

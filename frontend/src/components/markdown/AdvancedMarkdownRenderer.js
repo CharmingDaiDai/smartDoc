@@ -107,6 +107,34 @@ const Paragraph = ({ children, ...props }) => (
   </p>
 );
 
+// 自定义图片组件 - 自动处理相对路径
+const Image = ({ src, alt, ...props }) => {
+  // 处理相对路径，将 assets/ 开头的路径转换为 /assets/
+  let processedSrc = src;
+  if (src && typeof src === 'string') {
+    if (src.startsWith('assets/')) {
+      processedSrc = `/${src}`;
+    } else if (src.startsWith('./assets/')) {
+      processedSrc = src.replace('./assets/', '/assets/');
+    }
+  }
+  
+  return (
+    <img 
+      src={processedSrc} 
+      alt={alt} 
+      style={{
+        maxWidth: '100%',
+        height: 'auto',
+        borderRadius: '6px',
+        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24)',
+        margin: '8px 0'
+      }}
+      {...props} 
+    />
+  );
+};
+
 // 高级 Markdown 渲染器组件
 const AdvancedMarkdownRenderer = memo(({ 
   content, 
@@ -134,6 +162,7 @@ const AdvancedMarkdownRenderer = memo(({
   const components = {
     code: CodeBlock,
     p: Paragraph,
+    img: Image,
     h1: (props) => <Heading level={1} {...props} />,
     h2: (props) => <Heading level={2} {...props} />,
     h3: (props) => <Heading level={3} {...props} />,
