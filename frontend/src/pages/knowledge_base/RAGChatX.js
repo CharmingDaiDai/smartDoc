@@ -324,7 +324,7 @@ const StreamingBubble = ({
           isTyping
             ? {
                 step: 3, // 每次显示3个字符，减少闪烁
-                interval: 100, // 100ms间隔，合适的打字速度
+                interval: 20, // 20ms间隔，合适的打字速度
               }
             : false
         }
@@ -909,7 +909,10 @@ const RAGChatX = () => {
         }
         console.info("Transform message - Input type:", typeof message);
       }
-
+      // console.info(
+      //   "Transform message - RAW INPUT:",
+      //   JSON.parse(JSON.stringify(message))
+      // );
       // 默认值
       let content = "";
       let sources = [];
@@ -1351,6 +1354,7 @@ const RAGChatX = () => {
                 </div>
               ) : (
                 parsedMessages.map((msg, index) => {
+                  // console.info(msg);
                   const { id, message, status } = msg;
 
                   // 判断 message 是字符串（用户消息）还是对象（AI 回复）
