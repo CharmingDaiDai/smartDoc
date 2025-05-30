@@ -24,6 +24,7 @@ import {
   Typography,
   Space,
   theme,
+  Modal,
 } from "antd";
 import {
   BookOutlined,
@@ -76,19 +77,30 @@ const md = markdownit({
 
 // 消息内容渲染组件 - 将文本转换为带格式的 Markdown 显示
 const CustomBubbleMessageRender = ({ content, sources = [] }) => {
-  // 调试信息：检查sources数据
-  if (DEBUG_MODE && sources) {
-    console.log("CustomBubbleMessageRender - sources数据:", {
-      sourcesCount: sources.length,
-      sourcesData: sources.slice(0, 2), // 显示前2个sources的详细信息
-      hasValidSources: sources.length > 0,
+  const [openModal, setOpenModal] = useState(false);
+  const [activeSource, setActiveSource] = useState(null);
+
+  const handleClickSource = (source) => {
+    setActiveSource(source);
+    setOpenModal(true);
+  };
+
+  const closeModal = () => {
+    setOpenModal(false);
+    setActiveSource(null);
+  };
+
+  if (DEBUG_MODE) {
+    console.log("💬 CustomBubbleMessageRender - props:", {
+      content,
+      sourcesPreview: sources?.slice?.(0, 2),
     });
   }
-  // 内容类型转换：统一转换为字符串格式，支持多种输入类型
+
   let textContent = "";
   if (typeof content === "string") {
     textContent = content;
-  } else if (content && typeof content === "object") {
+  } else if (typeof content === "object" && content !== null) {
     textContent = content.message || content.content || content.text || "";
   } else {
     textContent = String(content || "");
@@ -97,16 +109,17 @@ const CustomBubbleMessageRender = ({ content, sources = [] }) => {
   if (!textContent || textContent.trim() === "") {
     return (
       <Typography>
-        <div style={{ color: "#999", fontStyle: "italic" }}>...</div>
+        <div style={{ color: "#999", fontStyle: "italic" }}>（空消息）</div>
       </Typography>
     );
   }
 
   try {
-    // 核心功能：使用 markdown-it 将文本转换为 HTML
     const htmlContent = md.render(textContent.trim().replace(/\\n/g, "\n"));
+
     return (
       <>
+        {/* 主消息内容渲染 */}
         <Typography>
           <div
             className="markdown-content"
@@ -114,7 +127,7 @@ const CustomBubbleMessageRender = ({ content, sources = [] }) => {
           />
         </Typography>
 
-        {/* 文档来源展示区域 */}
+        {/* 参考文档展示 */}
         {sources && sources.length > 0 && (
           <div
             style={{
@@ -139,8 +152,9 @@ const CustomBubbleMessageRender = ({ content, sources = [] }) => {
               }}
             >
               <BookOutlined style={{ fontSize: "12px" }} />
-              参考文档 ({sources.length}个):
+              参考文档（{sources.length}个）:
             </div>
+
             <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
               {sources.slice(0, 4).map((source, index) => (
                 <Tag
@@ -152,11 +166,8 @@ const CustomBubbleMessageRender = ({ content, sources = [] }) => {
                     borderRadius: "4px",
                     cursor: "pointer",
                   }}
-                  title={
-                    source.content
-                      ? source.content.substring(0, 200) + "..."
-                      : ""
-                  }
+                  title="点击查看详情"
+                  onClick={() => handleClickSource(source)}
                 >
                   {source.title ||
                     source.fileName ||
@@ -164,6 +175,7 @@ const CustomBubbleMessageRender = ({ content, sources = [] }) => {
                     `文档${index + 1}`}
                 </Tag>
               ))}
+
               {sources.length > 4 && (
                 <Tag
                   style={{
@@ -181,13 +193,44 @@ const CustomBubbleMessageRender = ({ content, sources = [] }) => {
             </div>
           </div>
         )}
+
+        {/* 弹出 Modal 渲染文档内容 */}
+        <Modal
+          title={
+            activeSource?.title ||
+            activeSource?.fileName ||
+            activeSource?.name ||
+            "参考内容"
+          }
+          open={openModal}
+          onCancel={closeModal}
+          footer={null}
+          width={720}
+          styles={{
+            body: {
+              maxHeight: "60vh",
+              overflowY: "auto",
+              // whiteSpace: "pre-wrap",
+            },
+          }}
+        >
+          <div
+            className="markdown-content"
+            // style={{ whiteSpace: "pre-wrap" }} // ✨ 自动换行
+            dangerouslySetInnerHTML={{
+              __html: md.render(
+                (activeSource?.content || "").trim().replace(/\\n/g, "\n")
+              ),
+            }}
+          />
+        </Modal>
       </>
     );
   } catch (error) {
-    console.error("Markdown渲染错误:", error);
+    console.error("❌ Markdown 渲染错误:", error);
     return (
       <Typography>
-        <div style={{ color: "red" }}>Markdown渲染出错: {error.message}</div>
+        <div style={{ color: "red" }}>Markdown 渲染出错: {error.message}</div>
       </Typography>
     );
   }
@@ -730,8 +773,7 @@ const RAGChatX = () => {
                     hasReceivedDocs = true;
                     sourcesData = jsonData.docs.map((doc, index) => ({
                       fileName: `文档${index + 1}`,
-                      content:
-                        doc.slice(0, 100) + (doc.length > 100 ? "..." : ""),
+                      content: doc,
                       confidence: 0.9 - index * 0.1,
                     }));
 
