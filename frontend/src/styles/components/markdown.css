@@ -109,3 +109,26 @@
   background-color: #e1e4e8;
   border: 0;
 }
+
+/* KaTeX 数学公式字体备用方案 */
+.markdown-content .katex {
+  font-family: var(--katex-main-font) !important;
+}
+
+.markdown-content .katex-display {
+  font-family: var(--katex-main-font) !important;
+}
+
+/* 针对不同数学字体类型的备用方案 */
+.markdown-content .katex .mathnormal,
+.markdown-content .katex .mathit {
+  font-family: var(--katex-math-font) !important;
+}
+
+.markdown-content .katex .mathrm {
+  font-family: var(--katex-main-font) !important;
+}
+
+.markdown-content .katex .mathtt {
+  font-family: var(--katex-mono-font) !important;
+}

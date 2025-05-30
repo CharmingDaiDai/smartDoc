@@ -14,6 +14,73 @@
   animation: fadeIn 0.3s ease-in-out;
 }
 
+/* 气泡消息容器宽度限制 */
+.user-message-container {
+  max-width: 75%;
+  margin-left: auto; /* 右对齐 */
+  margin-bottom: 16px;
+}
+
+.ai-message-container {
+  max-width: 85%;
+  margin-bottom: 16px;
+}
+
+/* 气泡内容宽度限制 */
+.bubble-content-wrapper {
+  max-width: 100%;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Markdown 内容宽度优化 */
+.bubble-content-wrapper .markdown-content {
+  max-width: 100%;
+  line-height: 1.6;
+}
+
+.bubble-content-wrapper .markdown-content img {
+  max-width: 100%;
+  height: auto;
+}
+
+.bubble-content-wrapper .markdown-content pre {
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.bubble-content-wrapper .markdown-content table {
+  max-width: 100%;
+  table-layout: auto;
+  overflow-x: auto;
+  display: block;
+  white-space: nowrap;
+}
+
+/* 响应式设计：移动端适配 */
+@media (max-width: 768px) {
+  .user-message-container {
+    max-width: 90%; /* 移动端稍微宽一点 */
+  }
+  
+  .ai-message-container {
+    max-width: 95%; /* 移动端稍微宽一点 */
+  }
+}
+
+@media (max-width: 480px) {
+  .user-message-container {
+    max-width: 95%; /* 小屏幕设备更宽 */
+  }
+  
+  .ai-message-container {
+    max-width: 100%; /* 小屏幕设备几乎占满 */
+  }
+}
+
 /* 美化滚动条 */
 .chat-scroll-area::-webkit-scrollbar {
   width: 6px;
