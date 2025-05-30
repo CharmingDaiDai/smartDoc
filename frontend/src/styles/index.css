@@ -1,9 +1,9 @@
 /* 全局CSS变量定义 */
 :root {
-  /* 数学字体备用方案变量 */
-  --katex-main-font: "KaTeX_Main", "Times New Roman", "STIX Two Math", "Latin Modern Math", "Cambria Math", serif;
-  --katex-math-font: "KaTeX_Math", "Times New Roman", "STIX Two Math", "Latin Modern Math", "Cambria Math", serif;
-  --katex-mono-font: "KaTeX_Typewriter", "Courier New", "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace;
+  /* 数学字体备用方案变量 - Times New Roman 优先 */
+  --katex-main-font: "Times New Roman", "KaTeX_Main", "STIX Two Math", "Latin Modern Math", "Cambria Math", serif;
+  --katex-math-font: "Times New Roman", "KaTeX_Math", "STIX Two Math", "Latin Modern Math", "Cambria Math", serif;
+  --katex-mono-font: "Courier New", "KaTeX_Typewriter", "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace;
 }
 
 body {

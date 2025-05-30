@@ -177,44 +177,44 @@
 /* 数学公式样式 */
 .katex {
   font-size: 1.1em;
-  /* 添加字体备用方案，当KaTeX字体加载失败时使用系统字体 */
-  font-family: "KaTeX_Main", "KaTeX_Math", "Times New Roman", "STIX Two Math", "Latin Modern Math", "Cambria Math", serif !important;
+  /* 直接使用 Times New Roman 作为主要字体，避免 KaTeX 字体加载延迟 */
+  font-family: "Times New Roman", "KaTeX_Main", "KaTeX_Math", "STIX Two Math", "Latin Modern Math", "Cambria Math", serif !important;
 }
 
 /* KaTeX 各种字体类型的备用方案 */
 .katex .mathnormal {
-  font-family: "KaTeX_Math", "Times New Roman", "STIX Two Math", "Latin Modern Math", "Cambria Math", serif !important;
+  font-family: "Times New Roman", "KaTeX_Math", "STIX Two Math", "Latin Modern Math", "Cambria Math", serif !important;
 }
 
 .katex .mathit {
-  font-family: "KaTeX_Math", "Times New Roman", "STIX Two Math", "Latin Modern Math", "Cambria Math", serif !important;
+  font-family: "Times New Roman", "KaTeX_Math", "STIX Two Math", "Latin Modern Math", "Cambria Math", serif !important;
   font-style: italic;
 }
 
 .katex .mathrm {
-  font-family: "KaTeX_Main", "Times New Roman", "STIX Two Math", "Latin Modern Math", "Cambria Math", serif !important;
+  font-family: "Times New Roman", "KaTeX_Main", "STIX Two Math", "Latin Modern Math", "Cambria Math", serif !important;
   font-style: normal;
 }
 
 .katex .mathbf {
-  font-family: "KaTeX_Main", "Times New Roman", "STIX Two Math", "Latin Modern Math", "Cambria Math", serif !important;
+  font-family: "Times New Roman", "KaTeX_Main", "STIX Two Math", "Latin Modern Math", "Cambria Math", serif !important;
   font-weight: bold;
 }
 
 .katex .mathtt {
-  font-family: "KaTeX_Typewriter", "Courier New", "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace !important;
+  font-family: "Courier New", "KaTeX_Typewriter", "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace !important;
 }
 
 .katex .mathcal {
-  font-family: "KaTeX_Caligraphic", "Lucida Calligraphy", "Brush Script MT", cursive !important;
+  font-family: "Times New Roman", "KaTeX_Caligraphic", "Lucida Calligraphy", "Brush Script MT", cursive !important;
 }
 
 .katex .mathfrak {
-  font-family: "KaTeX_Fraktur", "Old English Text MT", fantasy !important;
+  font-family: "Times New Roman", "KaTeX_Fraktur", "Old English Text MT", fantasy !important;
 }
 
 .katex .mathbb {
-  font-family: "KaTeX_AMS", "STIX Two Math", "Latin Modern Math", "Cambria Math", serif !important;
+  font-family: "Times New Roman", "KaTeX_AMS", "STIX Two Math", "Latin Modern Math", "Cambria Math", serif !important;
 }
 
 /* 确保数学符号有合适的备用字体 */
@@ -225,7 +225,7 @@
 .katex .mopen,
 .katex .mclose,
 .katex .mpunct {
-  font-family: "KaTeX_Main", "Times New Roman", "STIX Two Math", "Latin Modern Math", "Cambria Math", serif !important;
+  font-family: "Times New Roman", "KaTeX_Main", "STIX Two Math", "Latin Modern Math", "Cambria Math", serif !important;
 }
 
 .katex-display {
@@ -237,7 +237,7 @@
   border-radius: 6px;
   border: 1px solid #e9ecef;
   /* 确保块级数学公式也有字体备用 */
-  font-family: "KaTeX_Main", "Times New Roman", "STIX Two Math", "Latin Modern Math", "Cambria Math", serif !important;
+  font-family: "Times New Roman", "KaTeX_Main", "STIX Two Math", "Latin Modern Math", "Cambria Math", serif !important;
 }
 
 /* 水平分割线 */
