@@ -33,6 +33,8 @@ build/
 src/main/resources/doc_data
 src/main/resources/processed_docs
 
+frontend/public/assets
+
 ### VS Code ###
 .vscode/
 *.log
