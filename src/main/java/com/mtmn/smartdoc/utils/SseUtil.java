@@ -68,10 +68,11 @@ public class SseUtil {
      * @param message 信息内容
      * @return 格式化的消息流
      */
+    // FixMe 不能正确流式输出
     public Flux<String> sendFluxMessage(String message) {
         Sinks.Many<String> sink = Sinks.many().unicast().onBackpressureBuffer();
         sink.tryEmitNext(buildJsonSseMessage(message, null));
-        sink.tryEmitNext("data: [DONE]\n\n");
+//        sink.tryEmitNext("data: [DONE]\n\n");
         sink.tryEmitComplete();
         return sink.asFlux();
     }
