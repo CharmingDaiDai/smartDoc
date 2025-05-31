@@ -3,6 +3,7 @@ package com.mtmn.smartdoc.service.impl;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mtmn.smartdoc.common.ApiResponse;
+import com.mtmn.smartdoc.common.IntentResult;
 import com.mtmn.smartdoc.config.*;
 import com.mtmn.smartdoc.dto.CreateKBRequest;
 import com.mtmn.smartdoc.dto.KnowledgeBaseDTO;
@@ -12,6 +13,7 @@ import com.mtmn.smartdoc.po.User;
 import com.mtmn.smartdoc.repository.DocumentRepository;
 import com.mtmn.smartdoc.repository.KnowledgeBaseRepository;
 import com.mtmn.smartdoc.service.*;
+import com.mtmn.smartdoc.utils.IntentClassifier;
 import com.mtmn.smartdoc.utils.SseUtil;
 import com.mtmn.smartdoc.vo.DocumentVO;
 import dev.langchain4j.model.embedding.EmbeddingModel;
@@ -60,6 +62,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
     private final MinioService minioService;
     private final SseUtil sseUtil;
     private final LLMService llmService;
+    private final IntentClassifier intentClassifier;
 
     @Override
     public ApiResponse<List<KnowledgeBaseDTO>> listKnowledgeBase(User user) {
@@ -537,6 +540,11 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
 
         KnowledgeBase knowledgeBase = knowledgeBaseOpt.get();
 
+        // 意图识别
+        if (intentRecognition(question, null)) {
+            return sseUtil.handleStreamingChatResponse(question, null);
+        }
+        
         //  TODO 问题重写和问题分解作为 LLMService，然后把问题列表传入
         return NaiveRag.chat(sseUtil, knowledgeBase, id, question, topk, qr, qd);
     }
@@ -553,7 +561,24 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
 
         KnowledgeBase knowledgeBase = knowledgeBaseOpt.get();
 
+        // 意图识别
+        if (intentRecognition(question, null)) {
+            return sseUtil.handleStreamingChatResponse(question, null);
+//            return sseUtil.sendFluxMessage(llmService.createChatModel().chat(question));
+        }
+
         //  TODO 问题重写和问题分解作为 LLMService，然后把问题列表传入
         return HiSemRag.chat(sseUtil, knowledgeBase, id, question, maxRes, qr, qd);
+    }
+
+    private boolean intentRecognition(String question, String history) {
+        IntentResult intentResult = intentClassifier.analyzeIntent(question, history);
+        if (intentResult.isParseSuccess() && !intentResult.isNeedRetrieval()) {
+            String reason = intentResult.getReason();
+            String questionType = intentResult.getQuestionType();
+            log.info("问题: {} 无需检索, 原因: {}, 类型: {}", question, reason, questionType);
+            return true;
+        }
+        return false;
     }
 }
