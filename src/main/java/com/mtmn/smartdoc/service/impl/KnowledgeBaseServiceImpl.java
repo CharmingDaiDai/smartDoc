@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mtmn.smartdoc.common.ApiResponse;
 import com.mtmn.smartdoc.common.IntentResult;
+import com.mtmn.smartdoc.common.QueryRewriteResult;
 import com.mtmn.smartdoc.config.*;
 import com.mtmn.smartdoc.dto.CreateKBRequest;
 import com.mtmn.smartdoc.dto.KnowledgeBaseDTO;
@@ -12,18 +13,14 @@ import com.mtmn.smartdoc.po.KnowledgeBase;
 import com.mtmn.smartdoc.po.User;
 import com.mtmn.smartdoc.repository.DocumentRepository;
 import com.mtmn.smartdoc.repository.KnowledgeBaseRepository;
-import com.mtmn.smartdoc.service.*;
+import com.mtmn.smartdoc.service.DocumentService;
+import com.mtmn.smartdoc.service.KnowledgeBaseService;
+import com.mtmn.smartdoc.service.LLMService;
+import com.mtmn.smartdoc.service.MinioService;
 import com.mtmn.smartdoc.utils.IntentClassifier;
+import com.mtmn.smartdoc.utils.QueryRewrite;
 import com.mtmn.smartdoc.utils.SseUtil;
 import com.mtmn.smartdoc.vo.DocumentVO;
-import dev.langchain4j.model.embedding.EmbeddingModel;
-import dev.langchain4j.rag.content.Content;
-import dev.langchain4j.rag.content.retriever.ContentRetriever;
-import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
-import dev.langchain4j.rag.query.Query;
-import dev.langchain4j.store.embedding.milvus.MilvusEmbeddingStore;
-import io.milvus.common.clientenum.ConsistencyLevelEnum;
-import io.milvus.param.MetricType;
 import io.milvus.v2.client.ConnectConfig;
 import io.milvus.v2.client.MilvusClientV2;
 import io.milvus.v2.service.collection.request.DropCollectionReq;
@@ -40,7 +37,6 @@ import reactor.core.publisher.Flux;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * @author charmingdaidai
@@ -63,6 +59,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
     private final SseUtil sseUtil;
     private final LLMService llmService;
     private final IntentClassifier intentClassifier;
+    private final QueryRewrite queryRewrite;
 
     @Override
     public ApiResponse<List<KnowledgeBaseDTO>> listKnowledgeBase(User user) {
@@ -391,108 +388,6 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
         }
     }
 
-//    private List<Boolean> buildIndex(String kbName, BaseRag ragConfig, List<Document> documents) {
-//        String embeddingModelName = ragConfig.getEmbeddingModel();
-//
-//        // 创建Embedding模型
-//        EmbeddingModel embeddingModel = EmbeddingService.createEmbeddingModel(embeddingModelName);
-//        log.info("使用嵌入模型：{} 创建索引", embeddingModelName);
-//
-//        List<Boolean> success = new ArrayList<>();
-//
-//        try {
-//            if (ragConfig instanceof NaiveRag naiveConfig) {
-//                // TODO 改为 NaiveRagService.buildIndex()
-//
-//                // 获取配置参数
-//                Integer chunkSize = naiveConfig.getChunkSize();
-//                Integer chunkOverlap = naiveConfig.getChunkOverlap();
-//
-//                log.info("使用朴素RAG配置，块大小：{}，重叠大小：{}", chunkSize, chunkOverlap);
-//
-//                Long userId = getCurrentUserId();
-//                if (null == userId) {
-//                    throw new BadCredentialsException("请登录");
-//                }
-//
-//                String collectionName = getStoreKnowledgeBaseName(kbName);
-//
-//                MilvusEmbeddingStore embeddingStore = MilvusEmbeddingStore.builder()
-//                        .host("10.0.30.172")
-//                        .port(19530)
-//                        // Name of the collection 知识库名称 + userId
-//                        .collectionName(collectionName)
-//                        .dimension(embeddingModel.dimension())
-//                        .indexType(IndexType.FLAT)
-//                        .metricType(MetricType.COSINE)
-//                        .consistencyLevel(ConsistencyLevelEnum.EVENTUALLY)
-//                        .autoFlushOnInsert(false)
-//                        .idFieldName("id")
-//                        .textFieldName("text")
-//                        .metadataFieldName("metadata")
-//                        .vectorFieldName("vector")
-//                        .build();
-//
-//                for (Document document : documents) {
-//                    log.debug("处理文档，元数据：{}", document.metadata());
-//
-//                    if (document.text() != null && !document.text().isEmpty()) {
-//                        log.debug("文档内容预览：{}", document.text().substring(0, Math.min(200, document.text().length())) + "...");
-//
-//                        // 使用配置的chunkSize和chunkOverlap进行文档切分
-//                        DocumentSplitter splitter = DocumentSplitters.recursive(chunkSize, chunkOverlap);
-//                        List<TextSegment> segments = splitter.split(document);
-//
-//                        log.info("文档已切分为{}个片段", segments.size());
-//
-//                        // 将文档片段转换为向量并存入向量库
-//                        if (segments.isEmpty()) {
-//                            log.warn("文档内容为空，跳过处理");
-//                            continue;
-//                        }
-//
-//                        List<Embedding> embeddings = embeddingModel.embedAll(segments).content();
-//
-//                        embeddingStore.addAll(embeddings, segments);
-//
-//                        success.add(true);
-//
-//                        continue;
-//                    }
-//
-//                    success.add(false);
-//                }
-//            } else if (ragConfig instanceof HiSemRag hiSemConfig) {
-//                // TODO 改为 HiSemRagService.buildIndex()
-//
-//                // 获取配置参数
-//                Integer chunkSize = hiSemConfig.getChunkSize();
-//                Boolean generateAbstract = hiSemConfig.getGenerateAbstract();
-//
-//                log.info("使用层次语义RAG配置，块大小：{}，生成摘要：{}", chunkSize, generateAbstract);
-//
-//                // 层次语义RAG处理示例
-//                for (Document document : documents) {
-//                    if (generateAbstract) {
-//                        // 调用Embedding模型生成文档摘要
-//                        String docText = document.text().substring(0, Math.min(1000, document.text().length()));
-//                        float[] docEmbedding = embeddingModel.embed(docText).content().vector();
-//                        log.debug("文档摘要向量维度: {}", docEmbedding.length);
-//
-//                        // TODO: 实现层次语义RAG的索引构建逻辑
-//                    }
-//                }
-//            }
-//
-//            // 返回索引构建成功
-//            return success;
-//
-//        } catch (Exception e) {
-//            log.error("构建索引过程中发生错误: {}", e.getMessage(), e);
-//            return success;
-//        }
-//    }
-
     /**
      * 获取当前登录用户的ID
      *
@@ -544,7 +439,12 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
         if (intentRecognition(question, null)) {
             return sseUtil.handleStreamingChatResponse(question, null);
         }
-        
+
+        // 查询重写
+        if(qr){
+            question = queryRewrite.rewriteQuery("", question).getFinalQuery();
+        }
+
         //  TODO 问题重写和问题分解作为 LLMService，然后把问题列表传入
         return NaiveRag.chat(sseUtil, knowledgeBase, id, question, topk, qr, qd);
     }
@@ -564,7 +464,11 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
         // 意图识别
         if (intentRecognition(question, null)) {
             return sseUtil.handleStreamingChatResponse(question, null);
-//            return sseUtil.sendFluxMessage(llmService.createChatModel().chat(question));
+        }
+
+        // 查询重写
+        if(qr){
+            question = queryRewrite.rewriteQuery("", question).getFinalQuery();
         }
 
         //  TODO 问题重写和问题分解作为 LLMService，然后把问题列表传入
@@ -579,6 +483,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
             log.info("问题: {} 无需检索, 原因: {}, 类型: {}", question, reason, questionType);
             return true;
         }
+        log.info("问题: {} 需要检索", question);
         return false;
     }
 }
