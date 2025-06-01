@@ -198,14 +198,15 @@ public class KnowledgeBaseController {
     public Flux<String> naiveQa(@PathVariable(name = "id") String id,
                                 @RequestParam(name = "question") String question, // 用户问题
                                 @RequestParam(defaultValue = "5", name = "topk") int topk, // topk参数，默认为5
+                                @RequestParam(defaultValue = "false", name = "intent_recognition") boolean ir, // 意图识别参数，默认为 false
                                 @RequestParam(defaultValue = "false", name = "query_rewriting") boolean qr, // 查询重写参数，默认为false
                                 @RequestParam(defaultValue = "false", name = "query_decomposition") boolean qd, // 查询分解参数，默认为false
                                 @AuthenticationPrincipal User user) {
 
-        log.info("普通 RAG 问答，知识库ID：{}，问题：{}，topk：{}，查询重写：{}，查询分解：{}",
-                id, question, topk, qr, qd);
+        log.info("普通 RAG 问答，知识库ID：{}，问题：{}，topk：{}，意图识别：{}, 查询重写：{}，查询分解：{}",
+                id, question, topk, ir, qr, qd);
 
-        return knowledgeBaseService.naiveQa(id, question, topk, qr, qd);
+        return knowledgeBaseService.naiveQa(id, question, topk, ir, qr, qd);
     }
 
     @GetMapping(value = "/chat/hisem/{id}", produces = TEXT_EVENT_STREAM_VALUE)
@@ -213,13 +214,14 @@ public class KnowledgeBaseController {
     public Flux<String> hisemQa(@PathVariable(name = "id") String id,
                                 @RequestParam(name = "question") String question, // 用户问题
                                 @RequestParam(defaultValue = "10", name = "max_res") int maxRes, // maxRes参数，默认为10
+                                @RequestParam(defaultValue = "false", name = "intent_recognition") boolean ir, // 意图识别参数，默认为 false
                                 @RequestParam(defaultValue = "false", name = "query_rewriting") boolean qr, // 查询重写参数，默认为false
                                 @RequestParam(defaultValue = "false", name = "query_decomposition") boolean qd, // 查询分解参数，默认为false
                                 @AuthenticationPrincipal User user) {
 
-        log.info("普通 RAG 问答，知识库ID：{}，问题：{}，最大返回数量：{}，查询重写：{}，查询分解：{}",
-                id, question, maxRes, qr, qd);
+        log.info("HisemRAG 问答，知识库ID：{}，问题：{}，最大返回数量：{}，意图识别：{}, 查询重写：{}，查询分解：{}",
+                id, question, maxRes, ir, qr, qd);
 
-        return knowledgeBaseService.hisemQa(id, question, maxRes, qr, qd);
+        return knowledgeBaseService.hisemQa(id, question, maxRes, ir, qr, qd);
     }
 }

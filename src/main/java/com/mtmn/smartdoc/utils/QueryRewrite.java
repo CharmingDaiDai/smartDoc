@@ -44,7 +44,7 @@ public class QueryRewrite {
         **返回JSON格式：**
         {
           "rewrittenQuery": "重写后的查询",
-          "reason": "重写原因"
+          "reason": "简短说明重写原因"
         }
         """;
 

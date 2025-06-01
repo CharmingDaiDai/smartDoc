@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mtmn.smartdoc.common.ApiResponse;
 import com.mtmn.smartdoc.common.IntentResult;
-import com.mtmn.smartdoc.common.QueryRewriteResult;
 import com.mtmn.smartdoc.config.*;
 import com.mtmn.smartdoc.dto.CreateKBRequest;
 import com.mtmn.smartdoc.dto.KnowledgeBaseDTO;
@@ -424,7 +423,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
      * @return
      */
     @Override
-    public Flux<String> naiveQa(String id, String question, int topk, boolean qr, boolean qd) {
+    public Flux<String> naiveQa(String id, String question, int topk, boolean ir, boolean qr, boolean qd) {
         Optional<KnowledgeBase> knowledgeBaseOpt = knowledgeBaseRepository.findById(Long.valueOf(id));
 
         if (knowledgeBaseOpt.isEmpty()) {
@@ -436,21 +435,21 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
         KnowledgeBase knowledgeBase = knowledgeBaseOpt.get();
 
         // 意图识别
-        if (intentRecognition(question, null)) {
+        if (ir && needRetrieve(question, null)) {
             return sseUtil.handleStreamingChatResponse(question, null);
         }
 
         // 查询重写
-        if(qr){
+        if (qr) {
             question = queryRewrite.rewriteQuery("", question).getFinalQuery();
         }
 
-        //  TODO 问题重写和问题分解作为 LLMService，然后把问题列表传入
+        //  TODO 问题分解，然后把问题列表传入
         return NaiveRag.chat(sseUtil, knowledgeBase, id, question, topk, qr, qd);
     }
 
     @Override
-    public Flux<String> hisemQa(String id, String question, int maxRes, boolean qr, boolean qd) {
+    public Flux<String> hisemQa(String id, String question, int maxRes, boolean ir, boolean qr, boolean qd) {
         Optional<KnowledgeBase> knowledgeBaseOpt = knowledgeBaseRepository.findById(Long.valueOf(id));
 
         if (knowledgeBaseOpt.isEmpty()) {
@@ -462,28 +461,32 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
         KnowledgeBase knowledgeBase = knowledgeBaseOpt.get();
 
         // 意图识别
-        if (intentRecognition(question, null)) {
+        if (ir && !needRetrieve(question, null)) {
             return sseUtil.handleStreamingChatResponse(question, null);
         }
 
         // 查询重写
-        if(qr){
+        if (qr) {
             question = queryRewrite.rewriteQuery("", question).getFinalQuery();
         }
 
-        //  TODO 问题重写和问题分解作为 LLMService，然后把问题列表传入
+        //  TODO 问题分解，然后把问题列表传入
         return HiSemRag.chat(sseUtil, knowledgeBase, id, question, maxRes, qr, qd);
     }
 
-    private boolean intentRecognition(String question, String history) {
+    private boolean needRetrieve(String question, String history) {
         IntentResult intentResult = intentClassifier.analyzeIntent(question, history);
-        if (intentResult.isParseSuccess() && !intentResult.isNeedRetrieval()) {
+
+        if (intentResult.isParseSuccess()) {
             String reason = intentResult.getReason();
             String questionType = intentResult.getQuestionType();
+            if (intentResult.isNeedRetrieval()) {
+                log.info("问题: {} 需要检索, 原因: {}", question, reason);
+                return true;
+            }
             log.info("问题: {} 无需检索, 原因: {}, 类型: {}", question, reason, questionType);
-            return true;
         }
-        log.info("问题: {} 需要检索", question);
+
         return false;
     }
 }
