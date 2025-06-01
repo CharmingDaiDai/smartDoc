@@ -61,6 +61,10 @@ models:
     glm:
       api-key: 8af2f6a0b0197d510612ec82547a9a1d.dNP2dmQIZpoeusa0
       base-url: https://open.bigmodel.cn/api/paas/v4
+      model-name: glm-4-flash
+    glm-250414:
+      api-key: 8af2f6a0b0197d510612ec82547a9a1d.dNP2dmQIZpoeusa0
+      base-url: https://open.bigmodel.cn/api/paas/v4
       model-name: GLM-4-Flash-250414
     chatgpt:
       api-key: ${OPENAI_API_KEY:your-openai-api-key}
