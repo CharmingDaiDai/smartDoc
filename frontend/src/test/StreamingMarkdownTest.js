@@ -1,6 +1,5 @@
-import { UserOutlined, RobotOutlined } from '@ant-design/icons';
-import { Bubble } from '@ant-design/x';
-import { Typography, Button, Space, Card } from 'antd';
+import {RobotOutlined} from '@ant-design/icons';
+import {Button, Card, Space, Typography} from 'antd';
 import markdownit from 'markdown-it';
 import React from 'react';
 import mk from "markdown-it-katex";

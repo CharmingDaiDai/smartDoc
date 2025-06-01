@@ -1,37 +1,15 @@
-import React, { useEffect, useRef, useState } from "react";
-import {
-    Avatar,
-    Button,
-    Card,
-    Col,
-    Collapse,
-    Divider,
-    Empty,
-    Input,
-    message,
-    Row,
-    Select,
-    Spin,
-    Tag,
-    Typography,
-} from "antd";
-import {
-    BookOutlined,
-    QuestionCircleOutlined,
-    RobotOutlined,
-    SendOutlined,
-    UserOutlined,
-} from "@ant-design/icons";
-import { Bubble, Conversations, Welcome } from "@ant-design/x";
-import { useNavigate, useParams } from "react-router-dom";
-import api, { knowledgeBaseAPI } from "../../services/api";
-import { getMethodConfig } from "../../config/ragConfig";
+import React, {useEffect, useRef, useState} from "react";
+import {Avatar, Button, Card, Col, Divider, Empty, Input, message, Row, Select, Spin, Typography,} from "antd";
+import {BookOutlined, QuestionCircleOutlined, RobotOutlined, SendOutlined, UserOutlined,} from "@ant-design/icons";
+import {Bubble, Conversations, Welcome} from "@ant-design/x";
+import {useNavigate, useParams} from "react-router-dom";
+import api, {knowledgeBaseAPI} from "../../services/api";
+import {getMethodConfig} from "../../config/ragConfig";
 import markdownit from "markdown-it";
 import "../../styles/components/markdown.css";
 import "../../styles/components/ragChat.css";
 import RagMethodParams from "../../components/knowledge_base/RagMethodParams";
-import { createAuthEventSource } from "../../utils/eventSourceAuth";
-import AdvancedMarkdownRenderer from "../../components/markdown/AdvancedMarkdownRenderer";
+import {createAuthEventSource} from "../../utils/eventSourceAuth";
 
 const { Title, Paragraph, Text } = Typography;
 const { Option } = Select;

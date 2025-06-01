@@ -17,19 +17,25 @@ export const ragMethods = [
         type: "integer",
         min: 1,
         max: 15,
-        label: "检索数量"
+        label: "检索数量",
+      },
+      "intent-recognition": {
+        default: false,
+        type: "boolean",
+        label: "意图识别",
+        description: "判断用户查询的意图类型，决定是否需要检索（开启后会增加响应时间）",
       },
       "query-rewriting": {
         default: false,
         type: "boolean",
         label: "查询重写",
-        description: "智能重写用户查询以提高检索效果"
+        description: "智能重写用户查询以提高检索效果（开启后会增加响应时间）",
       },
       "query-decomposition": {
         default: false,
-        type: "boolean", 
+        type: "boolean",
         label: "查询分解",
-        description: "将复杂查询分解为多个简单查询"
+        description: "将复杂查询分解为多个简单查询（开启后会增加响应时间）",
       },
     },
   },
@@ -48,19 +54,25 @@ export const ragMethods = [
         type: "integer",
         min: 1,
         max: 15,
-        label: "最大结果数"
+        label: "最大结果数",
+      },
+      "intent-recognition": {
+        default: false,
+        type: "boolean",
+        label: "意图识别",
+        description: "判断用户查询的意图类型，决定是否需要检索（开启后会增加响应时间）",
       },
       "query-rewriting": {
         default: false,
         type: "boolean",
         label: "查询重写",
-        description: "智能重写用户查询以提高检索效果"
+        description: "智能重写用户查询以提高检索效果（开启后会增加响应时间）",
       },
       "query-decomposition": {
         default: false,
         type: "boolean",
         label: "查询分解",
-        description: "将复杂查询分解为多个简单查询"
+        description: "将复杂查询分解为多个简单查询（开启后会增加响应时间）",
       },
     },
   },
@@ -79,19 +91,25 @@ export const ragMethods = [
         type: "integer",
         min: 1,
         max: 15,
-        label: "最大结果数"
+        label: "最大结果数",
+      },
+      "intent-recognition": {
+        default: false,
+        type: "boolean",
+        label: "意图识别",
+        description: "判断用户查询的意图类型，决定是否需要检索（开启后会增加响应时间）",
       },
       "query-rewriting": {
         default: false,
         type: "boolean",
         label: "查询重写",
-        description: "智能重写用户查询以提高检索效果"
+        description: "智能重写用户查询以提高检索效果（开启后会增加响应时间）",
       },
       "query-decomposition": {
         default: false,
         type: "boolean",
         label: "查询分解",
-        description: "将复杂查询分解为多个简单查询"
+        description: "将复杂查询分解为多个简单查询（开启后会增加响应时间）",
       },
     },
   },
@@ -133,6 +151,12 @@ export const paramConstraints = {
     description: "是否提取摘要，用于概括文档内容",
     displayName: "摘要提取",
     example: "开启此功能可以提升对文档主题的理解",
+  },
+  "intent-recognition": {
+    default: false,
+    type: "boolean",
+    label: "意图识别",
+    description: "判断用户查询的意图类型，决定是否需要检索",
   },
   "query-rewriting": {
     type: "boolean",

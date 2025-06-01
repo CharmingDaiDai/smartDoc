@@ -1,4 +1,4 @@
-import React, { memo, useState, useEffect } from 'react';
+import React, {memo, useEffect, useState} from 'react';
 import AdvancedMarkdownRenderer from './AdvancedMarkdownRenderer';
 
 // 流式 Markdown 渲染器

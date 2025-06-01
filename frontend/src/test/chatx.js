@@ -1,47 +1,32 @@
-
 // ==================== 导入依赖 ====================
 // 导入 Ant Design 图标组件 - 用于界面各种操作按钮的图标
 import {
-  AppstoreAddOutlined,     // 应用商店图标 - 用于安装介绍
-  CloudUploadOutlined,     // 云上传图标 - 用于文件上传
-  CommentOutlined,         // 评论图标 - 用于聊天功能
-  CopyOutlined,           // 复制图标 - 用于复制消息
-  DeleteOutlined,         // 删除图标 - 用于删除会话
-  DislikeOutlined,        // 不喜欢图标 - 用于消息反馈
-  EditOutlined,           // 编辑图标 - 用于重命名会话
-  EllipsisOutlined,       // 更多操作图标
-  FileSearchOutlined,     // 文件搜索图标 - 用于指南功能
-  HeartOutlined,          // 心形图标 - 用于意图功能
-  LikeOutlined,           // 喜欢图标 - 用于消息反馈
-  PaperClipOutlined,      // 回形针图标 - 用于附件功能
-  PlusOutlined,           // 加号图标 - 用于新建会话
-  ProductOutlined,        // 产品图标 - 用于组件功能
-  QuestionCircleOutlined, // 问号图标 - 用于帮助
-  ReloadOutlined,         // 重新加载图标 - 用于重新生成
-  ScheduleOutlined,       // 日程图标 - 用于升级功能
-  ShareAltOutlined,       // 分享图标 - 用于分享功能
-  SmileOutlined,          // 微笑图标 - 用于角色功能
+    CloudUploadOutlined,
+    CopyOutlined,
+    DeleteOutlined,
+    DislikeOutlined,
+    EditOutlined,
+    EllipsisOutlined,
+    HeartOutlined,
+    LikeOutlined,
+    PaperClipOutlined,
+    PlusOutlined,
+    QuestionCircleOutlined,
+    ReloadOutlined,
+    ScheduleOutlined,
+    ShareAltOutlined,
 } from '@ant-design/icons';
 
 // 导入 Ant Design X 组件 - 专门用于构建 AI 聊天界面的组件库
-import {
-  Attachments,     // 附件组件 - 处理文件上传和显示
-  Bubble,          // 气泡组件 - 显示聊天消息气泡
-  Conversations,   // 会话组件 - 管理会话列表
-  Prompts,         // 提示词组件 - 显示快捷提示选项
-  Sender,          // 发送器组件 - 输入框和发送功能
-  Welcome,         // 欢迎组件 - 显示欢迎界面
-  useXAgent,       // Agent Hook - 管理 AI 代理
-  useXChat,        // Chat Hook - 管理聊天状态和消息
-} from '@ant-design/x';
+import {Attachments, Bubble, Conversations, Prompts, Sender, useXAgent, useXChat, Welcome,} from '@ant-design/x';
 
 // 导入 Ant Design 基础组件
-import { Avatar, Button, Flex, Space, Spin, message } from 'antd';
+import {Avatar, Button, Flex, message, Space, Spin} from 'antd';
 
 // 导入样式相关
-import { createStyles } from 'antd-style';  // 用于创建 CSS-in-JS 样式
-import dayjs from 'dayjs';                  // 日期处理库
-import React, { useEffect, useRef, useState } from 'react';
+import {createStyles} from 'antd-style'; // 用于创建 CSS-in-JS 样式
+import dayjs from 'dayjs'; // 日期处理库
+import React, {useEffect, useRef, useState} from 'react';
 
 // ==================== TypeScript 异步函数支持 ====================
 // 这是 TypeScript 编译器生成的辅助函数，用于支持 async/await 语法

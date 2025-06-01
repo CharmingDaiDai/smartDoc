@@ -1,50 +1,43 @@
 // 基于 Ant Design X 的流式 RAG 问答组件
 // 支持实时 Markdown 渲染和数学公式显示
-import React, {
-  useEffect,
-  useState,
-  useRef,
-  useCallback,
-  useMemo,
-} from "react";
+import React, {useCallback, useEffect, useMemo, useRef, useState,} from "react";
 import {
-  Avatar,
-  Button,
-  Card,
-  Col,
-  Input,
-  InputNumber,
-  message,
-  Row,
-  Select,
-  Slider,
-  Spin,
-  Switch,
-  Tag,
-  Typography,
-  Space,
-  theme,
-  Modal,
-  Tabs,
+    Avatar,
+    Button,
+    Card,
+    Col,
+    Input,
+    InputNumber,
+    message,
+    Modal,
+    Row,
+    Select,
+    Slider,
+    Space,
+    Spin,
+    Switch,
+    Tabs,
+    Tag,
+    theme,
+    Typography,
 } from "antd";
 import {
-  BookOutlined,
-  DatabaseOutlined,
-  QuestionCircleOutlined,
-  RobotOutlined,
-  SendOutlined,
-  SettingOutlined,
-  UserOutlined,
-  CopyOutlined,
-  SyncOutlined,
-  ReloadOutlined,
-  LikeOutlined,
-  DislikeOutlined,
+    BookOutlined,
+    CopyOutlined,
+    DatabaseOutlined,
+    DislikeOutlined,
+    LikeOutlined,
+    QuestionCircleOutlined,
+    ReloadOutlined,
+    RobotOutlined,
+    SendOutlined,
+    SettingOutlined,
+    UserOutlined,
 } from "@ant-design/icons";
-import { Bubble, useXAgent, useXChat } from "@ant-design/x";
-import { useNavigate, useParams } from "react-router-dom";
-import api, { knowledgeBaseAPI } from "../../services/api";
-import { getMethodConfig } from "../../config/ragConfig";
+import {Bubble, useXAgent, useXChat} from "@ant-design/x";
+import {useNavigate, useParams} from "react-router-dom";
+import api, {knowledgeBaseAPI} from "../../services/api";
+import {getMethodConfig} from "../../config/ragConfig";
 import markdownit from "markdown-it";
 import mk from "markdown-it-katex";
 import hljs from "highlight.js";
@@ -348,7 +341,7 @@ const StreamingBubble = ({
           isTyping
             ? {
                 step: 3, // 每次显示3个字符，减少闪烁
-                interval: 20, // 20ms间隔，合适的打字速度
+                interval: 10, // 10ms间隔，合适的打字速度
               }
             : false
         }
@@ -636,6 +629,10 @@ const RAGChatX = () => {
         const queryRewriting = currentRagParams["query-rewriting"] || false;
         const queryDecomposition =
           currentRagParams["query-decomposition"] || false;
+        const intentRecognition = 
+          currentRagParams["intent-recognition"] || 
+          currentRagParams["intentRecognition"] || 
+          false;
 
         if (DEBUG_MODE) {
           console.info(
@@ -655,6 +652,7 @@ const RAGChatX = () => {
               topk: topk,
               query_rewriting: queryRewriting,
               query_decomposition: queryDecomposition,
+              intent_recognition: intentRecognition,
             });
             apiUrl = `/api/kb/chat/naive/${
               currentKB.id
@@ -666,6 +664,7 @@ const RAGChatX = () => {
               max_res: maxRes,
               query_rewriting: queryRewriting,
               query_decomposition: queryDecomposition,
+              intent_recognition: intentRecognition,
             });
             apiUrl = `/api/kb/chat/hisem/${
               currentKB.id
@@ -677,6 +676,7 @@ const RAGChatX = () => {
               max_res: maxRes,
               query_rewriting: queryRewriting,
               query_decomposition: queryDecomposition,
+              intent_recognition: intentRecognition,
             });
             apiUrl = `/api/kb/chat/hisem-tree/${
               currentKB.id
@@ -689,6 +689,7 @@ const RAGChatX = () => {
               topk: topk,
               query_rewriting: queryRewriting,
               query_decomposition: queryDecomposition,
+              intent_recognition: intentRecognition,
             });
             apiUrl = `/api/kb/chat/naive/${
               currentKB.id
