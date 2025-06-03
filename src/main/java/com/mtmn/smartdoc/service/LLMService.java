@@ -18,9 +18,11 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * 大语言模型服务
+ * 负责创建和管理不同的聊天模型，提供文本生成功能
+ * 
  * @author charmingdaidai
  * @version 1.0
- * @description 大语言模型服务
  * @date 2025/4/18 14:30
  */
 @Service
@@ -36,6 +38,8 @@ public class LLMService {
 
     /**
      * 创建聊天语言模型 - 使用当前激活的模型配置
+     * 
+     * @return 聊天模型实例
      */
     public ChatModel createChatModel() {
         return createChatModel(modelConfig.getActiveLlm());

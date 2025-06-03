@@ -29,6 +29,9 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
+ * 认证服务实现
+ * 负责用户注册、登录、GitHub OAuth认证和令牌刷新等功能
+ * 
  * @author charmingdaidai
  */
 @Service

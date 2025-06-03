@@ -21,6 +21,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
+ * 仪表盘服务
+ * 负责用户活动记录、统计数据计算和活动历史查询
+ * 
  * @author charmingdaidai
  */
 @Log4j2
@@ -34,6 +37,9 @@ public class DashboardService {
     
     /**
      * 从Authentication获取用户对象
+     * 
+     * @param authentication 认证信息
+     * @return 用户对象，如果认证失败或用户不存在则返回null
      */
     private User getUserFromAuthentication(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -46,6 +52,12 @@ public class DashboardService {
     
     /**
      * 记录用户活动
+     * 
+     * @param authentication 认证信息
+     * @param activityType 活动类型
+     * @param documentId 文档ID
+     * @param documentName 文档名称
+     * @param description 活动描述
      */
     public void recordUserActivity(Authentication authentication, String activityType, Long documentId, String documentName, String description) {
         User user = getUserFromAuthentication(authentication);
@@ -73,6 +85,9 @@ public class DashboardService {
     
     /**
      * 获取用户的仪表盘统计数据
+     * 
+     * @param authentication 认证信息
+     * @return 仪表盘统计数据DTO
      */
     public DashboardStatisticsDto getUserStatistics(Authentication authentication) {
         User user = getUserFromAuthentication(authentication);
@@ -103,6 +118,10 @@ public class DashboardService {
     
     /**
      * 获取用户的最近活动
+     * 
+     * @param authentication 认证信息
+     * @param limit 限制返回的活动数量
+     * @return 用户活动DTO列表
      */
     public List<UserActivityDto> getUserRecentActivities(Authentication authentication, int limit) {
         User user = getUserFromAuthentication(authentication);
@@ -120,7 +139,10 @@ public class DashboardService {
     }
     
     /**
-     * 将实体转换为DTO
+     * 将用户活动实体转换为DTO
+     * 
+     * @param activity 用户活动实体
+     * @return 用户活动DTO
      */
     private UserActivityDto convertToDTO(UserActivity activity) {
         UserActivityDto dto = UserActivityDto.builder()

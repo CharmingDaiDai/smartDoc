@@ -20,9 +20,11 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
+ * 嵌入模型服务
+ * 负责创建和管理不同的嵌入模型，提供文本向量化功能
+ * 
  * @author charmingdaidai
  * @version 1.0
- * @description 嵌入模型工具类
  * @date 2025/4/18 10:00
  */
 @Log4j2
@@ -42,6 +44,11 @@ public class EmbeddingService {
         modelConfig = modelConfigInstance;
     }
     
+    /**
+     * 创建默认的嵌入模型
+     * 
+     * @return 嵌入模型实例
+     */
     public static EmbeddingModel createEmbeddingModel() {
         if (modelConfig == null) {
             log.error("ModelConfig 未初始化，无法创建嵌入模型");
@@ -50,6 +57,12 @@ public class EmbeddingService {
         return createEmbeddingModel(modelConfig.getActiveEmbedding());
     }
 
+    /**
+     * 创建指定模型的嵌入模型
+     * 
+     * @param modelId 模型ID
+     * @return 嵌入模型实例
+     */
     public static EmbeddingModel createEmbeddingModel(String modelId) {
         if (modelConfig == null) {
             log.error("ModelConfig 未初始化，无法创建嵌入模型");
@@ -71,10 +84,23 @@ public class EmbeddingService {
         });
     }
 
+    /**
+     * 从文档内容创建向量存储（使用默认模型）
+     * 
+     * @param content 文档内容
+     * @return 向量存储
+     */
     public static EmbeddingStore<Embedding> createDocumentVectors(String content) {
         return createDocumentVectors(content, null);
     }
 
+    /**
+     * 从文档内容创建向量存储（使用指定模型）
+     * 
+     * @param content 文档内容
+     * @param modelId 模型ID
+     * @return 向量存储
+     */
     public static EmbeddingStore<Embedding> createDocumentVectors(String content, String modelId) {
         log.info("创建文档向量，使用模型：{}", modelId == null ? "默认" : modelId);
         Document document = Document.from(content);
@@ -89,16 +115,35 @@ public class EmbeddingService {
         return embeddingStore;
     }
 
+    /**
+     * 将文本转换为嵌入向量（使用默认模型）
+     * 
+     * @param text 待嵌入的文本
+     * @return 嵌入向量
+     */
     public static Embedding embedText(String text) {
         return embedText(text, null);
     }
 
+    /**
+     * 将文本转换为嵌入向量（使用指定模型）
+     * 
+     * @param text 待嵌入的文本
+     * @param modelId 模型ID
+     * @return 嵌入向量
+     */
     public static Embedding embedText(String text, String modelId) {
         log.info("生成文本嵌入向量，使用模型：{}", modelId == null ? "默认" : modelId);
         EmbeddingModel embeddingModel = createEmbeddingModel(modelId);
         return embeddingModel.embed(text).content();
     }
 
+    /**
+     * 切换默认嵌入模型
+     * 
+     * @param modelId 新的模型ID
+     * @return 是否切换成功
+     */
     public static boolean switchModel(String modelId) {
         boolean success = modelConfig.switchEmbeddingModel(modelId);
         if (success) {
@@ -109,11 +154,19 @@ public class EmbeddingService {
         return success;
     }
 
+    /**
+     * 清除所有模型缓存
+     */
     public static void clearModelCache() {
         modelCache.clear();
         log.info("已清除模型缓存");
     }
 
+    /**
+     * 刷新指定模型的缓存
+     * 
+     * @param modelId 模型ID
+     */
     public static void refreshModelCache(String modelId) {
         modelCache.remove(modelId);
         log.info("已移除模型缓存: {}", modelId);

@@ -13,6 +13,9 @@ import java.util.List;
 import java.util.Optional;
 
 /**
+ * 文档服务
+ * 负责文档的上传、删除、查询和管理等功能
+ * 
  * @author charmingdaidai
  */
 @Log4j2
@@ -39,6 +42,7 @@ public class DocumentService {
      * @param file 文件
      * @param title 标题
      * @param user 用户
+     * @param kid 知识库ID
      * @return 文档对象
      */
     @Transactional

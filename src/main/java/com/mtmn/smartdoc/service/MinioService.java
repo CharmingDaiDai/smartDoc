@@ -18,6 +18,9 @@ import java.time.LocalDate;
 import java.util.UUID;
 
 /**
+ * MinIO对象存储服务
+ * 负责文件的上传、下载、删除等操作
+ * 
  * @author charmingdaidai
  */
 @Log4j2
@@ -77,6 +80,13 @@ public class MinioService {
         }
     }
 
+    /**
+     * 生成文件存储路径
+     * 格式：年/月/日/UUID-原始文件名
+     * 
+     * @param originalFilename 原始文件名
+     * @return 文件存储路径
+     */
     @NotNull
     private static String getFilePath(String originalFilename) {
         // 生成存储路径：年/月/日/UUID-原始文件名

@@ -32,9 +32,11 @@ import static com.mtmn.smartdoc.service.impl.KnowledgeBaseServiceImpl.getCurrent
 import static com.mtmn.smartdoc.service.impl.KnowledgeBaseServiceImpl.getStoreKnowledgeBaseName;
 
 /**
+ * 朴素RAG实现
+ * 基于简单的文档分块和向量检索的RAG方法
+ * 
  * @author charmingdaidai
  * @version 1.0
- * @description 普通 RAG 配置类
  * @date 2025/5/8 09:19
  */
 @Component("naiveRag")

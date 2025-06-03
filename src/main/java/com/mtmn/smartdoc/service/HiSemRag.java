@@ -31,9 +31,11 @@ import static com.mtmn.smartdoc.service.impl.KnowledgeBaseServiceImpl.getStoreKn
 import static com.mtmn.smartdoc.utils.MarkdownProcessor.findLeafNodes;
 
 /**
+ * 层次语义RAG实现
+ * 基于文档层次结构和语义理解的高级RAG方法
+ * 
  * @author charmingdaidai
  * @version 1.0
- * @description HiSemRAG 配置类
  * @date 2025/5/8 09:19
  */
 

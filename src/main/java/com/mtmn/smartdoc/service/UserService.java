@@ -15,7 +15,9 @@ import org.springframework.web.multipart.MultipartFile;
 
 /**
  * 用户服务
- * author charmingdaidai
+ * 处理用户相关的业务逻辑，包括个人资料管理、头像上传、密码修改等
+ * 
+ * @author charmingdaidai
  */
 @Log4j2
 @Service
@@ -137,6 +139,9 @@ public class UserService {
     
     /**
      * 将用户实体转换为DTO
+     * 
+     * @param user 用户实体
+     * @return 用户个人资料DTO
      */
     private UserProfileDto convertToDTO(User user) {
         UserProfileDto dto = UserProfileDto.builder()

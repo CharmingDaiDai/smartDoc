@@ -12,9 +12,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * 知识库服务接口
+ * 负责知识库的创建、删除、查询以及文档管理等功能
+ * 
  * @author charmingdaidai
  * @version 1.0
- * @description 知识库相关接口
  * @date 2025/5/4 14:49
  */
 public interface KnowledgeBaseService {
@@ -69,11 +71,48 @@ public interface KnowledgeBaseService {
      */
     ApiResponse<List<DocumentVO>> listKnowledgeBaseDocs(Long knowledgeBaseId, User user);
 
+    /**
+     * 向知识库添加文档
+     * 
+     * @param id 知识库ID
+     * @param user 当前用户
+     * @param files 文档文件数组
+     * @param titles 文档标题数组
+     * @return 添加结果列表
+     */
     ApiResponse<List<Boolean>> addDocs(Long id, User user, MultipartFile[] files, String[] titles);
 
+    /**
+     * 构建知识库索引
+     * 
+     * @param id 知识库ID
+     * @return 构建结果
+     */
     ApiResponse<String> buildIndex(String id);
 
+    /**
+     * 基于朴素RAG的问答
+     * 
+     * @param id 知识库ID
+     * @param question 问题
+     * @param topk 返回的top-k结果数量
+     * @param ir 是否启用信息检索
+     * @param qr 是否启用查询重写
+     * @param qd 是否启用查询分解
+     * @return 流式回答
+     */
     Flux<String> naiveQa(Long id, String question, int topk, boolean ir, boolean qr, boolean qd);
 
+    /**
+     * 基于HiSem RAG的问答
+     * 
+     * @param id 知识库ID
+     * @param question 问题
+     * @param maxRes 最大结果数量
+     * @param ir 是否启用信息检索
+     * @param qr 是否启用查询重写
+     * @param qd 是否启用查询分解
+     * @return 流式回答
+     */
     Flux<String> hisemQa(Long id, String question, int maxRes, boolean ir, boolean qr, boolean qd);
 }

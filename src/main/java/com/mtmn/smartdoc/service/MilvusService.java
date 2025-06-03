@@ -8,9 +8,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
+ * Milvus向量数据库服务
+ * 负责创建和管理Milvus嵌入存储
+ * 
  * @author charmingdaidai
  * @version 1.0
- * @description TODO
  * @date 2025/5/9 10:17
  */
 @Service
@@ -22,6 +24,13 @@ public class MilvusService {
     @Value("${milvus.port}")
     Integer port;
 
+    /**
+     * 获取Milvus嵌入存储实例
+     * 
+     * @param collectionName 集合名称
+     * @param dimension 向量维度
+     * @return Milvus嵌入存储实例
+     */
     public MilvusEmbeddingStore getEmbeddingStore(String collectionName, Integer dimension){
         return MilvusEmbeddingStore.builder()
                 .host(host)
