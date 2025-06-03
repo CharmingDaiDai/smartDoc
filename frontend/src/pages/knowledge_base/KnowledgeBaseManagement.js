@@ -26,6 +26,7 @@ import {
 import {
     BookOutlined,
     BuildOutlined,
+    SearchOutlined,
     DeleteOutlined,
     ExclamationCircleOutlined,
     EyeOutlined,
@@ -289,7 +290,7 @@ const KnowledgeBaseManagement = () => {
 
   // 前往知识库详情页
   const goToKnowledgeBaseDetail = (id) => {
-    navigate(`/knowledge_base/rag/${id}`);
+    navigate(`/knowledge_base/rag-x/${id}`);
   };
 
   // 前往文档管理页
@@ -327,11 +328,6 @@ const KnowledgeBaseManagement = () => {
         key: "buildIndex",
       });
     }
-  };
-
-  // 随机生成进度（模拟数据，实际应从API获取）
-  const getRandomDocumentCount = () => {
-    return Math.floor(Math.random() * 50) + 1;
   };
 
   // 获取RAG方法显示名称
@@ -506,73 +502,6 @@ const KnowledgeBaseManagement = () => {
     },
   ];
 
-  // 显示知识库操作选择菜单
-  const showKnowledgeBaseActionModal = (kb) => {
-    Modal.info({
-      title: `${kb.name} - 知识库操作`,
-      icon: <BookOutlined style={{ color: "#1890ff" }} />,
-      width: 500,
-      content: (
-        <div style={{ marginTop: 16 }}>
-          <Row gutter={[16, 16]}>
-            <Col span={12}>
-              <Button
-                type="primary"
-                icon={<UploadOutlined />}
-                style={{ width: "100%", height: "80px", borderRadius: "8px" }}
-                onClick={() => {
-                  Modal.destroyAll();
-                  goToDocumentManagement(kb.id, kb.name);
-                }}
-              >
-                <div style={{ marginTop: 8 }}>上传文档</div>
-              </Button>
-            </Col>
-            <Col span={12}>
-              <Button
-                icon={<BuildOutlined />}
-                style={{ width: "100%", height: "80px", borderRadius: "8px" }}
-                onClick={() => {
-                  Modal.destroyAll();
-                  handleBuildIndex(kb.id, kb.name);
-                }}
-              >
-                <div style={{ marginTop: 8 }}>构建索引</div>
-              </Button>
-            </Col>
-            <Col span={12}>
-              <Button
-                icon={<EyeOutlined />}
-                style={{ width: "100%", height: "80px", borderRadius: "8px" }}
-                onClick={() => {
-                  Modal.destroyAll();
-                  goToKnowledgeBaseDetail(kb.id);
-                }}
-              >
-                <div style={{ marginTop: 8 }}>知识库查询</div>
-              </Button>
-            </Col>
-            <Col span={12}>
-              <Button
-                danger
-                icon={<DeleteOutlined />}
-                style={{ width: "100%", height: "80px", borderRadius: "8px" }}
-                onClick={() => {
-                  Modal.destroyAll();
-                  showDeleteConfirm(kb.id, kb.name);
-                }}
-              >
-                <div style={{ marginTop: 8 }}>删除知识库</div>
-              </Button>
-            </Col>
-          </Row>
-        </div>
-      ),
-      okText: "关闭",
-      onOk() {},
-    });
-  };
-
   // 渲染知识库卡片
   const renderKnowledgeBaseCards = () => {
     if (loading) {
@@ -607,9 +536,6 @@ const KnowledgeBaseManagement = () => {
     return (
       <Row gutter={[24, 24]}>
         {filteredKnowledgeBases.map((kb) => {
-          // 获取文档数量（实际应从API获取）
-          const docCount = getRandomDocumentCount();
-
           return (
             <Col xs={24} sm={12} lg={8} xl={6} key={kb.id}>
               <Badge.Ribbon
@@ -633,11 +559,11 @@ const KnowledgeBaseManagement = () => {
                         }}
                       />
                     </Tooltip>,
-                    <Tooltip title="构建索引">
-                      <BuildOutlined
+                    <Tooltip title="知识库问答">
+                      <SearchOutlined
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleBuildIndex(kb.id, kb.name);
+                          goToKnowledgeBaseDetail(kb.id);
                         }}
                       />
                     </Tooltip>,
@@ -698,46 +624,6 @@ const KnowledgeBaseManagement = () => {
                       </Tag>
                     </div>
 
-                    <div style={{ marginTop: "12px" }}>
-                      <div
-                        style={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                        }}
-                      >
-                        <Typography.Text type="secondary">
-                          索引状态
-                        </Typography.Text>
-                        <Typography.Text strong>
-                          {kb.indexed ? "已索引" : "未索引"}
-                        </Typography.Text>
-                      </div>
-
-                      <div
-                        style={{
-                          marginTop: "4px",
-                          display: "flex",
-                          alignItems: "center",
-                        }}
-                      >
-                        <FileTextOutlined
-                          style={{ marginRight: "8px", color: "#1890ff" }}
-                        />
-                        <div style={{ flexGrow: 1 }}>
-                          <Progress
-                            percent={kb.indexed ? 100 : 0}
-                            size="small"
-                            showInfo={false}
-                            strokeColor={{
-                              "0%": "#108ee9",
-                              "100%": "#87d068",
-                            }}
-                            status={kb.indexed ? "success" : "normal"}
-                          />
-                        </div>
-                      </div>
-                    </div>
                   </div>
                 </Card>
               </Badge.Ribbon>
