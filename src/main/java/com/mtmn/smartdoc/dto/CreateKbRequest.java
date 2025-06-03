@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class CreateKBRequest {
+public class CreateKbRequest {
     /**
      * 知识库名称
      */

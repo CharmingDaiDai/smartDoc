@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mtmn.smartdoc.common.ApiResponse;
 import com.mtmn.smartdoc.common.IntentResult;
 import com.mtmn.smartdoc.config.*;
-import com.mtmn.smartdoc.dto.CreateKBRequest;
+import com.mtmn.smartdoc.dto.CreateKbRequest;
 import com.mtmn.smartdoc.dto.KnowledgeBaseDTO;
 import com.mtmn.smartdoc.po.DocumentPO;
 import com.mtmn.smartdoc.po.KnowledgeBase;
@@ -49,8 +49,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
 
-    @Value("milvus.uri")
-    private final String milvusUri;
+
+    @Value("${milvus.uri}")
+    private String milvusUri;
 
     private final KnowledgeBaseRepository knowledgeBaseRepository;
     private final DocumentRepository documentRepository;
@@ -70,8 +71,8 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
         try {
             List<KnowledgeBase> knowledgeBases = knowledgeBaseRepository.findByUserOrderByCreatedAtDesc(user);
             // 转换为DTO返回，避免暴露敏感信息
-            List<KnowledgeBaseDTO> knowledgeBaseDTOs = KnowledgeBaseDTO.fromEntityList(knowledgeBases);
-            return ApiResponse.success(knowledgeBaseDTOs);
+            List<KnowledgeBaseDTO> knowledgeBaseDtos = KnowledgeBaseDTO.fromEntityList(knowledgeBases);
+            return ApiResponse.success(knowledgeBaseDtos);
         } catch (Exception e) {
             log.error("获取知识库列表失败", e);
             return ApiResponse.error("获取知识库列表失败：" + e.getMessage());
@@ -80,18 +81,18 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
 
     @Override
     @Transactional
-    public ApiResponse<Boolean> createKnowledgeBase(CreateKBRequest createKBRequest, User user) {
-        log.info("创建知识库，用户：{}，知识库名称：{}", user.getUsername(), createKBRequest.getName());
+    public ApiResponse<Boolean> createKnowledgeBase(CreateKbRequest createKbRequest, User user) {
+        log.info("创建知识库，用户：{}，知识库名称：{}", user.getUsername(), createKbRequest.getName());
 
         // 参数校验
-        if (!StringUtils.hasText(createKBRequest.getName())) {
+        if (!StringUtils.hasText(createKbRequest.getName())) {
             return ApiResponse.error("知识库名称不能为空");
         }
 
         // 查询用户是否有已经存在的同名称知识库
         List<KnowledgeBase> existingKbs = knowledgeBaseRepository.findByUserOrderByCreatedAtDesc(user);
         boolean nameExists = existingKbs.stream()
-                .anyMatch(kb -> kb.getName().equals(createKBRequest.getName().trim()));
+                .anyMatch(kb -> kb.getName().equals(createKbRequest.getName().trim()));
 
         if (nameExists) {
             return ApiResponse.error("已存在同名知识库，请更换名称后重试");
@@ -100,11 +101,11 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
         try {
             // 创建知识库实体
             KnowledgeBase knowledgeBase = KnowledgeBase.builder()
-                    .name(createKBRequest.getName())
-                    .description(createKBRequest.getDescription())
-                    .embeddingModel(createKBRequest.getEmbeddingModel())
-                    .rag(createKBRequest.getRagMethod())
-                    .indexParam(createKBRequest.getIndexParam())
+                    .name(createKbRequest.getName())
+                    .description(createKbRequest.getDescription())
+                    .embeddingModel(createKbRequest.getEmbeddingModel())
+                    .rag(createKbRequest.getRagMethod())
+                    .indexParam(createKbRequest.getIndexParam())
                     .user(user)
                     .build();
 
@@ -362,25 +363,25 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
             BaseRag ragConfig = RagConfigFactory.createRagConfig(ragMethodName, embeddingModelName, indexParam);
 
             // 查询未被索引的文档
-            List<DocumentPO> documentPOList = documentRepository.findByKnowledgeBaseIdOrderByCreatedAtDesc(Long.valueOf(id))
+            List<DocumentPO> documentPoList = documentRepository.findByKnowledgeBaseIdOrderByCreatedAtDesc(Long.valueOf(id))
                     .stream()
                     .filter(doc -> !Boolean.TRUE.equals(doc.getIndexed()))
                     .toList();
 
-            if (documentPOList.isEmpty()) {
+            if (documentPoList.isEmpty()) {
                 return ApiResponse.success("没有未被索引的文档");
             }
 
-            List<Boolean> success = ragConfig.buildIndex(kbName, documentPOList, minioService);
+            List<Boolean> success = ragConfig.buildIndex(kbName, documentPoList, minioService);
 //            List<Boolean> success = buildIndex(kbName, ragConfig, documents);
 
             for (int i = 0; i < success.size(); i++) {
                 // TODO 没成功的现在没有提示
                 if (success.get(i)) {
                     // 更新文档的索引状态
-                    DocumentPO documentPO = documentPOList.get(i);
-                    documentPO.setIndexed(true);
-                    documentRepository.save(documentPO);
+                    DocumentPO documentPo = documentPoList.get(i);
+                    documentPo.setIndexed(true);
+                    documentRepository.save(documentPo);
                 }
             }
 

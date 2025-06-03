@@ -1,7 +1,7 @@
 package com.mtmn.smartdoc.service;
 
 import com.mtmn.smartdoc.common.ApiResponse;
-import com.mtmn.smartdoc.dto.CreateKBRequest;
+import com.mtmn.smartdoc.dto.CreateKbRequest;
 import com.mtmn.smartdoc.dto.KnowledgeBaseDTO;
 import com.mtmn.smartdoc.po.User;
 import com.mtmn.smartdoc.vo.DocumentVO;
@@ -31,7 +31,7 @@ public interface KnowledgeBaseService {
      * @param user 当前用户
      * @return 是否创建成功
      */
-    ApiResponse<Boolean> createKnowledgeBase(CreateKBRequest createKBRequest, User user);
+    ApiResponse<Boolean> createKnowledgeBase(CreateKbRequest createKBRequest, User user);
 
     /**
      * 删除知识库

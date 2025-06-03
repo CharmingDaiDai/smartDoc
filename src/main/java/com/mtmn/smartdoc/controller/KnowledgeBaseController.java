@@ -1,7 +1,7 @@
 package com.mtmn.smartdoc.controller;
 
 import com.mtmn.smartdoc.common.ApiResponse;
-import com.mtmn.smartdoc.dto.CreateKBRequest;
+import com.mtmn.smartdoc.dto.CreateKbRequest;
 import com.mtmn.smartdoc.dto.KnowledgeBaseDTO;
 import com.mtmn.smartdoc.po.User;
 import com.mtmn.smartdoc.service.KnowledgeBaseService;
@@ -77,7 +77,7 @@ public class KnowledgeBaseController {
      */
     @PostMapping("/create")
     @Operation(summary = "创建知识库", description = "创建一个新的知识库")
-    public ApiResponse<Boolean> createKnowledgeBase(@RequestBody CreateKBRequest createKBRequest,
+    public ApiResponse<Boolean> createKnowledgeBase(@RequestBody CreateKbRequest createKBRequest,
                                                     @AuthenticationPrincipal User user) {
         log.info("创建知识库，用户：{}，请求：{}", user.getUsername(), createKBRequest);
         return knowledgeBaseService.createKnowledgeBase(createKBRequest, user);
