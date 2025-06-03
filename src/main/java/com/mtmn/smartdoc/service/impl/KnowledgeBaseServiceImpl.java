@@ -4,7 +4,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mtmn.smartdoc.common.ApiResponse;
 import com.mtmn.smartdoc.common.IntentResult;
-import com.mtmn.smartdoc.config.*;
+import com.mtmn.smartdoc.config.ModelConfig;
+import com.mtmn.smartdoc.config.RagStrategyFactory;
 import com.mtmn.smartdoc.dto.CreateKbRequest;
 import com.mtmn.smartdoc.dto.KnowledgeBaseDTO;
 import com.mtmn.smartdoc.po.DocumentPO;
@@ -12,10 +13,7 @@ import com.mtmn.smartdoc.po.KnowledgeBase;
 import com.mtmn.smartdoc.po.User;
 import com.mtmn.smartdoc.repository.DocumentRepository;
 import com.mtmn.smartdoc.repository.KnowledgeBaseRepository;
-import com.mtmn.smartdoc.service.DocumentService;
-import com.mtmn.smartdoc.service.KnowledgeBaseService;
-import com.mtmn.smartdoc.service.LLMService;
-import com.mtmn.smartdoc.service.MinioService;
+import com.mtmn.smartdoc.service.*;
 import com.mtmn.smartdoc.utils.IntentClassifier;
 import com.mtmn.smartdoc.utils.QueryRewrite;
 import com.mtmn.smartdoc.utils.SseUtil;
@@ -64,6 +62,9 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
     private final LLMService llmService;
     private final IntentClassifier intentClassifier;
     private final QueryRewrite queryRewrite;
+    private final RagStrategyFactory ragStrategyFactory;
+    private final HiSemRag hiSemRag;
+    private final NaiveRag naiveRag;
 
     @Override
     public ApiResponse<List<KnowledgeBaseDTO>> listKnowledgeBase(User user) {
@@ -272,7 +273,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
             List<DocumentPO> documents = documentRepository.findByKnowledgeBaseIdOrderByCreatedAtDesc(knowledgeBaseId);
 
             // 将 Document 实体转换为 DocumentVO
-            List<DocumentVO> documentVOs = documents.stream()
+            List<DocumentVO> documentVos = documents.stream()
                     .map(doc -> DocumentVO.builder()
                             .id(doc.getId())
                             .title(doc.getTitle())
@@ -286,8 +287,8 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
                             .build())
                     .collect(Collectors.toList());
 
-            log.info("成功获取知识库文档列表，知识库ID：{}，文档数量：{}", knowledgeBaseId, documentVOs.size());
-            return ApiResponse.success(documentVOs);
+            log.info("成功获取知识库文档列表，知识库ID：{}，文档数量：{}", knowledgeBaseId, documentVos.size());
+            return ApiResponse.success(documentVos);
         } catch (Exception e) {
             log.error("获取知识库文档列表失败", e);
             return ApiResponse.error("获取知识库文档列表失败：" + e.getMessage());
@@ -359,9 +360,19 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
 
         String indexParam = knowledgeBase.getIndexParam();
 
+        Map<String, Object> params = new HashMap<>();
+        if (StringUtils.hasText(indexParam)) {
+            try {
+                params.putAll(objectMapper.readValue(indexParam, new TypeReference<Map<String, Object>>() {
+                }));
+            } catch (Exception e) {
+                log.error("解析索引参数JSON失败", e);
+            }
+        }
+
         try {
-            // 使用 RagConfigFactory 创建 RAG 配置对象
-            BaseRag ragConfig = RagConfigFactory.createRagConfig(ragMethodName, embeddingModelName, indexParam);
+            // 使用 ragStrategyFactory 创建 RAG 策略对象
+            BaseRag rag = ragStrategyFactory.getStrategy(ragMethodName);
 
             // 查询未被索引的文档
             List<DocumentPO> documentPoList = documentRepository.findByKnowledgeBaseIdOrderByCreatedAtDesc(Long.valueOf(id))
@@ -373,8 +384,10 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
                 return ApiResponse.success("没有未被索引的文档");
             }
 
-            List<Boolean> success = ragConfig.buildIndex(kbName, documentPoList, minioService);
-//            List<Boolean> success = buildIndex(kbName, ragConfig, documents);
+            //Integer chunkSize, Boolean generateAbstract, String embeddingModelName
+            params.put("embeddingModelName", embeddingModelName);
+
+            List<Boolean> success = rag.buildIndex(kbName, documentPoList, params);
 
             for (int i = 0; i < success.size(); i++) {
                 // TODO 没成功的现在没有提示
@@ -450,8 +463,11 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
             question = queryRewrite.rewriteQuery("", question).getFinalQuery();
         }
 
+        HashMap<String, Object> params = new HashMap<>();
+        params.put("topk", topk);
+
         //  TODO 问题分解，然后把问题列表传入
-        return NaiveRag.chat(sseUtil, knowledgeBase, question, topk);
+        return naiveRag.chat(knowledgeBase, question, params);
     }
 
     @Override
@@ -476,8 +492,11 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
             question = queryRewrite.rewriteQuery("", question).getFinalQuery();
         }
 
+        HashMap<String, Object> params = new HashMap<>();
+        params.put("maxRes", maxRes);
+
         //  TODO 问题分解，然后把问题列表传入
-        return HiSemRag.chat(sseUtil, knowledgeBase, question, maxRes);
+        return hiSemRag.chat(knowledgeBase, question, params);
     }
 
     private boolean needRetrieve(String question, String history) {

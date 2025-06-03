@@ -27,6 +27,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Log4j2
 @Service
+// TODO 改回非静态的
 public class EmbeddingService {
 
     private static final Map<String, EmbeddingModel> modelCache = new ConcurrentHashMap<>();

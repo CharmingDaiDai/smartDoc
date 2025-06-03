@@ -1,10 +1,9 @@
-package com.mtmn.smartdoc.config;
+package com.mtmn.smartdoc.service;
 
 import com.mtmn.smartdoc.common.ApacheTikaDocumentParser;
+import com.mtmn.smartdoc.common.CustomException;
 import com.mtmn.smartdoc.po.DocumentPO;
 import com.mtmn.smartdoc.po.KnowledgeBase;
-import com.mtmn.smartdoc.service.EmbeddingService;
-import com.mtmn.smartdoc.service.MinioService;
 import com.mtmn.smartdoc.utils.SseUtil;
 import dev.langchain4j.data.document.Document;
 import dev.langchain4j.data.document.DocumentSplitter;
@@ -17,18 +16,16 @@ import dev.langchain4j.rag.content.retriever.ContentRetriever;
 import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.rag.query.Query;
 import dev.langchain4j.store.embedding.milvus.MilvusEmbeddingStore;
-import io.milvus.common.clientenum.ConsistencyLevelEnum;
-import io.milvus.param.IndexType;
-import io.milvus.param.MetricType;
-import lombok.Builder;
-import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.stereotype.Component;
 import reactor.core.publisher.Flux;
 
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.IntStream;
 
 import static com.mtmn.smartdoc.service.impl.KnowledgeBaseServiceImpl.getCurrentUserId;
@@ -40,34 +37,42 @@ import static com.mtmn.smartdoc.service.impl.KnowledgeBaseServiceImpl.getStoreKn
  * @description 普通 RAG 配置类
  * @date 2025/5/8 09:19
  */
-@Data
-@Builder
+@Component("naiveRag")
 @Log4j2
+@RequiredArgsConstructor
 public class NaiveRag implements BaseRag {
-    private String methodName;
 
-    private String embeddingModel;
-
-    private Integer chunkSize;
-
-    private Integer chunkOverlap;
+    private final MinioService minioService;
+    private final SseUtil sseUtil;
+    private final MilvusService milvusService;
 
     /**
      * @return
      */
     @Override
-    public List<Boolean> buildIndex(String kbName, List<DocumentPO> documentPOList, MinioService minioService) {
-        String embeddingModelName = this.getEmbeddingModel();
+    public String getMethodName() {
+        return "naive";
+    }
+
+    /**
+     * @return
+     */
+    @Override
+    public List<Boolean> buildIndex(String kbName, List<DocumentPO> documentPoList, Map<String, Object> params) {
+        // 获取配置参数
+        Integer chunkSize = (Integer) params.getOrDefault("chunk-size", 512);
+        Integer chunkOverlap = (Integer) params.getOrDefault("chunk-overlap", 50);
+        String embeddingModelName = (String) params.get("embeddingModelName");
+        if (embeddingModelName == null) {
+            throw new CustomException("索引构建失败: embedding 模型为空");
+        }
+
+        log.info("使用嵌入模型：{} 创建索引", embeddingModelName);
 
         // 创建Embedding模型
         EmbeddingModel embeddingModel = EmbeddingService.createEmbeddingModel(embeddingModelName);
-        log.info("使用嵌入模型：{} 创建索引", embeddingModelName);
 
         List<Boolean> success = new ArrayList<>();
-
-        // 获取配置参数
-        Integer chunkSize = this.getChunkSize();
-        Integer chunkOverlap = this.getChunkOverlap();
 
         log.info("使用朴素RAG配置，块大小：{}，重叠大小：{}", chunkSize, chunkOverlap);
 
@@ -78,28 +83,14 @@ public class NaiveRag implements BaseRag {
 
         String collectionName = getStoreKnowledgeBaseName(kbName);
 
-        MilvusEmbeddingStore embeddingStore = MilvusEmbeddingStore.builder()
-                .host("10.0.30.172")
-                .port(19530)
-                // Name of the collection 知识库名称 + userId
-                .collectionName(collectionName)
-                .dimension(embeddingModel.embed("test").content().dimension())
-                .indexType(IndexType.FLAT)
-                .metricType(MetricType.COSINE)
-                .consistencyLevel(ConsistencyLevelEnum.EVENTUALLY)
-                .autoFlushOnInsert(false)
-                .idFieldName("id")
-                .textFieldName("text")
-                .metadataFieldName("metadata")
-                .vectorFieldName("vector")
-                .build();
+        MilvusEmbeddingStore embeddingStore = milvusService.getEmbeddingStore(collectionName, embeddingModel.dimension());
 
         List<Document> documents = new ArrayList<>();
 
         ApacheTikaDocumentParser documentParser = new ApacheTikaDocumentParser();
 
-        for (DocumentPO documentPO : documentPOList) {
-            String filePath = documentPO.getFilePath();
+        for (DocumentPO documentPo : documentPoList) {
+            String filePath = documentPo.getFilePath();
 
             try (InputStream inputStream = minioService.getFileContent(filePath)) {
                 // 使用Apache Tika解析器解析文档
@@ -161,7 +152,9 @@ public class NaiveRag implements BaseRag {
         return null;
     }
 
-    public static Flux<String> chat(SseUtil sseUtil, KnowledgeBase knowledgeBase, String question, int topk) {
+    @Override
+    public Flux<String> chat(KnowledgeBase knowledgeBase, String question, Map<String, Object> params) {
+        Integer topk = (Integer) params.getOrDefault("topk", 10);
 
         String kbName = knowledgeBase.getName();
 
@@ -173,20 +166,7 @@ public class NaiveRag implements BaseRag {
 
             String collectionName = getStoreKnowledgeBaseName(kbName);
 
-            MilvusEmbeddingStore embeddingStore = MilvusEmbeddingStore.builder()
-                    .host("10.0.30.172")
-                    .port(19530)
-                    .collectionName(collectionName)
-                    .dimension(embeddingModel.dimension())
-
-                    .metricType(MetricType.COSINE)
-                    .consistencyLevel(ConsistencyLevelEnum.EVENTUALLY)
-                    .autoFlushOnInsert(false)
-                    .idFieldName("id")
-                    .textFieldName("text")
-                    .metadataFieldName("metadata")
-                    .vectorFieldName("vector")
-                    .build();
+            MilvusEmbeddingStore embeddingStore = milvusService.getEmbeddingStore(collectionName, embeddingModel.dimension());
 
             ContentRetriever contentRetriever = EmbeddingStoreContentRetriever.builder()
                     .embeddingStore(embeddingStore)
@@ -241,5 +221,14 @@ public class NaiveRag implements BaseRag {
             String escapedError = errorMessage.replace("\"", "\\\"").replace("\n", "\\n");
             return sseUtil.sendFluxMessage("escapedError");
         }
+    }
+
+    /**
+     * @param ragMethod
+     * @return
+     */
+    @Override
+    public boolean supports(String ragMethod) {
+        return true;
     }
 }
