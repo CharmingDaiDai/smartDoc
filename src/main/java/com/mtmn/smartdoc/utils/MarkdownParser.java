@@ -129,18 +129,6 @@ public class MarkdownParser {
                     currentContent = new ArrayList<>();
                 }
 
-//                // 提取标题编号
-//                Pattern titleNumberPattern = Pattern.compile("^(\\d+(?:\\.\\d+)*)\\s*(.*)$");
-//                Matcher titleNumberMatcher = titleNumberPattern.matcher(titleText);
-//                String blockNumber = "";
-//
-//                if (titleNumberMatcher.find()) {
-//                    blockNumber = titleNumberMatcher.group(1);
-//                    // 标题可能仅包含数字，如 "3"
-//                    String restOfTitle = titleNumberMatcher.group(2);
-//                    titleText = !restOfTitle.isEmpty() ? restOfTitle : blockNumber;
-//                }
-
                 currentHeader = new HeaderInfo(level, titleText, "");
             } else {
                 // 如果尚未遇到任何标题，则内容属于根节点
@@ -264,9 +252,7 @@ public class MarkdownParser {
         // 根据节点级别确定实际缩进
         int actualIndent = baseIndent + rootNode.getLevel();
         StringBuilder prefix = new StringBuilder();
-        for (int i = 0; i < actualIndent; i++) {
-            prefix.append("  ");
-        }
+        prefix.append("  ".repeat(Math.max(0, actualIndent)));
 
         // 获取标题原始级别（如果有）
         int originalLevel = rootNode.getMetadata().containsKey("original_level") ?

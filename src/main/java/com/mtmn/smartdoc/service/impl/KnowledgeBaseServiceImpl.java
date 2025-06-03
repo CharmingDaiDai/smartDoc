@@ -298,13 +298,13 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
      * @return 每个布尔值表示对应文档的上传结果（true：成功，false：失败）
      */
     @Override
-    public ApiResponse<List<Boolean>> addDocs(String id, User user, MultipartFile[] files, String[] titles) {
+    public ApiResponse<List<Boolean>> addDocs(Long id, User user, MultipartFile[] files, String[] titles) {
 
         List<Boolean> uploaded = new ArrayList<>();
         try {
             for (int i = 0; i < files.length; i++) {
                 if (!files[i].isEmpty()) {
-                    DocumentPO document = documentService.uploadDocument(files[i], titles[i], user, Long.valueOf(id));
+                    DocumentPO document = documentService.uploadDocument(files[i], titles[i], user, id);
 
                     if (null != document) {
                         uploaded.add(true);
@@ -423,8 +423,8 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
      * @return
      */
     @Override
-    public Flux<String> naiveQa(String id, String question, int topk, boolean ir, boolean qr, boolean qd) {
-        Optional<KnowledgeBase> knowledgeBaseOpt = knowledgeBaseRepository.findById(Long.valueOf(id));
+    public Flux<String> naiveQa(Long id, String question, int topk, boolean ir, boolean qr, boolean qd) {
+        Optional<KnowledgeBase> knowledgeBaseOpt = knowledgeBaseRepository.findById(id);
 
         if (knowledgeBaseOpt.isEmpty()) {
             log.error("知识库: {}, 不存在，请确认知识库ID是否正确。", id);
@@ -445,12 +445,12 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
         }
 
         //  TODO 问题分解，然后把问题列表传入
-        return NaiveRag.chat(sseUtil, knowledgeBase, id, question, topk, qr, qd);
+        return NaiveRag.chat(sseUtil, knowledgeBase, question, topk);
     }
 
     @Override
-    public Flux<String> hisemQa(String id, String question, int maxRes, boolean ir, boolean qr, boolean qd) {
-        Optional<KnowledgeBase> knowledgeBaseOpt = knowledgeBaseRepository.findById(Long.valueOf(id));
+    public Flux<String> hisemQa(Long id, String question, int maxRes, boolean ir, boolean qr, boolean qd) {
+        Optional<KnowledgeBase> knowledgeBaseOpt = knowledgeBaseRepository.findById(id);
 
         if (knowledgeBaseOpt.isEmpty()) {
             log.error("知识库: {}, 不存在，请确认知识库ID是否正确。", id);
@@ -471,7 +471,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
         }
 
         //  TODO 问题分解，然后把问题列表传入
-        return HiSemRag.chat(sseUtil, knowledgeBase, id, question, maxRes, qr, qd);
+        return HiSemRag.chat(sseUtil, knowledgeBase, question, maxRes);
     }
 
     private boolean needRetrieve(String question, String history) {

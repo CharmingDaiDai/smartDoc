@@ -161,7 +161,7 @@ public class NaiveRag implements BaseRag {
         return null;
     }
 
-    public static Flux<String> chat(SseUtil sseUtil, KnowledgeBase knowledgeBase, String id, String question, int topk, boolean qr, boolean qd) {
+    public static Flux<String> chat(SseUtil sseUtil, KnowledgeBase knowledgeBase, String question, int topk) {
 
         String kbName = knowledgeBase.getName();
 

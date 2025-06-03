@@ -154,7 +154,7 @@ public class HiSemRag implements BaseRag {
         return null;
     }
 
-    public static Flux<String> chat(SseUtil sseUtil, KnowledgeBase knowledgeBase, String id, String question, int maxRes, boolean qr, boolean qd){
+    public static Flux<String> chat(SseUtil sseUtil, KnowledgeBase knowledgeBase, String question, int maxRes){
 
         String kbName = knowledgeBase.getName();
 

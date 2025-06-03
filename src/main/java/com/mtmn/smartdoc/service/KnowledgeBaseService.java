@@ -69,11 +69,11 @@ public interface KnowledgeBaseService {
      */
     ApiResponse<List<DocumentVO>> listKnowledgeBaseDocs(Long knowledgeBaseId, User user);
 
-    ApiResponse<List<Boolean>> addDocs(String id, User user, MultipartFile[] files, String[] titles);
+    ApiResponse<List<Boolean>> addDocs(Long id, User user, MultipartFile[] files, String[] titles);
 
     ApiResponse<String> buildIndex(String id);
 
-    Flux<String> naiveQa(String id, String question, int topk, boolean ir, boolean qr, boolean qd);
+    Flux<String> naiveQa(Long id, String question, int topk, boolean ir, boolean qr, boolean qd);
 
-    Flux<String> hisemQa(String id, String question, int maxRes, boolean ir, boolean qr, boolean qd);
+    Flux<String> hisemQa(Long id, String question, int maxRes, boolean ir, boolean qr, boolean qd);
 }

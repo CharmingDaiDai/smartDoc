@@ -160,7 +160,7 @@ public class KnowledgeBaseController {
     @PostMapping(value = "/addDocs/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "知识库添加文档", description = "向知识库添加文档")
     public ApiResponse<List<Boolean>> addDocs(
-            @PathVariable(name = "id") String id,
+            @PathVariable(name = "id") Long id,
             @AuthenticationPrincipal User user,
             @RequestParam(name = "files") MultipartFile[] files,
             @RequestParam(name = "titles") String[] titles) {
@@ -195,7 +195,7 @@ public class KnowledgeBaseController {
 
     @GetMapping(value = "/chat/naive/{id}", produces = TEXT_EVENT_STREAM_VALUE)
     @Operation(summary = "普通 RAG 问答", description = "普通 RAG 问答")
-    public Flux<String> naiveQa(@PathVariable(name = "id") String id,
+    public Flux<String> naiveQa(@PathVariable(name = "id") Long id,
                                 @RequestParam(name = "question") String question, // 用户问题
                                 @RequestParam(defaultValue = "5", name = "topk") int topk, // topk参数，默认为5
                                 @RequestParam(defaultValue = "false", name = "intent_recognition") boolean ir, // 意图识别参数，默认为 false
@@ -211,7 +211,7 @@ public class KnowledgeBaseController {
 
     @GetMapping(value = "/chat/hisem/{id}", produces = TEXT_EVENT_STREAM_VALUE)
     @Operation(summary = "HisemRAG 问答", description = "HisemRAG 问答")
-    public Flux<String> hisemQa(@PathVariable(name = "id") String id,
+    public Flux<String> hisemQa(@PathVariable(name = "id") Long id,
                                 @RequestParam(name = "question") String question, // 用户问题
                                 @RequestParam(defaultValue = "10", name = "max_res") int maxRes, // maxRes参数，默认为10
                                 @RequestParam(defaultValue = "false", name = "intent_recognition") boolean ir, // 意图识别参数，默认为 false

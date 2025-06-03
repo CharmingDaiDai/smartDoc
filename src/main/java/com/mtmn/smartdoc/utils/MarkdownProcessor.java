@@ -1,13 +1,7 @@
 package com.mtmn.smartdoc.utils;
 
-/**
- * @author charmingdaidai
- * @version 1.0
- * @description Markdown文档处理工具类，提供文档解析、分块、知识点提取等功能
- * @date 2025/5/23 10:36
- */
-
 import com.mtmn.smartdoc.common.MyNode;
+import lombok.extern.log4j.Log4j2;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -19,16 +13,22 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * @author charmingdaidai
+ * @version 1.0
+ * @description Markdown文档处理工具类，提供文档解析、分块、知识点提取等功能
+ * @date 2025/5/23 10:36
+ */
+@Log4j2
 public class MarkdownProcessor {
-    private static final Logger logger = Logger.getLogger(MarkdownProcessor.class.getName());
-
     // 全局参数配置
-    private static final int DEFAULT_MAX_TITLE_LEVEL = 3;  // 最大解析的标题层级
-    private static final int DEFAULT_MAX_BLOCK_SIZE = 2048;  // 最大块大小(字符数)
+    // 最大解析的标题层级
+    private static final int DEFAULT_MAX_TITLE_LEVEL = 3;
+    // 最大块大小(字符数)
+    private static final int DEFAULT_MAX_BLOCK_SIZE = 2048;
 
     /**
      * 将长文本内容分割成不超过最大大小的小块，保持句子完整性
@@ -56,14 +56,9 @@ public class MarkdownProcessor {
             char ch = content.charAt(i);
             currentSentence.append(ch);
 
-            // 检查是否句子结束
-            boolean isSentenceEnd = false;
-
-            // 检查是否是段落结束
-            if (i + 1 < content.length() &&
-                    content.substring(i, i + 2).equals(paragraphBreak)) {
-                isSentenceEnd = true;
-            }
+            // 检查是否句子结束 检查是否是段落结束
+            boolean isSentenceEnd = i + 1 < content.length() &&
+                    content.substring(i, i + 2).equals(paragraphBreak);
 
             // 检查是否是句子结束标点
             for (char ending : sentenceEndings) {
@@ -172,8 +167,7 @@ public class MarkdownProcessor {
 
             return new AbstractMap.SimpleEntry<>(rootNode, nodesDict);
         } catch (Exception e) {
-            logger.severe("解析文档结构时出错: " + e.getMessage());
-            e.printStackTrace();
+            log.error("解析文档结构时出错: {}", e.getMessage());
 
             // 创建一个基本的根节点作为后备
             MyNode rootNode = new MyNode(
@@ -222,7 +216,7 @@ public class MarkdownProcessor {
      * @param nodesDict 所有节点的字典
      */
     public static void generateKnowledgeSummaries(Map<String, MyNode> nodesDict) {
-        logger.info("开始生成知识点摘要...");
+        log.info("开始生成知识点摘要...");
 
         for (MyNode node : nodesDict.values()) {
             // 跳过空内容节点
@@ -237,7 +231,7 @@ public class MarkdownProcessor {
             node.getMetadata().put("knowledge_summary", summary);
         }
 
-        logger.info("知识点摘要生成完成");
+        log.info("知识点摘要生成完成");
     }
 
     /**
@@ -247,7 +241,7 @@ public class MarkdownProcessor {
      * @param nodesDict 所有节点的字典
      */
     public static void propagateKnowledgeToParents(MyNode rootNode, Map<String, MyNode> nodesDict) {
-        logger.info("开始知识点向上传递...");
+        log.info("开始知识点向上传递...");
 
         // 构建一个映射，从每个节点ID到其父节点ID
         Map<String, String> parentMap = new HashMap<>();
@@ -310,7 +304,8 @@ public class MarkdownProcessor {
         }
 
         // 整合父节点的子节点知识
-        sortedLevels.remove(sortedLevels.size() - 1);  // 移除最后一个（最深）层级
+        // 移除最后一个（最深）层级
+        sortedLevels.remove(sortedLevels.size() - 1);
 
         for (int level : sortedLevels) {
             if (!levelToNodes.containsKey(level)) {
@@ -345,7 +340,7 @@ public class MarkdownProcessor {
             }
         }
 
-        logger.info("知识点向上传递完成");
+        log.info("知识点向上传递完成");
     }
 
     /**
@@ -518,13 +513,7 @@ public class MarkdownProcessor {
             boolean generateSummaries) {
 
         try {
-//            // 检查输出文件是否已存在
-//            if (outputFile != null && new File(outputFile).exists()) {
-//                logger.info("文件已处理: " + filePath + "，跳过");
-//                return null;
-//            }
-
-            logger.info("开始处理文件: " + filePath);
+            log.info("开始处理文件: {}", filePath);
 
             // 1. 从文件读取Markdown内容
             String markdownText = Files.readString(Paths.get(filePath));
@@ -539,33 +528,32 @@ public class MarkdownProcessor {
             MyNode rootNode = result.getKey();
             Map<String, MyNode> nodesDict = result.getValue();
 
-            logger.info("文件解析完成，" + fileName + " 共 " + nodesDict.size() + " 个节点");
+            log.info("文件解析完成，{} 共 {} 个节点", fileName, nodesDict.size());
 
             // 3. 多级标题拼接
             if (joinTitles) {
                 buildTitlePaths(rootNode, nodesDict, "");
-                logger.info("多级标题拼接完成");
+                log.info("多级标题拼接完成");
             }
 
             // 4. 知识点和摘要生成与汇总
             if (generateSummaries) {
                 generateKnowledgeSummaries(nodesDict);
-                logger.info(fileName + " 知识点摘要生成完成");
+                log.info("{} 知识点摘要生成完成", fileName);
 
                 propagateKnowledgeToParents(rootNode, nodesDict);
-                logger.info(fileName + " 知识点向上传递完成");
+                log.info("{} 知识点向上传递完成", fileName);
             }
 
             // 5. 将节点持久化保存
             if (outputFile != null) {
                 saveNodesToFile(nodesDict, outputFile);
-                logger.info(fileName + " 处理完成，结果保存到: " + outputFile);
+                log.info("{} 处理完成，结果保存到: {}", fileName, outputFile);
             }
 
             return result;
         } catch (IOException e) {
-            logger.severe("处理文件 " + filePath + " 时出错: " + e.getMessage());
-            e.printStackTrace();
+            log.error("处理文件 {} 时出错: {}", filePath, e.getMessage());
             return null;
         }
     }
@@ -608,13 +596,7 @@ public class MarkdownProcessor {
             boolean generateSummaries) {
 
         try {
-//            // 检查输出文件是否已存在
-//            if (outputFile != null && new File(outputFile).exists()) {
-//                logger.info("文件已处理: " + documentTitle + "，跳过");
-//                return null;
-//            }
-
-            logger.info("开始处理文档: " + documentTitle);
+            log.info("开始处理文档: {}", documentTitle);
 
             // 1. 从输入流读取Markdown内容
             String markdownText = new BufferedReader(
@@ -629,33 +611,32 @@ public class MarkdownProcessor {
             MyNode rootNode = result.getKey();
             Map<String, MyNode> nodesDict = result.getValue();
 
-            logger.info("文档解析完成，" + documentTitle + " 共 " + nodesDict.size() + " 个节点");
+            log.info("文档解析完成，{} 共 {} 个节点", documentTitle, nodesDict.size());
 
             // 3. 多级标题拼接
             if (joinTitles) {
                 buildTitlePaths(rootNode, nodesDict, "");
-                logger.info("多级标题拼接完成");
+                log.info("多级标题拼接完成");
             }
 
             // 4. 知识点和摘要生成与汇总
             if (generateSummaries) {
                 generateKnowledgeSummaries(nodesDict);
-                logger.info(documentTitle + " 知识点摘要生成完成");
+                log.info("{} 知识点摘要生成完成", documentTitle);
 
                 propagateKnowledgeToParents(rootNode, nodesDict);
-                logger.info(documentTitle + " 知识点向上传递完成");
+                log.info("{} 知识点向上传递完成", documentTitle);
             }
 
             // 5. 将节点持久化保存
             if (outputFile != null) {
                 saveNodesToFile(nodesDict, outputFile);
-                logger.info(documentTitle + " 处理完成，结果保存到: " + outputFile);
+                log.info("{} 处理完成，结果保存到: {}", documentTitle, outputFile);
             }
 
             return result;
         } catch (IOException e) {
-            logger.severe("处理文档 " + documentTitle + " 时出错: " + e.getMessage());
-            e.printStackTrace();
+            log.error("处理文档 {} 时出错: {}", documentTitle, e.getMessage());
             return null;
         }
     }
@@ -685,7 +666,7 @@ public class MarkdownProcessor {
             Files.createDirectories(Paths.get(outputDir));
 
             // 获取输入目录中的所有md文件
-            List<Path> mdFiles = new ArrayList<>();
+            List<Path> mdFiles;
             try (Stream<Path> walk = Files.walk(Paths.get(inputDir))) {
                 mdFiles = walk
                         .filter(p -> !Files.isDirectory(p))
@@ -694,13 +675,13 @@ public class MarkdownProcessor {
             }
 
             if (mdFiles.isEmpty()) {
-                logger.info("在目录 " + inputDir + " 中未找到Markdown文件");
+                log.info("在目录 {} 中未找到Markdown文件", inputDir);
                 return;
             }
 
             int totalFiles = mdFiles.size();
-            logger.info("找到 " + totalFiles + " 个Markdown文件待处理");
-            logger.info("最大标题层级: " + maxLevel + ", 最大块大小: " + maxBlockSize + " 字符");
+            log.info("找到 {} 个Markdown文件待处理", totalFiles);
+            log.info("最大标题层级: {}, 最大块大小: {} 字符", maxLevel, maxBlockSize);
 
             // 创建线程池
             ExecutorService executor = Executors.newFixedThreadPool(
@@ -739,8 +720,8 @@ public class MarkdownProcessor {
                         int newCompleted = (int) (totalFiles - latch.getCount());
                         if (newCompleted != completed) {
                             completed = newCompleted;
-                            logger.info(String.format("处理进度: %d/%d (%.1f%%)",
-                                    completed, totalFiles, 100.0 * completed / totalFiles));
+                            log.info("处理进度: {}/{} ({}%)",
+                                    completed, totalFiles, String.format("%.1f", 100.0 * completed / totalFiles));
                         }
                     }
                 } catch (InterruptedException e) {
@@ -753,11 +734,10 @@ public class MarkdownProcessor {
 
             // 关闭线程池
             executor.shutdown();
-            logger.info("所有文件处理完成！处理结果保存在: " + outputDir);
+            log.info("所有文件处理完成！处理结果保存在: {}", outputDir);
 
         } catch (IOException | InterruptedException e) {
-            logger.severe("处理目录时出错: " + e.getMessage());
-            e.printStackTrace();
+            log.error("处理目录时出错: {}", e.getMessage());
         }
     }
 
