@@ -77,8 +77,6 @@ models:
 milvus:
   host: 10.0.30.172
   port: 19530
-  collection-name: document_vectors
-  dimension: 1024
 
 # MinIO配置
 minio:

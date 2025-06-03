@@ -25,6 +25,7 @@ import io.milvus.v2.client.MilvusClientV2;
 import io.milvus.v2.service.collection.request.DropCollectionReq;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -47,6 +48,9 @@ import java.util.stream.Collectors;
 @Log4j2
 @RequiredArgsConstructor
 public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
+
+    @Value("milvus.uri")
+    private final String milvusUri;
 
     private final KnowledgeBaseRepository knowledgeBaseRepository;
     private final DocumentRepository documentRepository;
@@ -155,7 +159,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
             // TODO 改为 RAGMethodService.deleteIndex()
             // 删除知识库的索引
             ConnectConfig connectConfig = ConnectConfig.builder()
-                    .uri("http://10.0.30.172:19530")
+                    .uri(milvusUri)
                     .build();
 
             MilvusClientV2 milvusClient = new MilvusClientV2(connectConfig);
