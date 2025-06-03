@@ -165,6 +165,7 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
 
             MilvusClientV2 milvusClient = new MilvusClientV2(connectConfig);
             milvusClient.dropCollection(DropCollectionReq.builder().collectionName(getStoreKnowledgeBaseName(knowledgeBase.getName())).build());
+            log.info("删除知识库索引，ID：{}", knowledgeBaseId);
 
             // 删除知识库表中的记录
             knowledgeBaseRepository.delete(knowledgeBase);
