@@ -2,9 +2,9 @@ spring:
   application:
     name: smart-doc
   datasource:
-    url: jdbc:mysql://10.0.30.172:13306/smart_doc?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
-    username: root
-    password: 123456
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:smart_doc}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:password}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
@@ -21,9 +21,9 @@ spring:
           issuer-uri: ${JWT_ISSUER_URI:http://localhost:8080}
       client:
         github:
-          client-id: Ov23likkGTPTqjQuzHfV
-          client-secret: 4fa66252792406a6d2938166a1ae7980e8d745e0
-          redirectUri: http://localhost:8080/api/auth/callback/github
+          client-id: ${GITHUB_CLIENT_ID:your_github_client_id}
+          client-secret: ${GITHUB_CLIENT_SECRET:your_github_client_secret}
+          redirectUri: ${GITHUB_REDIRECT_URI:http://localhost:8080/api/auth/callback/github}
 #          redirectUri: http://localhost:8080/dashboard
           scope: read:user,user:email
   servlet:
@@ -59,11 +59,11 @@ models:
   # 大语言模型配置
   llm:
     glm:
-      api-key: 8af2f6a0b0197d510612ec82547a9a1d.dNP2dmQIZpoeusa0
+      api-key: ${GLM_API_KEY:your_glm_api_key}
       base-url: https://open.bigmodel.cn/api/paas/v4
       model-name: glm-4-flash
     glm-250414:
-      api-key: 8af2f6a0b0197d510612ec82547a9a1d.dNP2dmQIZpoeusa0
+      api-key: ${GLM_API_KEY:your_glm_api_key}
       base-url: https://open.bigmodel.cn/api/paas/v4
       model-name: GLM-4-Flash-250414
     chatgpt:
@@ -79,9 +79,9 @@ models:
   embedding:
     bge-m3:
       description: 支持 8K 长度的输入
-      api-key: notnull
-      base-url: http://10.0.30.172:9997/v1/
-      model-name: bge-m3
+      api-key: ${EMBEDDING_API_KEY:notnull}
+      base-url: ${EMBEDDING_BASE_URL:http://localhost:9997/v1/}
+      model-name: ${EMBEDDING_MODEL_NAME:bge-m3}
 #    openai:
 #      description: OpenAI 的嵌入模型
 #      api-key: ${OPENAI_API_KEY:your-openai-api-key}
@@ -131,15 +131,15 @@ rag:
 
 # Milvus配置
 milvus:
-  uri: http://10.0.30.172:19530
-  host: 10.0.30.172
-  port: 19530
+  uri: http://${MILVUS_HOST:localhost}:${MILVUS_PORT:19530}
+  host: ${MILVUS_HOST:localhost}
+  port: ${MILVUS_PORT:19530}
 
 # MinIO配置
 minio:
-  endpoint: http://10.0.30.172:9000 #minio服务地址
-  accessKey: root #minio的用户名
-  secretKey: 12345678 #minio的密码
+  endpoint: ${MINIO_ENDPOINT:http://localhost:9000} #minio服务地址
+  accessKey: ${MINIO_ACCESS_KEY:minioadmin} #minio的用户名
+  secretKey: ${MINIO_SECRET_KEY:minioadmin} #minio的密码
   bucket:
     files: smartdoc
 

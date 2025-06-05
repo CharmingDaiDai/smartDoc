@@ -41,3 +41,9 @@ frontend/public/assets
 *.py
 .DS_Store
 docs
+
+### 环境变量文件 ###
+.env
+.env.local
+.env.production
+.env.development
