@@ -21,16 +21,16 @@
 - Docker (可选)
 
 ### 1. 克隆项目
-\`\`\`bash
-git clone https://github.com/your-repo/smartDoc.git
+```bash
+git clone https://github.com/CharmingDaiDai/smartDoc.git
 cd smartDoc
-\`\`\`
+```
 
 ### 2. 环境配置
 复制环境变量模板：
-\`\`\`bash
+```bash
 cp .env.example .env
-\`\`\`
+```
 
 编辑 `.env` 文件，填入您的配置信息。
 
@@ -41,13 +41,8 @@ cp .env.example .env
 
 ### 3. 启动服务
 
-#### 使用 Docker Compose (推荐)
-\`\`\`bash
-docker-compose up -d
-\`\`\`
-
 #### 手动启动
-\`\`\`bash
+```bash
 # 后端
 mvn clean package
 java -jar target/smart-doc-*.jar
@@ -56,7 +51,7 @@ java -jar target/smart-doc-*.jar
 cd frontend
 npm install
 npm start
-\`\`\`
+```
 
 ### 4. 访问应用
 - 前端界面: http://localhost:3000
@@ -136,39 +131,3 @@ npm start
 * [x] 图片渲染
 * [x] 代码语法高亮
 * [ ] 聊天界面支持选择不同大模型
-
-## 🔒 安全说明
-
-本项目已实施以下安全措施：
-- ✅ 敏感信息环境变量化
-- ✅ JWT 令牌认证
-- ✅ GitHub OAuth 集成
-- ✅ API 访问控制
-- ✅ 数据传输加密
-- ✅ 输入验证和过滤
-
-请查看 [安全配置指南](SECURITY.md) 了解详细的安全最佳实践。
-
-## 🤝 贡献指南
-
-欢迎提交 Issue 和 Pull Request！
-
-1. Fork 本仓库
-2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
-3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
-5. 创建 Pull Request
-
-## 📄 许可证
-
-本项目采用 MIT 许可证 - 查看 [LICENSE](LICENSE) 文件了解详情。
-
-## 📞 联系我们
-
-- 项目维护者: CharmingDaiDai
-- 邮箱: your-email@example.com
-- 项目主页: https://github.com/your-repo/smartDoc
-
----
-
-**⚠️ 安全提醒**: 部署到生产环境前，请务必阅读 [安全配置指南](SECURITY.md) 并按照建议进行安全配置。
