@@ -15,26 +15,31 @@
 ## 🚀 快速开始
 
 ### 环境要求
+
 - Java 17+
 - Node.js 16+
 - MySQL 8.0+
 - Docker (可选)
 
 ### 1. 克隆项目
+
 ```bash
 git clone https://github.com/CharmingDaiDai/smartDoc.git
 cd smartDoc
 ```
 
 ### 2. 环境配置
+
 复制环境变量模板：
+
 ```bash
 cp .env.example .env
 ```
 
 编辑 `.env` 文件，填入您的配置信息。
 
-**⚠️ 重要安全提醒**: 
+**⚠️ 重要安全提醒**:
+
 - 请勿将包含真实密钥的 `.env` 文件提交到版本控制系统
 - 生产环境请使用强密码和安全的密钥
 - 定期轮换 API 密钥和访问令牌
@@ -42,6 +47,7 @@ cp .env.example .env
 ### 3. 启动服务
 
 #### 手动启动
+
 ```bash
 # 后端
 mvn clean package
@@ -54,6 +60,7 @@ npm start
 ```
 
 ### 4. 访问应用
+
 - 前端界面: http://localhost:3000
 - 后端 API: http://localhost:8080
 - API 文档: http://localhost:8080/swagger-ui.html
@@ -94,28 +101,30 @@ npm start
 
 ### 核心功能
 
-### 核心功能
-* [x] 判断问题是否需要进行检索
+* [X] 判断问题是否需要进行检索
 * [ ] 添加文档的元数据信息
 * [ ] 多轮对话
 * [ ] 对话历史保存
 * [ ] 对话结果导出
 
 ### Naive RAG
-* [x] 问题重写
+
+* [X] 问题重写
 * [ ] 问题分解
-* [ ] 删除索引
+* [X] 删除索引
 * [ ] 删除单个文件
-* [ ] HyDE 假设文档嵌入
+* [X] HyDE 假设文档嵌入
 
 ### HiSem RAG
-* [x] 问题重写
+
+* [X] 问题重写
 * [ ] 问题分解
-* [ ] 删除索引
+* [X] 删除索引
 * [ ] 删除单个文件
 * [ ] HyDE 假设文档嵌入
 
 ### HiSem-Tree RAG
+
 * [ ] JSON 索引保存
 * [ ] 索引恢复
 * [ ] 层级检索
@@ -124,10 +133,11 @@ npm start
 * [ ] HyDE 假设文档嵌入
 
 ### 前端界面
-* [x] 显示出处（相关文档、基于 Ant Design）
+
+* [X] 显示出处（相关文档、基于 Ant Design）
 * [ ] 出处显示文档名称
-* [x] 重构流式渲染 Markdown
-* [x] 公式渲染
-* [x] 图片渲染
-* [x] 代码语法高亮
+* [X] 重构流式渲染 Markdown
+* [X] 公式渲染
+* [X] 图片渲染
+* [X] 代码语法高亮
 * [ ] 聊天界面支持选择不同大模型
