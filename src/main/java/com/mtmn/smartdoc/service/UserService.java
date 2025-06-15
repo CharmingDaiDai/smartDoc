@@ -31,8 +31,15 @@ public class UserService {
     /**
      * 获取用户个人资料
      * 
+     * 实现思路：
+     * 1. 根据用户名从数据库查询用户实体
+     * 2. 如果用户不存在则抛出404异常
+     * 3. 调用convertToDTO方法将用户实体转换为DTO
+     * 4. 包含头像URL等前端需要的完整信息
+     * 
      * @param username 用户名
-     * @return 用户个人资料DTO
+     * @return 用户个人资料DTO，包含用户基本信息和头像URL
+     * @throws CustomException 当用户不存在时抛出404异常
      */
     public UserProfileDto getUserProfile(String username) {
         User user = userRepository.findByUsername(username)
@@ -44,9 +51,19 @@ public class UserService {
     /**
      * 更新用户个人资料
      * 
+     * 实现思路：
+     * 1. 根据用户名查询用户实体，验证用户存在性
+     * 2. 检查邮箱变更情况，防止邮箱冲突
+     * 3. 如果邮箱有变更，验证新邮箱是否已被其他用户使用
+     * 4. 更新用户的邮箱等可修改字段
+     * 5. 保存更新后的用户实体到数据库
+     * 6. 转换为DTO返回给前端
+     * 7. 使用事务确保数据一致性
+     * 
      * @param username 用户名
-     * @param request 更新请求
+     * @param request 更新请求，包含要修改的用户信息
      * @return 更新后的用户个人资料DTO
+     * @throws CustomException 当用户不存在或邮箱冲突时抛出异常
      */
     @Transactional
     public UserProfileDto updateProfile(String username, UpdateProfileRequest request) {
@@ -69,9 +86,21 @@ public class UserService {
     /**
      * 上传用户头像
      * 
+     * 实现思路：
+     * 1. 验证上传文件的有效性，确保文件不为空
+     * 2. 根据用户名查询用户实体，验证用户存在性
+     * 3. 检查用户是否已有头像，如果有则先删除旧头像
+     * 4. 处理旧头像删除失败的情况，记录警告但不中断流程
+     * 5. 调用MinIO服务上传新头像文件
+     * 6. 更新用户实体中的头像路径信息
+     * 7. 保存更新后的用户实体到数据库
+     * 8. 转换为DTO返回，包含新头像的URL
+     * 9. 使用事务确保数据一致性，捕获异常并转换为业务异常
+     * 
      * @param username 用户名
-     * @param file 头像文件
-     * @return 更新后的用户个人资料DTO
+     * @param file 上传的头像文件
+     * @return 更新后的用户个人资料DTO，包含新头像URL
+     * @throws CustomException 当文件为空、用户不存在或上传失败时抛出异常
      */
     @Transactional
     public UserProfileDto uploadAvatar(String username, MultipartFile file) {
@@ -109,11 +138,21 @@ public class UserService {
     }
     
     /**
-     * 修改密码
+     * 修改用户密码
+     * 
+     * 实现思路：
+     * 1. 验证新密码与确认密码的一致性
+     * 2. 根据用户名查询用户实体，验证用户存在性
+     * 3. 使用密码编码器验证当前密码的正确性
+     * 4. 使用密码编码器对新密码进行加密
+     * 5. 更新用户实体中的密码字段
+     * 6. 保存更新后的用户实体到数据库
+     * 7. 使用事务确保密码修改的原子性
      * 
      * @param username 用户名
-     * @param request 修改密码请求
-     * @return 是否修改成功
+     * @param request 修改密码请求，包含当前密码、新密码和确认密码
+     * @return true表示修改成功
+     * @throws CustomException 当密码不一致、用户不存在或当前密码错误时抛出异常
      */
     @Transactional
     public boolean changePassword(String username, ChangePasswordRequest request) {
@@ -140,8 +179,16 @@ public class UserService {
     /**
      * 将用户实体转换为DTO
      * 
-     * @param user 用户实体
-     * @return 用户个人资料DTO
+     * 实现思路：
+     * 1. 使用Builder模式构建UserProfileDto对象
+     * 2. 复制用户实体中的基本信息字段
+     * 3. 检查用户是否有头像路径
+     * 4. 如果有头像，调用MinIO服务生成可访问的头像URL
+     * 5. 将头像URL设置到DTO中
+     * 6. 过滤敏感信息，只包含前端需要的字段
+     * 
+     * @param user 用户实体对象
+     * @return 用户个人资料DTO，包含前端展示所需的用户信息
      */
     private UserProfileDto convertToDTO(User user) {
         UserProfileDto dto = UserProfileDto.builder()

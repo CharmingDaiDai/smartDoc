@@ -18,10 +18,16 @@ public class RestService {
     
     /**
      * 创建RestTemplate Bean
-     * 配置连接超时和读取超时为10秒
      * 
-     * @param builder RestTemplate构建器
-     * @return 配置好的RestTemplate实例
+     * 实现思路：
+     * 1. 使用RestTemplateBuilder配置RestTemplate实例
+     * 2. 设置连接超时时间为10秒，防止连接挂起
+     * 3. 设置读取超时时间为10秒，防止读取响应时挂起
+     * 4. 构建并返回配置完成的RestTemplate实例
+     * 5. 该Bean可在整个应用中注入使用，用于HTTP客户端调用
+     * 
+     * @param builder Spring Boot提供的RestTemplate构建器
+     * @return 配置了超时参数的RestTemplate实例
      */
     @Bean
     public RestTemplate restTemplate(RestTemplateBuilder builder) {

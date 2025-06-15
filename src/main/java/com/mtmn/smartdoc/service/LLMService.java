@@ -39,7 +39,12 @@ public class LLMService {
     /**
      * 创建聊天语言模型 - 使用当前激活的模型配置
      * 
-     * @return 聊天模型实例
+     * 实现思路：
+     * 1. 调用重载方法createChatModel(String modelId)
+     * 2. 传入当前激活的模型ID作为参数
+     * 3. 简化调用接口，适用于使用默认模型的场景
+     * 
+     * @return 基于当前激活配置的聊天模型实例
      */
     public ChatModel createChatModel() {
         return createChatModel(modelConfig.getActiveLlm());
@@ -47,6 +52,14 @@ public class LLMService {
 
     /**
      * 创建聊天语言模型 - 根据指定的modelId
+     * 
+     * 实现思路：
+     * 1. 处理modelId参数，如果为null则使用当前激活模型
+     * 2. 使用ConcurrentHashMap的computeIfAbsent方法实现线程安全的缓存
+     * 3. 根据modelId获取对应的模型配置信息
+     * 4. 如果配置不存在则使用默认配置并记录警告
+     * 5. 使用OpenAI客户端构建器创建聊天模型实例
+     * 6. 缓存模型实例避免重复创建，提高性能
      *
      * @param modelId 模型ID，如果为null则使用当前激活的模型
      * @return 对应的聊天语言模型实例
@@ -74,10 +87,34 @@ public class LLMService {
         });
     }
 
+    /**
+     * 创建流式聊天语言模型 - 使用当前激活的模型配置
+     * 
+     * 实现思路：
+     * 1. 调用重载方法createStreamingChatModel(String modelId)
+     * 2. 传入当前激活的模型ID作为参数
+     * 3. 简化调用接口，适用于使用默认模型的流式场景
+     * 
+     * @return 基于当前激活配置的流式聊天模型实例
+     */
     public OpenAiStreamingChatModel createStreamingChatModel() {
         return createStreamingChatModel(modelConfig.getActiveLlm());
     }
 
+    /**
+     * 创建流式聊天语言模型 - 根据指定的modelId
+     * 
+     * 实现思路：
+     * 1. 处理modelId参数，如果为null则使用当前激活模型
+     * 2. 根据modelId获取对应的模型配置信息
+     * 3. 如果配置不存在则使用默认配置并记录警告
+     * 4. 使用OpenAI流式客户端构建器创建流式聊天模型
+     * 5. 设置最大完成令牌数以控制输出长度
+     * 6. 适用于需要实时响应的聊天场景
+     * 
+     * @param modelId 模型ID，如果为null则使用当前激活的模型
+     * @return 对应的流式聊天语言模型实例
+     */
     public OpenAiStreamingChatModel createStreamingChatModel(String modelId){
         // 如果未指定modelId，使用当前激活的模型
         String targetModelId = modelId == null ?
@@ -105,9 +142,17 @@ public class LLMService {
 
     /**
      * 清理JSON字符串，处理可能的Markdown代码块和其他非标准格式
+     * 
+     * 实现思路：
+     * 1. 检查输入字符串的有效性，空值返回默认JSON对象
+     * 2. 移除可能的Markdown代码块标记（```json 和 ```）
+     * 3. 查找第一个左大括号和最后一个右大括号的位置
+     * 4. 提取大括号之间的内容作为有效JSON
+     * 5. 如果无法找到有效的JSON结构则返回空对象
+     * 6. 记录警告信息便于调试问题
      *
-     * @param input 原始字符串
-     * @return 清理后的JSON字符串
+     * @param input 原始字符串，可能包含非JSON格式的内容
+     * @return 清理后的JSON字符串，保证格式正确
      */
     private String cleanJsonString(String input) {
         if (input == null || input.isEmpty()) {
@@ -134,7 +179,15 @@ public class LLMService {
     }
 
     /**
-     * 生成文本摘要
+     * 生成文本摘要 - 使用默认模型
+     * 
+     * 实现思路：
+     * 1. 调用重载方法generateSummary(String text, String modelId)
+     * 2. 传入null作为modelId，使用当前激活的默认模型
+     * 3. 简化调用接口，适用于大多数摘要生成场景
+     * 
+     * @param text 需要生成摘要的文本内容
+     * @return 生成的摘要文本
      */
     public String generateSummary(String text) {
         return generateSummary(text, null);
@@ -142,6 +195,13 @@ public class LLMService {
 
     /**
      * 生成文本摘要 - 使用指定的模型
+     * 
+     * 实现思路：
+     * 1. 记录操作日志，包含使用的模型信息
+     * 2. 根据modelId创建对应的聊天模型实例
+     * 3. 构造专门的摘要生成提示词
+     * 4. 调用模型的chat方法生成摘要
+     * 5. 返回模型生成的摘要内容
      *
      * @param text    需要生成摘要的文本
      * @param modelId 要使用的模型ID，如果为null则使用当前激活的模型
@@ -160,10 +220,36 @@ public class LLMService {
     }
 
 
+    /**
+     * 提取文本关键词 - 使用默认模型
+     * 
+     * 实现思路：
+     * 1. 调用重载方法extractKeywords(String text, String modelId)
+     * 2. 传入null作为modelId，使用当前激活的默认模型
+     * 3. 简化调用接口，适用于大多数关键词提取场景
+     * 
+     * @param text 需要提取关键词的文本内容
+     * @return 提取的关键词列表
+     */
     public List<String> extractKeywords(String text) {
         return extractKeywords(text, null);
     }
 
+    /**
+     * 提取文本关键词 - 使用指定的模型
+     * 
+     * 实现思路：
+     * 1. 记录操作日志，包含使用的模型信息
+     * 2. 根据modelId创建对应的聊天模型实例
+     * 3. 构造严格要求JSON格式返回的关键词提取提示词
+     * 4. 调用模型生成关键词提取结果
+     * 5. 解析模型返回的JSON格式响应
+     * 6. 捕获解析异常并返回空列表作为失败处理
+     * 
+     * @param text 需要提取关键词的文本内容
+     * @param modelId 要使用的模型ID，如果为null则使用当前激活的模型
+     * @return 提取的关键词列表，解析失败时返回空列表
+     */
     public List<String> extractKeywords(String text, String modelId) {
         log.info("提取关键词，使用模型：{}", modelId == null ? "默认" : modelId);
         ChatModel model = createChatModel(modelId);
@@ -189,9 +275,18 @@ public class LLMService {
 
     /**
      * 从JSON字符串中解析关键词列表
+     * 
+     * 实现思路：
+     * 1. 调用cleanJsonString方法清理输入的JSON字符串
+     * 2. 使用Jackson ObjectMapper解析JSON内容
+     * 3. 获取"keywords"字段对应的JsonNode节点
+     * 4. 检查节点是否为数组类型
+     * 5. 遍历数组元素，提取每个关键词的文本值
+     * 6. 过滤掉空值，构建最终的关键词列表
+     * 7. 如果解析失败则返回空列表
      *
-     * @param jsonString JSON字符串
-     * @return 关键词列表
+     * @param jsonString 包含关键词的JSON字符串
+     * @return 解析出的关键词列表
      */
     private List<String> parseKeywordsFromJson(String jsonString) {
         try {

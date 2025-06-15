@@ -34,7 +34,14 @@ public class MinioService {
     private String bucketName;
 
     /**
-     * 初始化 bucket
+     * 初始化MinIO存储桶
+     * 
+     * 实现思路：
+     * 1. 检查指定的存储桶是否已存在
+     * 2. 如果存储桶不存在，则创建新的存储桶
+     * 3. 记录存储桶创建的成功日志
+     * 4. 异常处理：捕获并转换为自定义异常
+     * 5. 确保后续文件操作有可用的存储空间
      */
     public void initBucket() {
         try {
@@ -50,11 +57,25 @@ public class MinioService {
     }
 
     /**
-     * 上传文件
+     * 上传文件到MinIO存储
      * 
-     * @param file 文件
+     * 实现思路：
+     * 1. 确保存储桶已初始化，如未存在则创建
+     * 2. 使用getFilePath生成唯一的文件存储路径
+     * 3. 构建PutObjectArgs对象，配置上传参数：
+     *    - 指定存储桶名称
+     *    - 设置对象名称（文件路径）
+     *    - 提供文件输入流和大小信息
+     *    - 设置内容类型以便正确处理
+     * 4. 执行文件上传操作到MinIO服务器
+     * 5. 记录上传成功的日志信息
+     * 6. 异常处理：捕获并转换为自定义异常
+     * 7. 返回生成的文件存储路径供后续引用
+     * 
+     * @param file MultipartFile文件对象
      * @param originalFilename 原始文件名
-     * @return 文件路径
+     * @return 在MinIO中的文件存储路径
+     * @throws CustomException 文件上传失败时
      */
     public String uploadFile(MultipartFile file, String originalFilename) {
         try {
@@ -84,8 +105,16 @@ public class MinioService {
      * 生成文件存储路径
      * 格式：年/月/日/UUID-原始文件名
      * 
+     * 实现思路：
+     * 1. 获取当前日期LocalDate.now()
+     * 2. 提取年份、月份、日期并格式化为两位数
+     * 3. 生成UUID作为文件唯一标识前缀
+     * 4. 构建路径格式：YYYY/MM/DD/UUID-原始文件名
+     * 5. 确保文件名的唯一性，避免冲突
+     * 6. 按日期分层存储，便于管理和查找
+     * 
      * @param originalFilename 原始文件名
-     * @return 文件存储路径
+     * @return 格式化的文件存储路径
      */
     @NotNull
     private static String getFilePath(String originalFilename) {
@@ -100,9 +129,17 @@ public class MinioService {
     }
 
     /**
-     * 删除文件
+     * 从MinIO删除文件
      * 
-     * @param filePath 文件路径
+     * 实现思路：
+     * 1. 构建RemoveObjectArgs对象，指定存储桶和文件路径
+     * 2. 调用MinIO客户端的removeObject方法删除文件
+     * 3. 记录文件删除成功的日志
+     * 4. 异常处理：捕获删除失败的异常并转换
+     * 5. 提供统一的错误信息和日志记录
+     * 
+     * @param filePath MinIO中的文件路径
+     * @throws CustomException 文件删除失败时
      */
     public void deleteFile(String filePath) {
         try {
@@ -120,10 +157,21 @@ public class MinioService {
     }
 
     /**
-     * 获取文件访问URL
+     * 获取文件的预签名访问URL
      * 
-     * @param filePath 文件路径
-     * @return 文件URL
+     * 实现思路：
+     * 1. 使用MinIO客户端的getPresignedObjectUrl方法
+     * 2. 构建GetPresignedObjectUrlArgs，配置参数：
+     *    - 指定存储桶名称
+     *    - 指定文件对象路径
+     *    - 设置HTTP方法为GET
+     * 3. 生成带有临时访问权限的URL
+     * 4. URL具有时效性，适合临时文件访问
+     * 5. 异常处理：捕获并转换为自定义异常
+     * 
+     * @param filePath MinIO中的文件路径
+     * @return 预签名的文件访问URL
+     * @throws CustomException URL生成失败时
      */
     public String getFileUrl(String filePath) {
         try {
@@ -141,10 +189,19 @@ public class MinioService {
     }
 
     /**
-     * 获取文件内容流
+     * 获取文件内容输入流
      * 
-     * @param filePath 文件路径
-     * @return 文件流
+     * 实现思路：
+     * 1. 构建GetObjectArgs对象，指定存储桶和文件路径
+     * 2. 调用MinIO客户端的getObject方法获取文件流
+     * 3. 返回InputStream供调用方读取文件内容
+     * 4. 调用方负责关闭输入流以释放资源
+     * 5. 异常处理：捕获并转换为自定义异常
+     * 6. 适用于文件内容读取、解析等场景
+     * 
+     * @param filePath MinIO中的文件路径
+     * @return 文件内容的输入流
+     * @throws CustomException 文件读取失败时
      */
     public InputStream getFileContent(String filePath) {
         try {
@@ -163,9 +220,31 @@ public class MinioService {
     /**
      * 从URL下载文件并上传到MinIO
      * 
-     * @param fileUrl 文件URL
-     * @param fileName 文件名（可选）
-     * @return MinIO中的文件路径
+     * 实现思路：
+     * 1. 验证文件URL的有效性，不能为空
+     * 2. 如果未提供文件名，则从URL自动生成：
+     *    - 使用UUID确保唯一性
+     *    - 提取URL最后部分作为文件名
+     *    - 移除URL参数（?后的内容）
+     * 3. 根据文件扩展名确定MIME内容类型：
+     *    - 支持常见图片格式：jpg/jpeg、png、gif
+     *    - 其他文件类型使用application/octet-stream
+     * 4. 创建临时文件用于下载：
+     *    - 使用Files.createTempFile创建临时文件
+     *    - 从URL读取输入流并复制到临时文件
+     * 5. 生成MinIO存储路径并确保存储桶存在
+     * 6. 上传文件到MinIO：
+     *    - 构建PutObjectArgs设置上传参数
+     *    - 使用文件输入流和内容类型
+     *    - 指定文件大小以优化传输
+     * 7. 清理资源：删除临时文件
+     * 8. 异常处理：统一捕获并转换为自定义异常
+     * 9. 返回MinIO中的文件存储路径
+     * 
+     * @param fileUrl 要下载的文件URL
+     * @param fileName 可选的文件名，为空时自动生成
+     * @return MinIO中的文件存储路径
+     * @throws CustomException URL无效或下载上传失败时
      */
     public String uploadFileFromUrl(String fileUrl, String fileName) {
         if (fileUrl == null || fileUrl.isEmpty()) {

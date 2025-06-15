@@ -42,6 +42,13 @@ public class AnalysisServiceImpl implements AnalysisService {
 
     /**
      * 将长文本内容分割成不超过最大大小的小块，保持句子完整性
+     * 
+     * 实现思路：
+     * 1. 检查内容长度，如果不超过最大限制则直接返回
+     * 2. 定义句子结束的标点符号集合
+     * 3. 逐字符遍历内容，构建完整句子
+     * 4. 在句子边界处检查是否超过大小限制
+     * 5. 确保每个块都不超过最大大小且保持句子完整性
      *
      * @param content  原始文本内容
      * @param maxSize  每个块的最大大小(字符数)
@@ -112,6 +119,11 @@ public class AnalysisServiceImpl implements AnalysisService {
     /**
      * 重载方法，使用默认最大块大小
      * 
+     * 实现思路：
+     * 1. 调用带参数的splitContentIntoChunks方法
+     * 2. 使用类常量MAX_BLOCK_SIZE作为默认最大块大小
+     * 3. 简化调用接口，提供便捷方法
+     * 
      * @param content 原始文本内容
      * @return 分割后的内容块列表
      */
@@ -119,6 +131,21 @@ public class AnalysisServiceImpl implements AnalysisService {
         return splitContentIntoChunks(content, MAX_BLOCK_SIZE);
     }
 
+    /**
+     * 生成文本摘要
+     * 
+     * 实现思路：
+     * 1. 计算原始内容长度用于统计
+     * 2. 将超长内容分割成多个块，避免单次处理过长文本
+     * 3. 使用线程池并行处理多个文本块，提高处理效率
+     * 4. 为每个文本块提交摘要生成任务到线程池
+     * 5. 收集所有任务的执行结果，合并成最终摘要
+     * 6. 正确关闭线程池，避免资源泄露
+     * 7. 构建包含统计信息的摘要结果对象
+     * 
+     * @param content 需要生成摘要的文本内容
+     * @return 包含摘要内容和统计信息的结果对象
+     */
     @Override
     public SummaryResult generateSummary(String content) {
         // 计算原始内容长度
@@ -169,6 +196,22 @@ public class AnalysisServiceImpl implements AnalysisService {
                 .build();
     }
 
+    /**
+     * 从数据库文档生成摘要并保存
+     * 
+     * 实现思路：
+     * 1. 根据文档ID从数据库查询文档实体
+     * 2. 如果文档不存在则抛出EntityNotFoundException异常
+     * 3. 调用readDocumentContent方法读取文档的实际内容
+     * 4. 调用generateSummary方法生成摘要
+     * 5. 将生成的摘要保存回文档实体的summary字段
+     * 6. 使用事务确保数据一致性
+     * 7. 记录操作日志便于追踪
+     * 
+     * @param documentId 文档ID
+     * @return 包含摘要内容和统计信息的结果对象
+     * @throws EntityNotFoundException 当文档不存在时抛出
+     */
     @Override
     @Transactional
     public SummaryResult generateSummaryFromDocument(Long documentId) {
@@ -190,6 +233,22 @@ public class AnalysisServiceImpl implements AnalysisService {
         return result;
     }
 
+    /**
+     * 提取文本关键词
+     * 
+     * 实现思路：
+     * 1. 计算原始内容长度用于统计
+     * 2. 将超长内容分割成多个块，避免单次处理过长文本
+     * 3. 使用线程池并行处理多个文本块，提高处理效率
+     * 4. 为每个文本块提交关键词提取任务到线程池
+     * 5. 使用Set去重，避免重复关键词
+     * 6. 收集所有任务的执行结果，合并成最终关键词列表
+     * 7. 提供容错机制，如果没有提取到关键词则使用默认值
+     * 8. 正确关闭线程池，避免资源泄露
+     * 
+     * @param content 需要提取关键词的文本内容
+     * @return 包含关键词列表和统计信息的结果对象
+     */
     @Override
     public KeywordsResult extractKeywords(String content) {
         // 计算原始内容长度
@@ -256,6 +315,22 @@ public class AnalysisServiceImpl implements AnalysisService {
                 .build();
     }
 
+    /**
+     * 从数据库文档提取关键词并保存
+     * 
+     * 实现思路：
+     * 1. 根据文档ID从数据库查询文档实体
+     * 2. 如果文档不存在则抛出EntityNotFoundException异常
+     * 3. 调用readDocumentContent方法读取文档的实际内容
+     * 4. 调用extractKeywords方法提取关键词
+     * 5. 将关键词列表用逗号连接成字符串，保存到文档实体的keywords字段
+     * 6. 使用事务确保数据一致性
+     * 7. 记录操作日志便于追踪
+     * 
+     * @param documentId 文档ID
+     * @return 包含关键词列表和统计信息的结果对象
+     * @throws EntityNotFoundException 当文档不存在时抛出
+     */
     @Override
     @Transactional
     public KeywordsResult extractKeywordsFromDocument(Long documentId) {
@@ -277,6 +352,23 @@ public class AnalysisServiceImpl implements AnalysisService {
         return result;
     }
 
+    /**
+     * 润色文档内容
+     * 
+     * 实现思路：
+     * 1. 计算原始内容长度用于统计
+     * 2. 验证润色类型参数，如果为空则使用默认的"formal"类型
+     * 3. 将超长内容分割成多个块，避免单次处理过长文本
+     * 4. 使用线程池并行处理多个文本块，提高处理效率
+     * 5. 为每个文本块提交润色任务到线程池
+     * 6. 收集所有任务的执行结果，用换行符连接成最终润色内容
+     * 7. 提供容错机制，如果润色失败则使用默认提示
+     * 8. 正确关闭线程池，避免资源泄露
+     * 
+     * @param content 需要润色的文本内容
+     * @param polishType 润色类型（如formal、casual等）
+     * @return 包含润色后内容和统计信息的结果对象
+     */
     @Override
     public PolishResult polishDocument(String content, String polishType) {
         // 计算原始内容长度
@@ -350,6 +442,23 @@ public class AnalysisServiceImpl implements AnalysisService {
                 .build();
     }
 
+    /**
+     * 从数据库文档润色内容并保存信息
+     * 
+     * 实现思路：
+     * 1. 根据文档ID从数据库查询文档实体
+     * 2. 如果文档不存在则抛出EntityNotFoundException异常
+     * 3. 调用readDocumentContent方法读取文档的实际内容
+     * 4. 调用polishDocument方法进行文档润色
+     * 5. 将润色信息（类型和时间）追加到文档的summary字段
+     * 6. 使用事务确保数据一致性
+     * 7. 记录操作日志便于追踪
+     * 
+     * @param documentId 文档ID
+     * @param polishType 润色类型
+     * @return 包含润色后内容和统计信息的结果对象
+     * @throws EntityNotFoundException 当文档不存在时抛出
+     */
     @Override
     @Transactional
     public PolishResult polishDocumentFromDocument(Long documentId, String polishType) {
@@ -377,6 +486,20 @@ public class AnalysisServiceImpl implements AnalysisService {
         return result;
     }
 
+    /**
+     * 检测文本中的敏感信息
+     * 
+     * 实现思路：
+     * 1. 计算原始内容长度用于统计
+     * 2. 验证输入内容，如果为空则返回空结果
+     * 3. 判断内容长度，如果超过阈值则调用分块检测方法
+     * 4. 对于正常长度的内容直接调用LLMService进行检测
+     * 5. 处理检测过程中的异常，确保服务稳定性
+     * 6. 构建包含敏感信息列表和统计信息的结果对象
+     * 
+     * @param content 需要检测敏感信息的文本内容
+     * @return 包含敏感信息列表和统计信息的结果对象
+     */
     @Override
     public SecurityResult detectSensitiveInfo(String content) {
         // 计算原始内容长度
@@ -418,6 +541,15 @@ public class AnalysisServiceImpl implements AnalysisService {
     
     /**
      * 对长内容分块检测敏感信息
+     * 
+     * 实现思路：
+     * 1. 将长内容分割成多个块，便于并行处理
+     * 2. 使用线程池并行处理多个文本块，提高检测效率
+     * 3. 为每个文本块计算在原文中的偏移量，确保位置信息准确
+     * 4. 提交敏感信息检测任务到线程池
+     * 5. 调整每个块检测结果中的位置信息，加上相应的偏移量
+     * 6. 收集所有块的检测结果，合并成最终结果
+     * 7. 正确关闭线程池，避免资源泄露
      * 
      * @param content 需要检测的长内容
      * @return 合并后的敏感信息检测结果
@@ -497,6 +629,23 @@ public class AnalysisServiceImpl implements AnalysisService {
                 .build();
     }
 
+    /**
+     * 从数据库文档检测敏感信息并保存结果
+     * 
+     * 实现思路：
+     * 1. 根据文档ID从数据库查询文档实体
+     * 2. 如果文档不存在则抛出EntityNotFoundException异常
+     * 3. 调用readDocumentContent方法读取文档的实际内容
+     * 4. 调用detectSensitiveInfo方法检测敏感信息
+     * 5. 使用Jackson将检测结果序列化为JSON字符串
+     * 6. 将JSON结果保存到文档实体的sensitiveInfo字段
+     * 7. 使用事务确保数据一致性
+     * 8. 处理JSON序列化异常，记录错误日志
+     * 
+     * @param documentId 文档ID
+     * @return 包含敏感信息列表和统计信息的结果对象
+     * @throws EntityNotFoundException 当文档不存在时抛出
+     */
     @Override
     @Transactional
     public SecurityResult detectSensitiveInfoFromDocument(Long documentId) {
@@ -527,7 +676,17 @@ public class AnalysisServiceImpl implements AnalysisService {
     
     /**
      * 读取文档内容
-     * 从文件存储服务（如MinIO）中获取文件内容
+     * 
+     * 实现思路：
+     * 1. 验证文档对象和文档路径的有效性
+     * 2. 获取文档的文件类型和存储路径信息
+     * 3. 调用FileService的readFileContent方法读取文件内容
+     * 4. FileService会根据文件类型自动选择合适的读取方法
+     * 5. 记录读取操作的成功日志，包含关键统计信息
+     * 6. 捕获并处理读取过程中的异常，返回错误提示
+     * 
+     * @param document 文档实体对象，包含文件路径和类型信息
+     * @return 文档的文本内容，如果读取失败则返回错误信息
      */
     private String readDocumentContent(DocumentPO document) {
         if (document == null || document.getFilePath() == null) {

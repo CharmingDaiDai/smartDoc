@@ -66,6 +66,17 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
     private final HiSemRag hiSemRag;
     private final NaiveRag naiveRag;
 
+    /**
+     * 获取用户的知识库列表
+     * 
+     * 实现思路：
+     * 1. 根据用户查询其所有知识库，按创建时间倒序排列
+     * 2. 将知识库实体转换为DTO对象，避免暴露敏感信息
+     * 3. 统一异常处理，返回标准化响应格式
+     * 
+     * @param user 当前登录用户
+     * @return 包含知识库DTO列表的API响应对象
+     */
     @Override
     public ApiResponse<List<KnowledgeBaseDTO>> listKnowledgeBase(User user) {
         log.info("获取用户知识库列表，用户：{}", user.getUsername());
@@ -80,6 +91,20 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
         }
     }
 
+    /**
+     * 创建知识库
+     * 
+     * 实现思路：
+     * 1. 校验输入参数的有效性（名称不能为空）
+     * 2. 检查同用户下是否已存在同名知识库，避免重复创建
+     * 3. 构建知识库实体对象，包含用户指定的配置信息
+     * 4. 保存到数据库并返回创建结果
+     * 5. 使用事务确保数据一致性
+     * 
+     * @param createKbRequest 创建知识库的请求参数，包含名称、描述、嵌入模型等配置
+     * @param user 当前登录用户
+     * @return 创建结果的API响应对象，成功返回true，失败返回错误信息
+     */
     @Override
     @Transactional
     public ApiResponse<Boolean> createKnowledgeBase(CreateKbRequest createKbRequest, User user) {
@@ -121,6 +146,22 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
         }
     }
 
+    /**
+     * 删除知识库
+     * 
+     * 实现思路：
+     * 1. 校验知识库ID的有效性
+     * 2. 检查知识库是否存在
+     * 3. 验证用户权限（只有知识库所有者才能删除）
+     * 4. 删除知识库中的所有文档（包括Minio中的文件）
+     * 5. 删除Milvus中的索引集合
+     * 6. 删除数据库中的知识库记录
+     * 7. 使用事务确保数据一致性
+     * 
+     * @param knowledgeBaseId 要删除的知识库ID
+     * @param user 当前登录用户
+     * @return 删除结果的API响应对象，成功返回true，失败返回错误信息
+     */
     @Override
     @Transactional
     public ApiResponse<Boolean> deleteKnowledgeBase(Long knowledgeBaseId, User user) {
@@ -179,6 +220,16 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
         }
     }
 
+    /**
+     * 获取可用的嵌入模型列表
+     * 
+     * 实现思路：
+     * 1. 从模型配置中获取所有嵌入模型信息
+     * 2. 将模型配置转换为前端需要的格式（label、description、value）
+     * 3. 返回标准化的API响应
+     * 
+     * @return 包含嵌入模型列表的API响应对象，每个模型包含标签、描述和值
+     */
     @Override
     public ApiResponse<List<Map<String, String>>> listEmbeddingModels() {
         log.info("获取嵌入模型列表");
@@ -197,6 +248,21 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
         return ApiResponse.success(embeddingModels);
     }
 
+    /**
+     * 获取知识库详情
+     * 
+     * 实现思路：
+     * 1. 校验知识库ID参数的有效性
+     * 2. 检查知识库是否存在于数据库中
+     * 3. 验证用户权限（只有知识库所有者才能访问详情）
+     * 4. 将知识库实体转换为DTO对象
+     * 5. 解析索引参数JSON字符串为Map对象，便于前端展示
+     * 6. 统一异常处理，确保服务的稳定性
+     * 
+     * @param id 知识库ID
+     * @param user 当前登录用户
+     * @return 包含知识库详情DTO的API响应对象
+     */
     @Override
     public ApiResponse<KnowledgeBaseDTO> getKnowledgeBase(Long id, User user) {
         log.info("获取知识库详情，ID：{}，用户：{}", id, user.getUsername());
@@ -246,6 +312,21 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
         }
     }
 
+    /**
+     * 获取知识库文档列表
+     * 
+     * 实现思路：
+     * 1. 校验知识库ID参数的有效性
+     * 2. 检查知识库是否存在于数据库中
+     * 3. 验证用户权限（只有知识库所有者才能访问）
+     * 4. 查询知识库下的所有文档，按创建时间倒序排列
+     * 5. 将文档实体转换为VO对象，满足前端展示需求
+     * 6. 统一异常处理，确保服务的稳定性
+     * 
+     * @param knowledgeBaseId 知识库ID
+     * @param user 当前登录用户
+     * @return 包含文档列表的API响应对象
+     */
     @Override
     public ApiResponse<List<DocumentVO>> listKnowledgeBaseDocs(Long knowledgeBaseId, User user) {
         log.info("获取知识库文档列表，知识库ID：{}，用户：{}", knowledgeBaseId, user.getUsername());
@@ -298,7 +379,14 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
     /**
      * 批量向指定知识库添加文档
      *
-     * @param id     知识库ID，字符串格式
+     * 实现思路：
+     * 1. 遍历传入的文件数组和标题数组
+     * 2. 对每个非空文件调用documentService.uploadDocument进行上传
+     * 3. 记录每个文档的上传结果（成功/失败）
+     * 4. 返回包含所有上传结果的列表
+     * 5. 异常处理确保批量操作的稳定性
+     * 
+     * @param id     知识库ID
      * @param user   当前登录用户
      * @param files  要上传的文件列表
      * @param titles 与 files 数组一一对应的文档标题列表
@@ -333,8 +421,19 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
     }
 
     /**
-     * @param id
-     * @return
+     * 构建知识库索引
+     * 
+     * 实现思路：
+     * 1. 根据知识库ID查询知识库信息，获取嵌入模型和RAG方法配置
+     * 2. 从文档库中查询该知识库下未被索引的文档
+     * 3. 解析索引参数JSON，合并嵌入模型名称到参数中
+     * 4. 使用RAG策略工厂创建对应的RAG策略对象
+     * 5. 调用RAG策略的buildIndex方法构建索引
+     * 6. 更新成功构建索引的文档状态为已索引
+     * 7. 返回构建结果的响应
+     * 
+     * @param id 知识库ID字符串
+     * @return 索引构建结果的API响应对象
      */
     @Override
     public ApiResponse<String> buildIndex(String id) {
@@ -409,7 +508,13 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
     /**
      * 获取当前登录用户的ID
      *
-     * @return 当前登录用户ID
+     * 实现思路：
+     * 1. 从Spring Security上下文中获取认证信息
+     * 2. 检查认证状态和认证主体类型
+     * 3. 根据不同的主体类型提取用户ID
+     * 4. 统一异常处理，确保服务的稳定性
+     *
+     * @return 当前登录用户ID，获取失败时返回null
      */
     public static Long getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -429,17 +534,38 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
         return null;
     }
 
+    /**
+     * 生成存储在向量数据库中的知识库名称
+     * 
+     * 实现思路：
+     * 1. 通过格式化字符串将用户ID和知识库名称组合
+     * 2. 确保不同用户的同名知识库在向量数据库中有唯一标识
+     * 3. 使用前缀"kb_"便于识别和管理
+     * 
+     * @param kbName 知识库名称
+     * @return 格式化后的知识库存储名称，格式为"kb_{用户ID}_{知识库名称}"
+     */
     public static String getStoreKnowledgeBaseName(String kbName) {
         return "kb_" + getCurrentUserId() + "_" + kbName;
     }
 
     /**
-     * @param id
-     * @param question
-     * @param topk
-     * @param qr
-     * @param qd
-     * @return
+     * 基于朴素RAG的问答服务
+     * 
+     * 实现思路：
+     * 1. 验证知识库ID的有效性，检查知识库是否存在
+     * 2. 根据意图识别参数判断是否需要进行知识检索
+     * 3. 如果启用查询重写，对用户问题进行优化处理
+     * 4. 设置查询参数（topk等）并调用朴素RAG策略
+     * 5. 返回流式响应，支持实时对话体验
+     * 
+     * @param id 知识库ID
+     * @param question 用户问题
+     * @param topk 检索结果数量限制
+     * @param ir 是否启用意图识别
+     * @param qr 是否启用查询重写
+     * @param qd 是否启用问题分解（当前未实现）
+     * @return 流式响应对象，包含AI回答内容
      */
     @Override
     public Flux<String> naiveQa(Long id, String question, int topk, boolean ir, boolean qr, boolean qd) {
@@ -470,6 +596,24 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
         return naiveRag.chat(knowledgeBase, question, params);
     }
 
+    /**
+     * 基于HiSem分层语义RAG的问答服务
+     * 
+     * 实现思路：
+     * 1. 验证知识库ID的有效性，检查知识库是否存在
+     * 2. 根据意图识别参数判断是否需要进行知识检索，与naiveQa逻辑相反
+     * 3. 如果启用查询重写，对用户问题进行优化处理
+     * 4. 设置查询参数（maxRes等）并调用HiSem RAG策略
+     * 5. 返回流式响应，支持更高质量的对话体验
+     * 
+     * @param id 知识库ID
+     * @param question 用户问题
+     * @param maxRes 最大检索结果数量
+     * @param ir 是否启用意图识别
+     * @param qr 是否启用查询重写
+     * @param qd 是否启用问题分解（当前未实现）
+     * @return 流式响应对象，包含AI回答内容
+     */
     @Override
     public Flux<String> hisemQa(Long id, String question, int maxRes, boolean ir, boolean qr, boolean qd) {
         Optional<KnowledgeBase> knowledgeBaseOpt = knowledgeBaseRepository.findById(id);
@@ -499,6 +643,18 @@ public class KnowledgeBaseServiceImpl implements KnowledgeBaseService {
         return hiSemRag.chat(knowledgeBase, question, params);
     }
 
+    /**
+     * 判断问题是否需要进行知识检索
+     * 
+     * 实现思路：
+     * 1. 使用意图分类器分析用户问题的意图
+     * 2. 根据分析结果判断是否需要在知识库中检索相关信息
+     * 3. 记录分析过程和结果，便于调试和优化
+     * 
+     * @param question 用户问题
+     * @param history 对话历史（可选）
+     * @return true表示需要检索，false表示无需检索
+     */
     private boolean needRetrieve(String question, String history) {
         IntentResult intentResult = intentClassifier.analyzeIntent(question, history);
 

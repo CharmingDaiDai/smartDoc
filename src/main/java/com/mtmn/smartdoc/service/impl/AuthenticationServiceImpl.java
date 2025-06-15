@@ -59,6 +59,20 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     private final RestTemplate restTemplate;
     private final MinioService minioService;
 
+    /**
+     * 用户注册
+     * 
+     * 实现思路：
+     * 1. 根据注册请求构建新用户对象
+     * 2. 使用BCrypt对用户密码进行加密存储
+     * 3. 设置用户基本信息和默认状态（非VIP、已启用）
+     * 4. 将用户信息保存到数据库
+     * 5. 为新注册用户生成JWT访问令牌和刷新令牌
+     * 6. 返回包含令牌的认证响应
+     * 
+     * @param request 用户注册请求，包含用户名、邮箱、密码等信息
+     * @return 包含JWT令牌的认证响应对象
+     */
     @Override
     public AuthenticationResponse register(RegisterRequest request) {
         // 创建用户对象
@@ -85,6 +99,22 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .build();
     }
 
+    /**
+     * 用户登录认证
+     * 
+     * 实现思路：
+     * 1. 使用Spring Security的AuthenticationManager验证用户凭证
+     * 2. 验证用户名和密码的正确性
+     * 3. 从数据库查询用户信息，检查用户是否存在
+     * 4. 验证用户账户状态，确保用户未被禁用
+     * 5. 更新用户的最后登录时间
+     * 6. 为认证成功的用户生成JWT访问令牌和刷新令牌
+     * 7. 返回包含令牌的认证响应
+     * 
+     * @param request 用户登录请求，包含用户名和密码
+     * @return 包含JWT令牌的认证响应对象
+     * @throws CustomException 当用户不存在或被禁用时抛出
+     */
     @Override
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
         // 进行认证
@@ -117,6 +147,18 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .build();
     }
 
+    /**
+     * 创建GitHub OAuth授权URL
+     * 
+     * 实现思路：
+     * 1. 生成随机的state参数，用于防止CSRF攻击
+     * 2. 使用UriComponentsBuilder构建标准的GitHub OAuth授权URL
+     * 3. 设置必要的OAuth参数：client_id、redirect_uri、scope、state
+     * 4. 返回完整的授权URL供前端重定向使用
+     * 5. state参数应保存到session或缓存中以便后续验证
+     * 
+     * @return GitHub OAuth授权URL字符串
+     */
     @Override
     public String createGithubAuthorizationUrl() {
         String state = UUID.randomUUID().toString();
@@ -130,6 +172,23 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .build().toUriString();
     }
 
+    /**
+     * GitHub OAuth认证处理
+     * 
+     * 实现思路：
+     * 1. 使用授权码向GitHub交换访问令牌
+     * 2. 使用访问令牌获取GitHub用户信息
+     * 3. 下载用户头像并上传到MinIO存储服务
+     * 4. 根据GitHub ID查找现有用户或创建新用户
+     * 5. 更新用户信息和最后登录时间
+     * 6. 为用户生成JWT访问令牌和刷新令牌
+     * 7. 处理整个流程中的异常情况
+     * 
+     * @param code GitHub返回的授权码
+     * @param state 防CSRF攻击的状态参数
+     * @return 包含JWT令牌的认证响应对象
+     * @throws RuntimeException 当GitHub认证流程失败时抛出
+     */
     @Override
     public AuthenticationResponse authenticateWithGithub(String code, String state) {
         try {
@@ -247,6 +306,21 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         }
     }
 
+    /**
+     * 刷新JWT令牌
+     * 
+     * 实现思路：
+     * 1. 从刷新令牌中提取用户名信息
+     * 2. 验证刷新令牌的格式和有效性
+     * 3. 根据用户名从数据库查询用户信息
+     * 4. 验证刷新令牌是否为该用户签发且未过期
+     * 5. 为用户生成新的访问令牌和刷新令牌
+     * 6. 返回包含新令牌的认证响应
+     * 
+     * @param refreshToken 客户端提供的刷新令牌
+     * @return 包含新JWT令牌的认证响应对象
+     * @throws CustomException 当刷新令牌无效或用户不存在时抛出
+     */
     @Override
     public AuthenticationResponse refreshToken(String refreshToken) {
         // 验证刷新令牌的有效性

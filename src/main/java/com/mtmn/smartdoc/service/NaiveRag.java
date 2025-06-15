@@ -49,7 +49,14 @@ public class NaiveRag implements BaseRag {
     private final MilvusService milvusService;
 
     /**
-     * @return
+     * 获取RAG方法名称
+     * 
+     * 实现思路：
+     * 1. 返回该RAG实现的标识名称
+     * 2. 用于RAG策略工厂的策略选择
+     * 3. 与配置文件中的方法名保持一致
+     * 
+     * @return RAG方法名称："naive"
      */
     @Override
     public String getMethodName() {
@@ -57,7 +64,26 @@ public class NaiveRag implements BaseRag {
     }
 
     /**
-     * @return
+     * 构建朴素RAG索引
+     * 
+     * 实现思路：
+     * 1. 从参数中获取分块配置（块大小、重叠大小）和嵌入模型名称
+     * 2. 验证必要参数的有效性，特别是嵌入模型名称
+     * 3. 创建对应的嵌入模型实例
+     * 4. 获取当前用户ID并构建知识库的集合名称
+     * 5. 创建Milvus嵌入存储实例
+     * 6. 遍历文档列表，使用Apache Tika解析每个文档内容
+     * 7. 使用文档分割器将长文档分割成较小的文本段
+     * 8. 为每个文本段生成嵌入向量
+     * 9. 将文本段和对应的嵌入向量存储到Milvus中
+     * 10. 记录每个文档的处理结果并返回成功状态列表
+     * 
+     * @param kbName 知识库名称
+     * @param documentPoList 要建立索引的文档列表
+     * @param params 索引构建参数，包含分块配置和嵌入模型等
+     * @return 每个文档的索引构建结果列表，true表示成功，false表示失败
+     * @throws CustomException 当嵌入模型为空时抛出
+     * @throws BadCredentialsException 当用户未登录时抛出
      */
     @Override
     public List<Boolean> buildIndex(String kbName, List<DocumentPO> documentPoList, Map<String, Object> params) {
@@ -138,7 +164,14 @@ public class NaiveRag implements BaseRag {
     }
 
     /**
-     * @return
+     * 删除所有索引数据
+     * 
+     * 实现思路：
+     * 1. 删除Milvus集合中的所有向量数据
+     * 2. 清理相关的元数据信息
+     * 3. 释放存储空间
+     * 
+     * @return 删除操作是否成功
      */
     @Override
     public Boolean deleteIndex() {
@@ -146,14 +179,42 @@ public class NaiveRag implements BaseRag {
     }
 
     /**
-     * @param docIds
-     * @return
+     * 根据文档ID列表删除指定索引
+     * 
+     * 实现思路：
+     * 1. 验证文档ID列表的有效性
+     * 2. 根据文档ID查找对应的向量记录
+     * 3. 从Milvus集合中删除指定的向量数据
+     * 4. 更新索引状态和统计信息
+     * 
+     * @param docIds 要删除的文档ID列表
+     * @return 删除操作是否成功
      */
     @Override
     public Boolean deleteIndex(List<String> docIds) {
         return null;
     }
 
+    /**
+     * 朴素RAG问答服务
+     * 
+     * 实现思路：
+     * 1. 从参数中获取TopK值，默认为10个最相关文档
+     * 2. 使用指定的嵌入模型对用户问题进行向量化
+     * 3. 在Milvus向量数据库中进行相似度检索
+     * 4. 构建内容检索器，设置最大结果数量
+     * 5. 检索与问题最相关的文档片段
+     * 6. 如果没有找到相关内容，返回提示信息
+     * 7. 构建包含检索指导的提示模板，提高回答质量
+     * 8. 将检索到的文档片段格式化为上下文
+     * 9. 使用SSE流式输出处理聊天响应
+     * 10. 异常处理：捕获并返回友好的错误信息
+     * 
+     * @param knowledgeBase 知识库对象，包含配置信息
+     * @param question 用户提出的问题
+     * @param params 查询参数，包含topk等配置
+     * @return 流式响应，实时返回生成的答案
+     */
     @Override
     public Flux<String> chat(KnowledgeBase knowledgeBase, String question, Map<String, Object> params) {
         Integer topk = (Integer) params.getOrDefault("topk", 10);
@@ -226,8 +287,15 @@ public class NaiveRag implements BaseRag {
     }
 
     /**
-     * @param ragMethod
-     * @return
+     * 检查是否支持指定的RAG方法
+     * 
+     * 实现思路：
+     * 1. 验证传入的RAG方法名称
+     * 2. 检查当前实现是否支持该方法
+     * 3. 返回支持状态布尔值
+     * 
+     * @param ragMethod RAG方法名称
+     * @return 是否支持该RAG方法
      */
     @Override
     public boolean supports(String ragMethod) {

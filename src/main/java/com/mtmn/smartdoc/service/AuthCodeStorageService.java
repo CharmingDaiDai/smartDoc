@@ -29,8 +29,16 @@ public class AuthCodeStorageService {
     /**
      * 存储授权码及对应的认证响应
      * 
-     * @param code 一次性授权码
-     * @param response 认证响应（包含token）
+     * 实现思路：
+     * 1. 计算授权码过期时间（当前时间+120秒）
+     * 2. 创建AuthCodeEntry对象包装认证响应和过期时间
+     * 3. 将授权码作为key存储到ConcurrentHashMap中
+     * 4. 记录存储操作的调试日志，包含过期时间
+     * 5. 调用清理方法移除已过期的授权码
+     * 6. 确保授权码的时效性和存储安全
+     * 
+     * @param code 一次性授权码，用作存储的key
+     * @param response 认证响应对象，包含JWT令牌等信息
      */
     public void storeAuthCode(String code, AuthenticationResponse response) {
         LocalDateTime expiryTime = LocalDateTime.now().plusSeconds(CODE_EXPIRATION_SECONDS);
@@ -44,8 +52,19 @@ public class AuthCodeStorageService {
     /**
      * 获取并删除授权码对应的认证响应
      * 
+     * 实现思路：
+     * 1. 验证授权码的有效性（非空且存在于存储中）
+     * 2. 如果授权码无效，记录警告日志并返回null
+     * 3. 获取授权码对应的存储条目
+     * 4. 检查授权码是否已过期：
+     *    - 如果过期，从存储中移除并记录警告
+     *    - 如果过期，返回null表示无效
+     * 5. 如果有效，从存储中移除（确保一次性使用特性）
+     * 6. 记录成功获取和移除的调试日志
+     * 7. 返回认证响应对象供调用方使用
+     * 
      * @param code 一次性授权码
-     * @return 认证响应（如果授权码有效）；否则返回null
+     * @return 认证响应对象（如果授权码有效），否则返回null
      */
     public AuthenticationResponse getAndRemoveAuthResponse(String code) {
         if (code == null || !codeStore.containsKey(code)) {
@@ -70,6 +89,13 @@ public class AuthCodeStorageService {
     
     /**
      * 清理过期的授权码
+     * 
+     * 实现思路：
+     * 1. 遍历ConcurrentHashMap中的所有条目
+     * 2. 使用removeIf方法移除已过期的条目
+     * 3. 通过AuthCodeEntry.isExpired()判断过期状态
+     * 4. 自动清理机制减少内存占用
+     * 5. 简化实现，生产环境建议使用定时任务
      */
     private void cleanupExpiredCodes() {
         codeStore.entrySet().removeIf(entry -> entry.getValue().isExpired());

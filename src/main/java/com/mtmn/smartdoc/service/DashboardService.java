@@ -36,10 +36,16 @@ public class DashboardService {
     private final UserRepository userRepository;
     
     /**
-     * 从Authentication获取用户对象
+     * 从认证信息中获取用户对象
      * 
-     * @param authentication 认证信息
-     * @return 用户对象，如果认证失败或用户不存在则返回null
+     * 实现思路：
+     * 1. 检查认证信息的有效性和认证状态
+     * 2. 从认证信息中提取用户名
+     * 3. 根据用户名从数据库查询用户实体
+     * 4. 如果查询失败则返回null，便于调用方处理
+     * 
+     * @param authentication Spring Security的认证信息
+     * @return 用户实体对象，认证失败或用户不存在时返回null
      */
     private User getUserFromAuthentication(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -51,13 +57,21 @@ public class DashboardService {
     }
     
     /**
-     * 记录用户活动
+     * 记录用户活动到数据库
      * 
-     * @param authentication 认证信息
-     * @param activityType 活动类型
-     * @param documentId 文档ID
+     * 实现思路：
+     * 1. 从认证信息中提取用户实体
+     * 2. 验证用户的有效性，无效用户记录警告并跳过
+     * 3. 构建UserActivity实体对象，包含活动详情
+     * 4. 设置当前时间作为活动时间戳
+     * 5. 保存活动记录到数据库
+     * 6. 捕获异常并记录错误日志，不影响主业务流程
+     * 
+     * @param authentication 用户认证信息
+     * @param activityType 活动类型（如SUMMARY、KEYWORDS等）
+     * @param documentId 关联的文档ID
      * @param documentName 文档名称
-     * @param description 活动描述
+     * @param description 活动描述信息
      */
     public void recordUserActivity(Authentication authentication, String activityType, Long documentId, String documentName, String description) {
         User user = getUserFromAuthentication(authentication);
@@ -86,8 +100,16 @@ public class DashboardService {
     /**
      * 获取用户的仪表盘统计数据
      * 
-     * @param authentication 认证信息
-     * @return 仪表盘统计数据DTO
+     * 实现思路：
+     * 1. 从认证信息中提取用户实体
+     * 2. 验证用户有效性，无效用户返回全零统计数据
+     * 3. 查询用户的文档总数
+     * 4. 分别统计各类型的分析活动数量
+     * 5. 包括关键词提取、安全检查、摘要生成、文档润色等
+     * 6. 构建并返回包含完整统计信息的DTO对象
+     * 
+     * @param authentication 用户认证信息
+     * @return 仪表盘统计数据DTO，包含文档数和各类分析活动统计
      */
     public DashboardStatisticsDto getUserStatistics(Authentication authentication) {
         User user = getUserFromAuthentication(authentication);
