@@ -22,7 +22,7 @@ public class IntentClassifier {
     private IntentResponseParser intentResponseParser;
 
     @Value("${prompt.intentClassifier}")
-    public static String INTENT_PROMPT;
+    public String INTENT_PROMPT;
 
     public IntentResult analyzeIntent(String currentQuestion, String conversationHistory) {
         String prompt = String.format(INTENT_PROMPT,

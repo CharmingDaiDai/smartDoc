@@ -24,7 +24,7 @@ public class QueryRewrite {
     private LLMService llmService;
 
     @Value("${prompt.queryRewrite}")
-    private static String SIMPLE_REWRITE_PROMPT;
+    private String SIMPLE_REWRITE_PROMPT;
 
     public QueryRewriteResult rewriteQuery(String conversationHistory, String originalQuery) {
         try {
