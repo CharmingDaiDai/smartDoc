@@ -1,6 +1,5 @@
 package com.mtmn.smartdoc.utils;
 
-import com.mtmn.smartdoc.common.QueryRewriteResult;
 import com.mtmn.smartdoc.service.LLMService;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -10,39 +9,36 @@ import org.springframework.stereotype.Service;
 /**
  * @author charmingdaidai
  * @version 1.0
- * @description TODO
- * @date 2025/6/1 13:23
+ * @description 问题分解
+ * @date 2025/8/3 13:23
  */
 @Service
 @Log4j2
-public class QueryRewrite {
-
-    @Autowired
-    private QueryRewriteParser queryRewriteParser;
+public class QueryDecompose {
 
     @Autowired
     private LLMService llmService;
 
-    @Value("${prompt.queryRewrite}")
-    private static String SIMPLE_REWRITE_PROMPT;
+    @Value("${prompt.queryDecompose2}")
+    private String QUERY_DECOMPOSE_PROMPT;
 
-    public QueryRewriteResult rewriteQuery(String conversationHistory, String originalQuery) {
+    public String[] decomposeQuery(String userQuery) {
         try {
-            String prompt = String.format(SIMPLE_REWRITE_PROMPT, conversationHistory, originalQuery);
+            String prompt = String.format(QUERY_DECOMPOSE_PROMPT, userQuery);
 
             String response = llmService.createChatModel().chat(prompt);
-            QueryRewriteResult result = queryRewriteParser.parseSimpleResponse(response);
-            result.setOriginalQuery(originalQuery);
+            log.debug("问题分解 - 原始: {} | 分解: {}", userQuery, response);
+
+            String[] queries = response.split("\n");
 
             // 记录日志
-            log.info("查询重写 - 原始: {} | 重写: {} | 原因: {}",
-                    originalQuery, result.getRewrittenQuery(), result.getReason());
+            log.info("问题分解 - 原始: {} | 分解: {}", userQuery, queries);
 
-            return result;
+            return queries;
 
         } catch (Exception e) {
-            log.error("查询重写失败", e);
-            return QueryRewriteResult.builder().rewrittenQuery(originalQuery).build();
+            log.error("问题分解失败", e);
+            return new String[]{userQuery};
         }
     }
 }
